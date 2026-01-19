@@ -1,2 +1,0 @@
-GET {{host}}/users/{{userId}}/subscriptions/{{subscriptionId}}/reminders
-Authorization: Bearer {{token}}

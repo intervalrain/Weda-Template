@@ -1,2 +1,0 @@
-POST {{host}}/users/{{userId}}/subscriptions/{{subscriptionId}}/reminders/{{reminderId}}/dismiss
-Authorization: Bearer {{token}}
