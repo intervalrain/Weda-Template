@@ -1,6 +1,6 @@
 using Weda.Template.Domain.Common;
 
-using MediatR;
+using Mediator;
 
 using Microsoft.AspNetCore.Http;
 

@@ -3,7 +3,7 @@
   <ItemGroup>
     <PackageReference Include="Ardalis.SmartEnum" />
     <PackageReference Include="ErrorOr" />
-    <PackageReference Include="MediatR" />
+    <PackageReference Include="Mediator.Abstractions" />
     <PackageReference Include="throw" />
   </ItemGroup>
 

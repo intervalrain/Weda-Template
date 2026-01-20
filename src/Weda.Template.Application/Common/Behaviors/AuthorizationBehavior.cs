@@ -5,7 +5,7 @@ using Weda.Template.Application.Common.Security.Request;
 
 using ErrorOr;
 
-using MediatR;
+using Mediator;
 
 namespace Weda.Template.Application.Common.Behaviors;
 
@@ -15,10 +15,10 @@ public class AuthorizationBehavior<TRequest, TResponse>(
             where TRequest : IAuthorizeableRequest<TResponse>
             where TResponse : IErrorOr
 {
-    public async Task<TResponse> Handle(
+    public async ValueTask<TResponse> Handle(
         TRequest request,
-        RequestHandlerDelegate<TResponse> next,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        MessageHandlerDelegate<TRequest, TResponse> next)
     {
         var authorizationAttributes = request.GetType()
             .GetCustomAttributes<AuthorizeAttribute>()
@@ -26,7 +26,7 @@ public class AuthorizationBehavior<TRequest, TResponse>(
 
         if (authorizationAttributes.Count == 0)
         {
-            return await next();
+            return await next(request, cancellationToken);
         }
 
         var requiredPermissions = authorizationAttributes
@@ -49,6 +49,6 @@ public class AuthorizationBehavior<TRequest, TResponse>(
 
         return authorizationResult.IsError
             ? (dynamic)authorizationResult.Errors
-            : await next();
+            : await next(request, cancellationToken);
     }
 }

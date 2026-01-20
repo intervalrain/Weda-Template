@@ -1,5 +1,8 @@
 using Weda.Template.Application.Common.Interfaces;
+using Weda.Template.Domain.Employees.DomainServices;
+using Weda.Template.Domain.Employees.Repositories;
 using Weda.Template.Infrastructure.Common;
+using Weda.Template.Infrastructure.Employees.Persistence;
 using Weda.Template.Infrastructure.Security;
 using Weda.Template.Infrastructure.Security.CurrentUserProvider;
 using Weda.Template.Infrastructure.Security.PolicyEnforcer;
@@ -37,6 +40,9 @@ public static class WedaTemplateInfrastructureModule
     private static IServiceCollection AddPersistence(this IServiceCollection services)
     {
         services.AddDbContext<AppDbContext>(options => options.UseSqlite("Data Source = Weda.Template.sqlite"));
+
+        services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+        services.AddScoped<IEmployeeHierarchyService, EmployeeHierarchyService>();
 
         return services;
     }

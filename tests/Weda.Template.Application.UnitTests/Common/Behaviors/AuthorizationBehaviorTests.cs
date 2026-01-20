@@ -2,23 +2,17 @@ using Weda.Template.Application.Common.Behaviors;
 using Weda.Template.Application.Common.Interfaces;
 using Weda.Template.Application.Common.Security.Request;
 
-using MediatR;
+using Mediator;
 
 namespace Weda.Template.Application.UnitTests.Common.Behaviors;
 
 public class AuthorizationBehaviorTests
 {
     private readonly IAuthorizationService _mockAuthorizationService;
-    private readonly RequestHandlerDelegate<ErrorOr<Response>> _mockNextBehavior;
 
     public AuthorizationBehaviorTests()
     {
         _mockAuthorizationService = Substitute.For<IAuthorizationService>();
-
-        _mockNextBehavior = Substitute.For<RequestHandlerDelegate<ErrorOr<Response>>>();
-        _mockNextBehavior
-            .Invoke()
-            .Returns(Response.Instance);
     }
 
     [Fact]
@@ -29,8 +23,11 @@ public class AuthorizationBehaviorTests
 
         var authorizationBehavior = new AuthorizationBehavior<RequestWithNoAuthorizationAttribute, ErrorOr<Response>>(_mockAuthorizationService);
 
+        MessageHandlerDelegate<RequestWithNoAuthorizationAttribute, ErrorOr<Response>> next =
+            (_, _) => new ValueTask<ErrorOr<Response>>(Response.Instance);
+
         // Act
-        var result = await authorizationBehavior.Handle(request, _mockNextBehavior, default);
+        var result = await authorizationBehavior.Handle(request, default, next);
 
         // Assert
         result.IsError.Should().BeFalse();
@@ -53,8 +50,11 @@ public class AuthorizationBehaviorTests
 
         var authorizationBehavior = new AuthorizationBehavior<RequestWithSingleAuthorizationAttribute, ErrorOr<Response>>(_mockAuthorizationService);
 
+        MessageHandlerDelegate<RequestWithSingleAuthorizationAttribute, ErrorOr<Response>> next =
+            (_, _) => new ValueTask<ErrorOr<Response>>(Response.Instance);
+
         // Act
-        var result = await authorizationBehavior.Handle(request, _mockNextBehavior, default);
+        var result = await authorizationBehavior.Handle(request, default, next);
 
         // Assert
         result.IsError.Should().BeFalse();
@@ -79,8 +79,11 @@ public class AuthorizationBehaviorTests
 
         var authorizationBehavior = new AuthorizationBehavior<RequestWithSingleAuthorizationAttribute, ErrorOr<Response>>(_mockAuthorizationService);
 
+        MessageHandlerDelegate<RequestWithSingleAuthorizationAttribute, ErrorOr<Response>> next =
+            (_, _) => new ValueTask<ErrorOr<Response>>(Response.Instance);
+
         // Act
-        var result = await authorizationBehavior.Handle(request, _mockNextBehavior, default);
+        var result = await authorizationBehavior.Handle(request, default, next);
 
         // Assert
         result.IsError.Should().BeTrue();
@@ -103,8 +106,11 @@ public class AuthorizationBehaviorTests
 
         var authorizationBehavior = new AuthorizationBehavior<RequestWithTonsOfAuthorizationAttribute, ErrorOr<Response>>(_mockAuthorizationService);
 
+        MessageHandlerDelegate<RequestWithTonsOfAuthorizationAttribute, ErrorOr<Response>> next =
+            (_, _) => new ValueTask<ErrorOr<Response>>(Response.Instance);
+
         // Act
-        var result = await authorizationBehavior.Handle(request, _mockNextBehavior, default);
+        var result = await authorizationBehavior.Handle(request, default, next);
 
         // Assert
         result.IsError.Should().BeFalse();
@@ -129,8 +135,11 @@ public class AuthorizationBehaviorTests
 
         var authorizationBehavior = new AuthorizationBehavior<RequestWithTonsOfAuthorizationAttribute, ErrorOr<Response>>(_mockAuthorizationService);
 
+        MessageHandlerDelegate<RequestWithTonsOfAuthorizationAttribute, ErrorOr<Response>> next =
+            (_, _) => new ValueTask<ErrorOr<Response>>(Response.Instance);
+
         // Act
-        var result = await authorizationBehavior.Handle(request, _mockNextBehavior, default);
+        var result = await authorizationBehavior.Handle(request, default, next);
 
         // Assert
         result.IsError.Should().BeTrue();

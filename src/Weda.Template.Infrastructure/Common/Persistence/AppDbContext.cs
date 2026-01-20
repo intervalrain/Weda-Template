@@ -1,7 +1,7 @@
 using Weda.Template.Domain.Common;
 using Weda.Template.Infrastructure.Common.Middleware;
 
-using MediatR;
+using Mediator;
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
@@ -12,7 +12,7 @@ public class AppDbContext(DbContextOptions options, IHttpContextAccessor _httpCo
 {
     public async override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        var domainEvents = ChangeTracker.Entries<Entity>()
+        var domainEvents = ChangeTracker.Entries<AggregateRoot>()
            .SelectMany(entry => entry.Entity.PopDomainEvents())
            .ToList();
 

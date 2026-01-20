@@ -2,7 +2,7 @@ using ErrorOr;
 
 using FluentValidation;
 
-using MediatR;
+using Mediator;
 
 namespace Weda.Template.Application.Common.Behaviors;
 
@@ -13,21 +13,21 @@ public class ValidationBehavior<TRequest, TResponse>(IValidator<TRequest>? valid
 {
     private readonly IValidator<TRequest>? _validator = validator;
 
-    public async Task<TResponse> Handle(
+    public async ValueTask<TResponse> Handle(
         TRequest request,
-        RequestHandlerDelegate<TResponse> next,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        MessageHandlerDelegate<TRequest, TResponse> next)
     {
         if (_validator is null)
         {
-            return await next();
+            return await next(request, cancellationToken);
         }
 
         var validationResult = await _validator.ValidateAsync(request, cancellationToken);
 
         if (validationResult.IsValid)
         {
-            return await next();
+            return await next(request, cancellationToken);
         }
 
         var errors = validationResult.Errors

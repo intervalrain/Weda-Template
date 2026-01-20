@@ -7,6 +7,7 @@
   <ItemGroup>
     <PackageReference Include="FluentValidation" />
     <PackageReference Include="FluentValidation.AspNetCore" />
+    <PackageReference Include="Mediator.Abstractions" />
   </ItemGroup>
 
 </Project>
