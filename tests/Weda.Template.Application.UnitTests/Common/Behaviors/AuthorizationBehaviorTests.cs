@@ -1,6 +1,5 @@
-using Weda.Template.Application.Common.Behaviors;
-using Weda.Template.Application.Common.Interfaces;
-using Weda.Template.Application.Common.Security.Request;
+using Weda.Core.Application.Behaviors;
+using Weda.Core.Application.Security;
 
 using Mediator;
 

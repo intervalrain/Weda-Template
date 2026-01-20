@@ -1,4 +1,4 @@
-namespace Weda.Template.Application.Common.Security.Policies;
+namespace Weda.Core.Application.Security.Policies;
 
 public static class Policy
 {

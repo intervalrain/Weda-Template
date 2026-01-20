@@ -1,6 +1,8 @@
-using Weda.Template.Application.Common.Interfaces;
+using Weda.Core.Application.Interfaces;
+using Weda.Core.Application.Security;
 using Weda.Template.Domain.Employees.DomainServices;
 using Weda.Template.Domain.Employees.Repositories;
+using Weda.Template.Infrastructure.Common.Persistence;
 using Weda.Template.Infrastructure.Employees.Persistence;
 using Weda.Template.Infrastructure.Security;
 using Weda.Template.Infrastructure.Security.CurrentUserProvider;
@@ -12,7 +14,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Weda.Template.Infrastructure.Common.Persistence;
 
 namespace Weda.Template.Infrastructure;
 

@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace Weda.Template.Application.Common.Security.Request;
+namespace Weda.Core.Application.Security;
 
 public interface IAuthorizeableRequest<T> : IRequest<T>
 {

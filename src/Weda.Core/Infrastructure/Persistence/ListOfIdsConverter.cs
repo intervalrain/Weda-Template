@@ -1,9 +1,7 @@
-using System.Data;
-
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
-namespace Weda.Template.Infrastructure.Common.Persistence;
+namespace Weda.Core.Infrastructure.Persistence;
 
 public class ListOfIdsConverter(ConverterMappingHints? mappingHints = null)
     : ValueConverter<List<Guid>, string>(

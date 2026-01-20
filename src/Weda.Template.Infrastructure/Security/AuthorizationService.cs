@@ -1,5 +1,4 @@
-using Weda.Template.Application.Common.Interfaces;
-using Weda.Template.Application.Common.Security.Request;
+using Weda.Core.Application.Security;
 using Weda.Template.Infrastructure.Security.CurrentUserProvider;
 using Weda.Template.Infrastructure.Security.PolicyEnforcer;
 

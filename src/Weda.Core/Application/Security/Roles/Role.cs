@@ -1,4 +1,4 @@
-namespace Weda.Template.Application.Common.Security.Roles;
+namespace Weda.Core.Application.Security.Roles;
 
 public static class Role
 {

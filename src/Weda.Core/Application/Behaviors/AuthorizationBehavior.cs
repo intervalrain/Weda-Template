@@ -1,13 +1,12 @@
 using System.Reflection;
 
-using Weda.Template.Application.Common.Interfaces;
-using Weda.Template.Application.Common.Security.Request;
+using Weda.Core.Application.Security;
 
 using ErrorOr;
 
 using Mediator;
 
-namespace Weda.Template.Application.Common.Behaviors;
+namespace Weda.Core.Application.Behaviors;
 
 public class AuthorizationBehavior<TRequest, TResponse>(
     IAuthorizationService _authorizationService)

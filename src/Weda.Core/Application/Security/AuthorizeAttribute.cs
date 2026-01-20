@@ -1,4 +1,4 @@
-namespace Weda.Template.Application.Common.Security.Request;
+namespace Weda.Core.Application.Security;
 
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
 public class AuthorizeAttribute : Attribute

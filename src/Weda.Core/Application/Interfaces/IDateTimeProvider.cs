@@ -1,4 +1,4 @@
-namespace Weda.Template.Application.Common.Interfaces;
+namespace Weda.Core.Application.Interfaces;
 
 public interface IDateTimeProvider
 {

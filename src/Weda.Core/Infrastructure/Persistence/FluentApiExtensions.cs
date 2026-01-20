@@ -1,10 +1,9 @@
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Weda.Template.Infrastructure.Common.Persistence;
+namespace Weda.Core.Infrastructure.Persistence;
 
 public static class FluentApiExtensions
 {
-    // FYI: SQLite doesn't support JSON columns yet. Otherwise, we'd prefer calling .ToJson() on the owned entity instead.
     public static PropertyBuilder<T> HasValueJsonConverter<T>(this PropertyBuilder<T> propertyBuilder)
     {
         return propertyBuilder.HasConversion(

@@ -1,9 +1,9 @@
-using Weda.Template.Application.Common.Security.Policies;
-using Weda.Template.Application.Common.Security.Request;
-using Weda.Template.Application.Common.Security.Roles;
+using Weda.Core.Application.Security;
 using Weda.Template.Infrastructure.Security.CurrentUserProvider;
 
 using ErrorOr;
+using Weda.Core.Application.Security.Policies;
+using Weda.Core.Application.Security.Roles;
 
 namespace Weda.Template.Infrastructure.Security.PolicyEnforcer;
 

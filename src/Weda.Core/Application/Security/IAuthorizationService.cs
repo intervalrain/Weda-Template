@@ -1,8 +1,6 @@
-using Weda.Template.Application.Common.Security.Request;
-
 using ErrorOr;
 
-namespace Weda.Template.Application.Common.Interfaces;
+namespace Weda.Core.Application.Security;
 
 public interface IAuthorizationService
 {

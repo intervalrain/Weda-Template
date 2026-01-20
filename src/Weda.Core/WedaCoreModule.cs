@@ -26,9 +26,9 @@ public static class WedaCoreModule
 
         services.AddProblemDetails();
 
-        // Mediator must be configured by the caller (requires SourceGenerator in the calling project)
         configureMediator(services);
 
+        services.AddScoped(typeof(IPipelineBehavior<,>), typeof(AuthorizationBehavior<,>));
         services.AddScoped(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
         services.AddValidatorsFromAssemblyContaining<TApplicationMarker>();
 

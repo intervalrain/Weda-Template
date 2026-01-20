@@ -1,4 +1,4 @@
-using Weda.Template.Application.Common.Interfaces;
+using Weda.Core.Application.Interfaces;
 
 namespace Weda.Template.Infrastructure.Services;
 
