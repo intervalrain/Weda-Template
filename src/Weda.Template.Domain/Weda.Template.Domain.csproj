@@ -1,9 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <PackageReference Include="Ardalis.SmartEnum" />
+    <ProjectReference Include="..\Weda.Template.Ddd\Weda.Template.Ddd.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="ErrorOr" />
-    <PackageReference Include="Mediator.Abstractions" />
     <PackageReference Include="throw" />
   </ItemGroup>
 

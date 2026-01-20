@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <ProjectReference Include="..\Weda.Template.Ddd\Weda.Template.Ddd.csproj" />
     <ProjectReference Include="..\Weda.Template.Application\Weda.Template.Application.csproj" />
   </ItemGroup>
 
@@ -20,6 +21,5 @@
     <PackageReference Include="Microsoft.AspNetCore.Authentication" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
   </ItemGroup>
-
 
 </Project>

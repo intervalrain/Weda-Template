@@ -1,9 +1,7 @@
 using Asp.Versioning;
-
 using Mediator;
-
 using Microsoft.AspNetCore.Mvc;
-
+using Weda.Template.Api.Mapping;
 using Weda.Template.Application.Employees.Commands.CreateEmployee;
 using Weda.Template.Application.Employees.Commands.DeleteEmployee;
 using Weda.Template.Application.Employees.Commands.UpdateEmployee;
@@ -11,7 +9,6 @@ using Weda.Template.Application.Employees.Queries.GetEmployee;
 using Weda.Template.Application.Employees.Queries.GetSubordinates;
 using Weda.Template.Application.Employees.Queries.ListEmployees;
 using Weda.Template.Contracts.Employees;
-using Weda.Template.Domain.Employees.Entities;
 using Weda.Template.Domain.Employees.Enums;
 
 namespace Weda.Template.Api.Controllers;
@@ -19,11 +16,10 @@ namespace Weda.Template.Api.Controllers;
 /// <summary>
 /// Manages employee operations including CRUD and organizational hierarchy.
 /// </summary>
-[ApiController]
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/[controller]")]
 [Produces("application/json")]
-public class EmployeesController(IMediator _mediator) : ControllerBase
+public class EmployeesController(IMediator _mediator) : ApiController
 {
     /// <summary>
     /// Retrieves all employees.
@@ -38,7 +34,7 @@ public class EmployeesController(IMediator _mediator) : ControllerBase
         var result = await _mediator.Send(query);
 
         return result.Match(
-            employees => Ok(employees.Select(ToResponse)),
+            employees => Ok(EmployeeMapper.ToResponseList(employees)),
             errors => Problem(errors));
     }
 
@@ -58,7 +54,7 @@ public class EmployeesController(IMediator _mediator) : ControllerBase
         var result = await _mediator.Send(query);
 
         return result.Match(
-            employee => Ok(ToResponse(employee)),
+            employee => Ok(EmployeeMapper.ToResponse(employee)),
             errors => Problem(errors));
     }
 
@@ -93,7 +89,7 @@ public class EmployeesController(IMediator _mediator) : ControllerBase
             employee => CreatedAtAction(
                 nameof(GetById),
                 new { id = employee.Id },
-                ToResponse(employee)),
+                EmployeeMapper.ToResponse(employee)),
             errors => Problem(errors));
     }
 
@@ -134,7 +130,7 @@ public class EmployeesController(IMediator _mediator) : ControllerBase
         var result = await _mediator.Send(command);
 
         return result.Match(
-            employee => Ok(ToResponse(employee)),
+            employee => Ok(EmployeeMapper.ToResponse(employee)),
             errors => Problem(errors));
     }
 
@@ -176,40 +172,7 @@ public class EmployeesController(IMediator _mediator) : ControllerBase
         var result = await _mediator.Send(query);
 
         return result.Match(
-            subordinates => Ok(subordinates.Select(ToResponse)),
+            subordinates => Ok(EmployeeMapper.ToResponseList(subordinates)),
             errors => Problem(errors));
-    }
-
-    private static EmployeeResponse ToResponse(Employee employee) =>
-        new(
-            employee.Id,
-            employee.Name.Value,
-            employee.Email.Value,
-            employee.Department.ToString(),
-            employee.Position,
-            employee.HireDate,
-            employee.Status.ToString(),
-            employee.SupervisorId,
-            employee.CreatedAt,
-            employee.UpdatedAt);
-
-    private IActionResult Problem(IEnumerable<ErrorOr.Error> errors)
-    {
-        var firstError = errors.First();
-
-        var statusCode = firstError.Type switch
-        {
-            ErrorOr.ErrorType.NotFound => StatusCodes.Status404NotFound,
-            ErrorOr.ErrorType.Validation => StatusCodes.Status400BadRequest,
-            ErrorOr.ErrorType.Conflict => StatusCodes.Status409Conflict,
-            ErrorOr.ErrorType.Unauthorized => StatusCodes.Status401Unauthorized,
-            ErrorOr.ErrorType.Forbidden => StatusCodes.Status403Forbidden,
-            _ => StatusCodes.Status500InternalServerError,
-        };
-
-        return Problem(
-            title: firstError.Code,
-            detail: firstError.Description,
-            statusCode: statusCode);
     }
 }

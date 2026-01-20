@@ -1,4 +1,4 @@
-namespace Weda.Template.Domain.Common.Persistence;
+namespace Weda.Template.Ddd.Domain;
 
 public interface IRepository<T>
     where T : Entity

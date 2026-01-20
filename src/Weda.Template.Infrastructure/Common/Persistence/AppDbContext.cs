@@ -1,10 +1,8 @@
-using Weda.Template.Domain.Common;
-using Weda.Template.Infrastructure.Common.Middleware;
-
 using Mediator;
-
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Weda.Template.Ddd.Domain;
+using Weda.Template.Ddd.Infrastructure.Middleware;
 
 namespace Weda.Template.Infrastructure.Common;
 
@@ -45,12 +43,12 @@ public class AppDbContext(DbContextOptions options, IHttpContextAccessor _httpCo
 
     private void AddDomainEventsToOfflineProcessingQueue(List<IDomainEvent> domainEvents)
     {
-        Queue<IDomainEvent> domainEventsQueue = _httpContextAccessor.HttpContext!.Items.TryGetValue(EventualConsistencyMiddleware.DomainEventsKey, out var value) &&
+        Queue<IDomainEvent> domainEventsQueue = _httpContextAccessor.HttpContext!.Items.TryGetValue(EventualConsistencyMiddlewareConstants.DomainEventsKey, out var value) &&
             value is Queue<IDomainEvent> existingDomainEvents
                 ? existingDomainEvents
                 : new();
 
         domainEvents.ForEach(domainEventsQueue.Enqueue);
-        _httpContextAccessor.HttpContext.Items[EventualConsistencyMiddleware.DomainEventsKey] = domainEventsQueue;
+        _httpContextAccessor.HttpContext.Items[EventualConsistencyMiddlewareConstants.DomainEventsKey] = domainEventsQueue;
     }
 }

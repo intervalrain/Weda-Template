@@ -1,23 +1,21 @@
-using Weda.Template.Domain.Common;
-
 using Mediator;
-
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
+using Weda.Template.Ddd.Domain;
 
-namespace Weda.Template.Infrastructure.Common.Middleware;
+namespace Weda.Template.Ddd.Infrastructure.Middleware;
 
-public class EventualConsistencyMiddleware(RequestDelegate _next)
+public class EventualConsistencyMiddleware<TDbContext>(RequestDelegate next)
+    where TDbContext : DbContext
 {
-    public const string DomainEventsKey = "DomainEventsKey";
-
-    public async Task InvokeAsync(HttpContext context, IPublisher publisher, AppDbContext dbContext)
+    public async Task InvokeAsync(HttpContext context, IPublisher publisher, TDbContext dbContext)
     {
         var transaction = await dbContext.Database.BeginTransactionAsync();
         context.Response.OnCompleted(async () =>
         {
             try
             {
-                if (context.Items.TryGetValue(DomainEventsKey, out var value) && value is Queue<IDomainEvent> domainEvents)
+                if (context.Items.TryGetValue(EventualConsistencyMiddlewareConstants.DomainEventsKey, out var value) && value is Queue<IDomainEvent> domainEvents)
                 {
                     while (domainEvents.TryDequeue(out var nextEvent))
                     {
@@ -36,6 +34,6 @@ public class EventualConsistencyMiddleware(RequestDelegate _next)
             }
         });
 
-        await _next(context);
+        await next(context);
     }
 }

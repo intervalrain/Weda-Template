@@ -1,14 +1,14 @@
 using Microsoft.EntityFrameworkCore;
+using Weda.Template.Ddd.Domain;
 
-using Weda.Template.Domain.Common;
-using Weda.Template.Domain.Common.Persistence;
+namespace Weda.Template.Ddd.Infrastructure.Persistence;
 
-namespace Weda.Template.Infrastructure.Common.Persistence;
-
-public class GenericRepository<T>(AppDbContext _dbContext) : IRepository<T>
+public class GenericRepository<T, TDbContext>(TDbContext dbContext) : IRepository<T>
     where T : Entity
+    where TDbContext : DbContext
 {
-    protected readonly DbSet<T> DbSet = _dbContext.Set<T>();
+    protected readonly TDbContext DbContext = dbContext;
+    protected readonly DbSet<T> DbSet = dbContext.Set<T>();
 
     public virtual async Task<T?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
@@ -23,18 +23,18 @@ public class GenericRepository<T>(AppDbContext _dbContext) : IRepository<T>
     public virtual async Task AddAsync(T entity, CancellationToken cancellationToken = default)
     {
         await DbSet.AddAsync(entity, cancellationToken);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await DbContext.SaveChangesAsync(cancellationToken);
     }
 
     public virtual async Task UpdateAsync(T entity, CancellationToken cancellationToken = default)
     {
         DbSet.Update(entity);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await DbContext.SaveChangesAsync(cancellationToken);
     }
 
     public virtual async Task DeleteAsync(T entity, CancellationToken cancellationToken = default)
     {
         DbSet.Remove(entity);
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await DbContext.SaveChangesAsync(cancellationToken);
     }
 }

@@ -1,6 +1,5 @@
 using ErrorOr;
-
-using Weda.Template.Domain.Common;
+using Weda.Template.Ddd.Domain;
 using Weda.Template.Domain.Employees.Enums;
 using Weda.Template.Domain.Employees.Errors;
 using Weda.Template.Domain.Employees.Events;

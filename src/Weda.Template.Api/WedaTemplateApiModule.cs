@@ -1,6 +1,5 @@
+using System.Reflection;
 using Asp.Versioning;
-
-using Mediator;
 
 namespace Weda.Template.Api;
 
@@ -27,7 +26,7 @@ public static class WedaTemplateApiModule
 
         services.AddSwaggerGen(options =>
         {
-            var xmlFilename = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+            var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
             var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFilename);
             if (File.Exists(xmlPath))
             {

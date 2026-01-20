@@ -1,4 +1,4 @@
-namespace Weda.Template.Domain.Common;
+namespace Weda.Template.Ddd.Domain;
 
 public abstract class Entity
 {

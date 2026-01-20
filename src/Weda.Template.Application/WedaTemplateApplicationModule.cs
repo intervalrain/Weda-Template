@@ -1,10 +1,8 @@
-using Weda.Template.Application.Common.Behaviors;
-
 using FluentValidation;
-
 using Mediator;
-
 using Microsoft.Extensions.DependencyInjection;
+using Weda.Template.Application.Common.Behaviors;
+using Weda.Template.Ddd.Application.Behaviors;
 
 namespace Weda.Template.Application;
 

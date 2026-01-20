@@ -1,10 +1,8 @@
 using ErrorOr;
-
 using FluentValidation;
-
 using Mediator;
 
-namespace Weda.Template.Application.Common.Behaviors;
+namespace Weda.Template.Ddd.Application.Behaviors;
 
 public class ValidationBehavior<TRequest, TResponse>(IValidator<TRequest>? validator = null)
     : IPipelineBehavior<TRequest, TResponse>

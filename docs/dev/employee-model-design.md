@@ -116,11 +116,11 @@ Handles hierarchy-related operations:
 
 ## API Endpoints
 
-| Method | Endpoint                          | Description                    |
-|--------|-----------------------------------|--------------------------------|
-| GET    | /api/v1/employees                 | List all employees             |
-| GET    | /api/v1/employees/{id}            | Get employee by ID             |
-| POST   | /api/v1/employees                 | Create new employee            |
-| PUT    | /api/v1/employees/{id}            | Update employee                |
-| DELETE | /api/v1/employees/{id}            | Delete employee                |
-| GET    | /api/v1/employees/{id}/subordinates | Get all subordinates         |
+| Method | Endpoint                            | Description                    |
+|--------|-------------------------------------|--------------------------------|
+| GET    | /api/v1/employees                   | List all employees             |
+| GET    | /api/v1/employees/{id}              | Get employee by ID             |
+| POST   | /api/v1/employees                   | Create new employee            |
+| PUT    | /api/v1/employees/{id}              | Update employee                |
+| DELETE | /api/v1/employees/{id}              | Delete employee                |
+| GET    | /api/v1/employees/{id}/subordinates | Get all subordinates           |

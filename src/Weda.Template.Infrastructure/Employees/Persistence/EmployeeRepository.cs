@@ -1,13 +1,12 @@
 using Microsoft.EntityFrameworkCore;
-
+using Weda.Template.Ddd.Infrastructure.Persistence;
 using Weda.Template.Domain.Employees.Entities;
 using Weda.Template.Domain.Employees.Repositories;
 using Weda.Template.Infrastructure.Common;
-using Weda.Template.Infrastructure.Common.Persistence;
 
 namespace Weda.Template.Infrastructure.Employees.Persistence;
 
-public class EmployeeRepository(AppDbContext dbContext) : GenericRepository<Employee>(dbContext), IEmployeeRepository
+public class EmployeeRepository(AppDbContext dbContext) : GenericRepository<Employee, AppDbContext>(dbContext), IEmployeeRepository
 {
     public async Task<Employee?> GetByEmailAsync(string email, CancellationToken cancellationToken = default)
     {

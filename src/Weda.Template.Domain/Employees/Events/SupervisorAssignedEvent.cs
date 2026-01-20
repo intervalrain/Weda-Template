@@ -1,4 +1,4 @@
-using Weda.Template.Domain.Common;
+using Weda.Template.Ddd.Domain;
 using Weda.Template.Domain.Employees.Entities;
 
 namespace Weda.Template.Domain.Employees.Events;
