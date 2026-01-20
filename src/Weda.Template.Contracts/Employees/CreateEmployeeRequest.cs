@@ -8,7 +8,7 @@ public record CreateEmployeeRequest(
     string Department,
     string Position,
     DateTime HireDate,
-    Guid? SupervisorId);
+    int? SupervisorId);
 
 public class CreateEmployeeRequestExample : IExamplesProvider<CreateEmployeeRequest>
 {

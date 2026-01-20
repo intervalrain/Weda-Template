@@ -1,18 +1,19 @@
 using Microsoft.EntityFrameworkCore;
-using Weda.Template.Ddd.Domain;
+using Weda.Core.Domain;
 
-namespace Weda.Template.Ddd.Infrastructure.Persistence;
+namespace Weda.Core.Infrastructure.Persistence;
 
-public class GenericRepository<T, TDbContext>(TDbContext dbContext) : IRepository<T>
-    where T : Entity
+public class GenericRepository<T, TId, TDbContext>(TDbContext dbContext) : IRepository<T, TId>
+    where T : Entity<TId>
+    where TId : notnull
     where TDbContext : DbContext
 {
     protected readonly TDbContext DbContext = dbContext;
     protected readonly DbSet<T> DbSet = dbContext.Set<T>();
 
-    public virtual async Task<T?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    public virtual async Task<T?> GetByIdAsync(TId id, CancellationToken cancellationToken = default)
     {
-        return await DbSet.FirstOrDefaultAsync(e => e.Id == id, cancellationToken);
+        return await DbSet.FirstOrDefaultAsync(e => e.Id.Equals(id), cancellationToken);
     }
 
     public virtual async Task<List<T>> GetAllAsync(CancellationToken cancellationToken = default)

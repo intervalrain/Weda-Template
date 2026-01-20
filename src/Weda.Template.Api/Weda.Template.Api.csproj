@@ -4,17 +4,14 @@
     <IsPackable>true</IsPackable>
     <UserSecretsId>36d3aabc-1075-47d7-9b3b-c1feebf8f3bd</UserSecretsId>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <NoWarn>$(NoWarn);1591</NoWarn>
+    <NoWarn>$(NoWarn);1591;MSG0005</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Asp.Versioning.Mvc" />
     <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" />
-    <PackageReference Include="Mediator.SourceGenerator">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Microsoft.OpenApi" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
@@ -22,9 +19,14 @@
     <PackageReference Include="Riok.Mapperly" />
     <PackageReference Include="Swashbuckle.AspNetCore" />
     <PackageReference Include="Swashbuckle.AspNetCore.Filters" />
+    <PackageReference Include="Mediator.SourceGenerator">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Weda.Core\Weda.Core.csproj" />
     <ProjectReference Include="..\Weda.Template.Contracts\Weda.Template.Contracts.csproj" />
     <ProjectReference Include="..\Weda.Template.Application\Weda.Template.Application.csproj" />
     <ProjectReference Include="..\Weda.Template.Infrastructure\Weda.Template.Infrastructure.csproj" />

@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\Weda.Template.Ddd\Weda.Template.Ddd.csproj" />
+    <ProjectReference Include="..\Weda.Core\Weda.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,10 +1,11 @@
-namespace Weda.Template.Ddd.Domain;
+namespace Weda.Core.Domain;
 
-public abstract class AggregateRoot : Entity
+public abstract class AggregateRoot<TId> : Entity<TId>, IAggregateRoot
+    where TId : notnull
 {
-    protected readonly List<IDomainEvent> _domainEvents = [];
+    private readonly List<IDomainEvent> _domainEvents = [];
 
-    protected AggregateRoot(Guid id)
+    protected AggregateRoot(TId id)
         : base(id)
     {
     }

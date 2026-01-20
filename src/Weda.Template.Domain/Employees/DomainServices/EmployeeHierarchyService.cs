@@ -1,5 +1,4 @@
 using ErrorOr;
-
 using Weda.Template.Domain.Employees.Entities;
 using Weda.Template.Domain.Employees.Errors;
 using Weda.Template.Domain.Employees.Repositories;
@@ -11,7 +10,7 @@ namespace Weda.Template.Domain.Employees.DomainServices;
 /// </summary>
 public class EmployeeHierarchyService(IEmployeeRepository _employeeRepository) : IEmployeeHierarchyService
 {
-    public async Task<ErrorOr<Success>> AssignSupervisorAsync(Employee employee, Guid? supervisorId)
+    public async Task<ErrorOr<Success>> AssignSupervisorAsync(Employee employee, int? supervisorId)
     {
         if (supervisorId is null)
         {
@@ -32,7 +31,7 @@ public class EmployeeHierarchyService(IEmployeeRepository _employeeRepository) :
         return employee.AssignSupervisor(supervisorId);
     }
 
-    public async Task<List<Employee>> GetManagementChainAsync(Guid employeeId)
+    public async Task<List<Employee>> GetManagementChainAsync(int employeeId)
     {
         var chain = new List<Employee>();
         var currentId = employeeId;
@@ -58,7 +57,7 @@ public class EmployeeHierarchyService(IEmployeeRepository _employeeRepository) :
         return chain;
     }
 
-    public async Task<List<Employee>> GetAllReportsAsync(Guid supervisorId)
+    public async Task<List<Employee>> GetAllReportsAsync(int supervisorId)
     {
         var allReports = new List<Employee>();
         var directReports = await _employeeRepository.GetBySupervisorIdAsync(supervisorId);
@@ -73,10 +72,10 @@ public class EmployeeHierarchyService(IEmployeeRepository _employeeRepository) :
         return allReports;
     }
 
-    private async Task<bool> WouldCreateCircularReferenceAsync(Guid employeeId, Guid potentialSupervisorId)
+    private async Task<bool> WouldCreateCircularReferenceAsync(int employeeId, int potentialSupervisorId)
     {
         var currentId = potentialSupervisorId;
-        var visited = new HashSet<Guid> { employeeId };
+        var visited = new HashSet<int> { employeeId };
 
         while (true)
         {

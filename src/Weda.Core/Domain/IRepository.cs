@@ -1,9 +1,10 @@
-namespace Weda.Template.Ddd.Domain;
+namespace Weda.Core.Domain;
 
-public interface IRepository<T>
-    where T : Entity
+public interface IRepository<T, TId>
+    where T : Entity<TId>
+    where TId : notnull
 {
-    Task<T?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<T?> GetByIdAsync(TId id, CancellationToken cancellationToken = default);
 
     Task<List<T>> GetAllAsync(CancellationToken cancellationToken = default);
 

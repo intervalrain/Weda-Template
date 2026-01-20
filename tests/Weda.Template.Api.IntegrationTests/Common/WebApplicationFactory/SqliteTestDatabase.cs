@@ -1,7 +1,7 @@
-using Weda.Template.Infrastructure.Common;
-
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+
+using Weda.Template.Infrastructure.Common.Persistence;
 
 namespace Weda.Template.Api.IntegrationTests.Common.WebApplicationFactory;
 

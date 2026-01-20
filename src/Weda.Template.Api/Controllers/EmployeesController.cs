@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using Mediator;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Weda.Template.Api.Mapping;
 using Weda.Template.Application.Employees.Commands.CreateEmployee;
@@ -10,6 +11,8 @@ using Weda.Template.Application.Employees.Queries.GetSubordinates;
 using Weda.Template.Application.Employees.Queries.ListEmployees;
 using Weda.Template.Contracts.Employees;
 using Weda.Template.Domain.Employees.Enums;
+
+using Weda.Core.Api;
 
 namespace Weda.Template.Api.Controllers;
 
@@ -28,6 +31,7 @@ public class EmployeesController(IMediator _mediator) : ApiController
     /// <response code="200">Returns the list of employees.</response>
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<EmployeeResponse>), StatusCodes.Status200OK)]
+    [AllowAnonymous]
     public async Task<IActionResult> GetAll()
     {
         var query = new ListEmployeesQuery();
@@ -45,10 +49,11 @@ public class EmployeesController(IMediator _mediator) : ApiController
     /// <returns>The employee details.</returns>
     /// <response code="200">Returns the employee.</response>
     /// <response code="404">Employee not found.</response>
-    [HttpGet("{id:guid}")]
+    [HttpGet("{id:int}")]
     [ProducesResponseType(typeof(EmployeeResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetById(Guid id)
+    [AllowAnonymous]
+    public async Task<IActionResult> GetById(int id)
     {
         var query = new GetEmployeeQuery(id);
         var result = await _mediator.Send(query);
@@ -102,11 +107,11 @@ public class EmployeesController(IMediator _mediator) : ApiController
     /// <response code="200">Employee updated successfully.</response>
     /// <response code="400">Invalid request data.</response>
     /// <response code="404">Employee not found.</response>
-    [HttpPut("{id:guid}")]
+    [HttpPut("{id:int}")]
     [ProducesResponseType(typeof(EmployeeResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Update(Guid id, [FromBody] UpdateEmployeeRequest request)
+    public async Task<IActionResult> Update(int id, [FromBody] UpdateEmployeeRequest request)
     {
         if (!Enum.TryParse<Department>(request.Department, ignoreCase: true, out var department))
         {
@@ -142,11 +147,11 @@ public class EmployeesController(IMediator _mediator) : ApiController
     /// <response code="204">Employee deleted successfully.</response>
     /// <response code="404">Employee not found.</response>
     /// <response code="409">Cannot delete employee with subordinates.</response>
-    [HttpDelete("{id:guid}")]
+    [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
-    public async Task<IActionResult> Delete(Guid id)
+    public async Task<IActionResult> Delete(int id)
     {
         var command = new DeleteEmployeeCommand(id);
         var result = await _mediator.Send(command);
@@ -163,10 +168,10 @@ public class EmployeesController(IMediator _mediator) : ApiController
     /// <returns>A list of all subordinates.</returns>
     /// <response code="200">Returns the list of subordinates.</response>
     /// <response code="404">Supervisor not found.</response>
-    [HttpGet("{id:guid}/subordinates")]
+    [HttpGet("{id:int}/subordinates")]
     [ProducesResponseType(typeof(IEnumerable<EmployeeResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetSubordinates(Guid id)
+    public async Task<IActionResult> GetSubordinates(int id)
     {
         var query = new GetSubordinatesQuery(id);
         var result = await _mediator.Send(query);

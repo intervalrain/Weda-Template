@@ -1,0 +1,27 @@
+using Asp.Versioning;
+using Swashbuckle.AspNetCore.SwaggerGen;
+using Swashbuckle.AspNetCore.SwaggerUI;
+
+namespace Weda.Core;
+
+public class WedaCoreOptions
+{
+    public ApiVersion DefaultApiVersion { get; set; } = new(1, 0);
+
+    public string ApiVersionGroupNameFormat { get; set; } = "'v'VVV";
+
+    public Action<SwaggerGenOptions>? ConfigureSwagger { get; set; }
+}
+
+public class WedaCoreAppOptions
+{
+    public bool EnsureDatabaseCreated { get; set; } = false;
+
+    public string SwaggerEndpointUrl { get; set; } = "/swagger/v1/swagger.json";
+
+    public string SwaggerEndpointName { get; set; } = "API V1";
+
+    public string RoutePrefix { get; set; } = string.Empty;
+
+    public Action<SwaggerUIOptions>? ConfigureSwaggerUI { get; set; }
+}

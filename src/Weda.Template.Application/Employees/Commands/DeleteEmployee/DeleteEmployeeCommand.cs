@@ -4,4 +4,4 @@ using Mediator;
 
 namespace Weda.Template.Application.Employees.Commands.DeleteEmployee;
 
-public record DeleteEmployeeCommand(Guid Id) : IRequest<ErrorOr<Deleted>>;
+public record DeleteEmployeeCommand(int Id) : IRequest<ErrorOr<Deleted>>;

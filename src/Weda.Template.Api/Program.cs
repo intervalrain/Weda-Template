@@ -1,33 +1,32 @@
-using Weda.Template.Api;
+using Mediator;
+using Weda.Core;
 using Weda.Template.Application;
+using Weda.Template.Contracts;
 using Weda.Template.Infrastructure;
+using Weda.Template.Infrastructure.Common.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 {
     builder.Services
-        .AddPresentation()
         .AddApplication()
-        .AddInfrastructure(builder.Configuration);
+        .AddInfrastructure(builder.Configuration)
+        .AddWedaCore<IContractsMarker, IApplicationMarker>(
+            services => services.AddMediator(options =>
+            {
+                options.ServiceLifetime = ServiceLifetime.Scoped;
+                options.Assemblies = [typeof(IApplicationMarker).Assembly];
+            }));
 }
 
 var app = builder.Build();
 {
-    app.UseExceptionHandler();
-    app.UseInfrastructure();
-
-    if (app.Environment.IsDevelopment())
+    app.UseWedaCore<AppDbContext>(options =>
     {
-        app.UseSwagger();
-        app.UseSwaggerUI(options =>
-        {
-            options.SwaggerEndpoint("/swagger/v1/swagger.json", "Weda API V1");
-            options.RoutePrefix = string.Empty;
-        });
-    }
-
-    app.UseHttpsRedirection();
-    app.UseAuthorization();
-    app.MapControllers();
+        options.EnsureDatabaseCreated = app.Environment.IsDevelopment();
+        options.SwaggerEndpointUrl = "/swagger/v1/swagger.json";
+        options.SwaggerEndpointName = "Weda API V1";
+        options.RoutePrefix = string.Empty;
+    });
 
     app.Run();
 }

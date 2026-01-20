@@ -8,10 +8,10 @@ using Weda.Template.Domain.Employees.Enums;
 namespace Weda.Template.Application.Employees.Commands.UpdateEmployee;
 
 public record UpdateEmployeeCommand(
-    Guid Id,
+    int Id,
     string Name,
     string Email,
     Department Department,
     string Position,
     EmployeeStatus Status,
-    Guid? SupervisorId) : IRequest<ErrorOr<Employee>>;
+    int? SupervisorId) : IRequest<ErrorOr<Employee>>;

@@ -6,4 +6,4 @@ using Weda.Template.Domain.Employees.Entities;
 
 namespace Weda.Template.Application.Employees.Queries.GetSubordinates;
 
-public record GetSubordinatesQuery(Guid SupervisorId) : IRequest<ErrorOr<List<Employee>>>;
+public record GetSubordinatesQuery(int SupervisorId) : IRequest<ErrorOr<List<Employee>>>;

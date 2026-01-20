@@ -27,7 +27,7 @@ public class AuthorizationBehaviorTests
             (_, _) => new ValueTask<ErrorOr<Response>>(Response.Instance);
 
         // Act
-        var result = await authorizationBehavior.Handle(request, default, next);
+        var result = await authorizationBehavior.Handle(request, next, default);
 
         // Assert
         result.IsError.Should().BeFalse();
@@ -54,7 +54,7 @@ public class AuthorizationBehaviorTests
             (_, _) => new ValueTask<ErrorOr<Response>>(Response.Instance);
 
         // Act
-        var result = await authorizationBehavior.Handle(request, default, next);
+        var result = await authorizationBehavior.Handle(request, next, default);
 
         // Assert
         result.IsError.Should().BeFalse();
@@ -83,7 +83,7 @@ public class AuthorizationBehaviorTests
             (_, _) => new ValueTask<ErrorOr<Response>>(Response.Instance);
 
         // Act
-        var result = await authorizationBehavior.Handle(request, default, next);
+        var result = await authorizationBehavior.Handle(request, next, default);
 
         // Assert
         result.IsError.Should().BeTrue();
@@ -110,7 +110,7 @@ public class AuthorizationBehaviorTests
             (_, _) => new ValueTask<ErrorOr<Response>>(Response.Instance);
 
         // Act
-        var result = await authorizationBehavior.Handle(request, default, next);
+        var result = await authorizationBehavior.Handle(request, next, default);
 
         // Assert
         result.IsError.Should().BeFalse();
@@ -139,7 +139,7 @@ public class AuthorizationBehaviorTests
             (_, _) => new ValueTask<ErrorOr<Response>>(Response.Instance);
 
         // Act
-        var result = await authorizationBehavior.Handle(request, default, next);
+        var result = await authorizationBehavior.Handle(request, next, default);
 
         // Assert
         result.IsError.Should().BeTrue();

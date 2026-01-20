@@ -8,7 +8,7 @@ public record UpdateEmployeeRequest(
     string Department,
     string Position,
     string Status,
-    Guid? SupervisorId);
+    int? SupervisorId);
 
 public class UpdateEmployeeRequestExample : IExamplesProvider<UpdateEmployeeRequest>
 {

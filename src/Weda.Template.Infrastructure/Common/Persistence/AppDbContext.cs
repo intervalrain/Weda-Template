@@ -1,16 +1,16 @@
 using Mediator;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Weda.Template.Ddd.Domain;
-using Weda.Template.Ddd.Infrastructure.Middleware;
+using Weda.Core.Domain;
+using Weda.Core.Infrastructure.Middleware;
 
-namespace Weda.Template.Infrastructure.Common;
+namespace Weda.Template.Infrastructure.Common.Persistence;
 
 public class AppDbContext(DbContextOptions options, IHttpContextAccessor _httpContextAccessor, IPublisher _publisher) : DbContext(options)
 {
     public async override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        var domainEvents = ChangeTracker.Entries<AggregateRoot>()
+        var domainEvents = ChangeTracker.Entries<IAggregateRoot>()
            .SelectMany(entry => entry.Entity.PopDomainEvents())
            .ToList();
 

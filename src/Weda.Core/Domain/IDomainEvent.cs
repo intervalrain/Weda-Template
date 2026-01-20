@@ -1,6 +1,6 @@
 using Mediator;
 
-namespace Weda.Template.Ddd.Domain;
+namespace Weda.Core.Domain;
 
 public interface IDomainEvent : INotification
 {

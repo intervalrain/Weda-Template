@@ -1,4 +1,4 @@
-using Weda.Template.Ddd.Domain;
+using Weda.Core.Domain;
 using Weda.Template.Domain.Employees.Entities;
 
 namespace Weda.Template.Domain.Employees.Repositories;
@@ -6,7 +6,7 @@ namespace Weda.Template.Domain.Employees.Repositories;
 /// <summary>
 /// Repository interface for Employee aggregate operations.
 /// </summary>
-public interface IEmployeeRepository : IRepository<Employee>
+public interface IEmployeeRepository : IRepository<Employee, int>
 {
     /// <summary>
     /// Finds an employee by their email address.
@@ -22,5 +22,5 @@ public interface IEmployeeRepository : IRepository<Employee>
     /// <param name="supervisorId">The supervisor's ID.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>List of employees reporting to the supervisor.</returns>
-    Task<List<Employee>> GetBySupervisorIdAsync(Guid supervisorId, CancellationToken cancellationToken = default);
+    Task<List<Employee>> GetBySupervisorIdAsync(int supervisorId, CancellationToken cancellationToken = default);
 }

@@ -483,4 +483,8 @@ $RECYCLE.BIN/
 # Vim temporary swap files
 *.swp
 
+# AI configuration files
 .claude
+
+# Database
+**/*.sqlite

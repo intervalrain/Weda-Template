@@ -1,9 +1,9 @@
 using Mediator;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Weda.Template.Ddd.Domain;
+using Weda.Core.Domain;
 
-namespace Weda.Template.Ddd.Infrastructure.Middleware;
+namespace Weda.Core.Infrastructure.Middleware;
 
 public class EventualConsistencyMiddleware<TDbContext>(RequestDelegate next)
     where TDbContext : DbContext

@@ -2,7 +2,7 @@ using ErrorOr;
 using FluentValidation;
 using Mediator;
 
-namespace Weda.Template.Ddd.Application.Behaviors;
+namespace Weda.Core.Application.Behaviors;
 
 public class ValidationBehavior<TRequest, TResponse>(IValidator<TRequest>? validator = null)
     : IPipelineBehavior<TRequest, TResponse>
@@ -13,8 +13,8 @@ public class ValidationBehavior<TRequest, TResponse>(IValidator<TRequest>? valid
 
     public async ValueTask<TResponse> Handle(
         TRequest request,
-        CancellationToken cancellationToken,
-        MessageHandlerDelegate<TRequest, TResponse> next)
+        MessageHandlerDelegate<TRequest, TResponse> next,
+        CancellationToken cancellationToken)
     {
         if (_validator is null)
         {

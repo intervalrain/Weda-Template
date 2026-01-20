@@ -1,5 +1,5 @@
 using ErrorOr;
-using Weda.Template.Ddd.Domain;
+using Weda.Core.Domain;
 using Weda.Template.Domain.Employees.Enums;
 using Weda.Template.Domain.Employees.Errors;
 using Weda.Template.Domain.Employees.Events;
@@ -11,7 +11,7 @@ namespace Weda.Template.Domain.Employees.Entities;
 /// Represents an employee in the organization.
 /// This is the aggregate root for the Employee bounded context.
 /// </summary>
-public class Employee : AggregateRoot
+public class Employee : AggregateRoot<int>
 {
     /// <summary>
     /// Gets the employee's full name.
@@ -47,7 +47,7 @@ public class Employee : AggregateRoot
     /// Gets the ID of the employee's direct supervisor.
     /// Null indicates the employee has no supervisor (e.g., CEO).
     /// </summary>
-    public Guid? SupervisorId { get; private set; }
+    public int? SupervisorId { get; private set; }
 
     /// <summary>
     /// Gets the date and time when this record was created.
@@ -60,15 +60,13 @@ public class Employee : AggregateRoot
     public DateTime? UpdatedAt { get; private set; }
 
     private Employee(
-        Guid id,
         EmployeeName name,
         Email email,
         Department department,
         string position,
         DateTime hireDate,
-        Guid? supervisorId,
+        int? supervisorId,
         DateTime createdAt)
-        : base(id)
     {
         Name = name;
         Email = email;
@@ -89,8 +87,7 @@ public class Employee : AggregateRoot
         Department department,
         string position,
         DateTime hireDate,
-        Guid? supervisorId = null,
-        Guid? id = null,
+        int? supervisorId = null,
         DateTime? createdAt = null)
     {
         var nameResult = EmployeeName.Create(name);
@@ -116,7 +113,6 @@ public class Employee : AggregateRoot
         }
 
         var employee = new Employee(
-            id ?? Guid.NewGuid(),
             nameResult.Value,
             emailResult.Value,
             department,
@@ -215,7 +211,7 @@ public class Employee : AggregateRoot
     /// <summary>
     /// Assigns a supervisor to this employee.
     /// </summary>
-    public ErrorOr<Success> AssignSupervisor(Guid? supervisorId)
+    public ErrorOr<Success> AssignSupervisor(int? supervisorId)
     {
         if (Status == EmployeeStatus.Inactive)
         {
@@ -304,7 +300,6 @@ public class Employee : AggregateRoot
     /// Private parameterless constructor for EF Core.
     /// </summary>
     private Employee()
-        : base()
     {
         Name = null!;
         Email = null!;

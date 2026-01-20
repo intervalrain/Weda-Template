@@ -1,10 +1,10 @@
 using ErrorOr;
-
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
-namespace Weda.Template.Api.Controllers;
+namespace Weda.Core.Api;
 
 [ApiController]
 [Authorize]

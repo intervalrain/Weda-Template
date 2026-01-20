@@ -1,4 +1,4 @@
-namespace Weda.Template.Ddd.Infrastructure.Middleware;
+namespace Weda.Core.Infrastructure.Middleware;
 
 public static class EventualConsistencyMiddlewareConstants
 {

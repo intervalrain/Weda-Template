@@ -27,7 +27,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Weda.Template.Infrastructur
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Weda.Template.Api.IntegrationTests", "tests\Weda.Template.Api.IntegrationTests\Weda.Template.Api.IntegrationTests.csproj", "{2A315D67-B631-478A-8F67-9EE9DB03D0C5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Weda.Template.Ddd", "src\Weda.Template.Ddd\Weda.Template.Ddd.csproj", "{7C60408B-3E3A-4027-9D02-1C876E16789E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Weda.Core", "src\Weda.Core\Weda.Core.csproj", "{7C60408B-3E3A-4027-9D02-1C876E16789E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
