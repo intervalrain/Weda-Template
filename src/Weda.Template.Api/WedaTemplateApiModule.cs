@@ -1,5 +1,7 @@
 using System.Reflection;
 using Asp.Versioning;
+using Swashbuckle.AspNetCore.Filters;
+using Weda.Template.Contracts;
 
 namespace Weda.Template.Api;
 
@@ -32,7 +34,11 @@ public static class WedaTemplateApiModule
             {
                 options.IncludeXmlComments(xmlPath);
             }
+
+            options.ExampleFilters();
         });
+
+        services.AddSwaggerExamplesFromAssemblyOf<IContractsMarker>();
 
         services.AddMediator(options =>
         {

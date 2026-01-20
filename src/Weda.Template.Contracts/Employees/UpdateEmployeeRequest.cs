@@ -1,3 +1,5 @@
+using Swashbuckle.AspNetCore.Filters;
+
 namespace Weda.Template.Contracts.Employees;
 
 public record UpdateEmployeeRequest(
@@ -7,3 +9,14 @@ public record UpdateEmployeeRequest(
     string Position,
     string Status,
     Guid? SupervisorId);
+
+public class UpdateEmployeeRequestExample : IExamplesProvider<UpdateEmployeeRequest>
+{
+    public UpdateEmployeeRequest GetExamples() => new(
+        Name: "John Doe",
+        Email: "john.doe@example.com",
+        Department: "Engineering",
+        Position: "Senior Software Engineer",
+        Status: "Active",
+        SupervisorId: null);
+}

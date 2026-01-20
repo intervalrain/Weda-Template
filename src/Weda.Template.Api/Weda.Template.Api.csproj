@@ -21,6 +21,7 @@
     </PackageReference>
     <PackageReference Include="Riok.Mapperly" />
     <PackageReference Include="Swashbuckle.AspNetCore" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Filters" />
   </ItemGroup>
 
   <ItemGroup>
