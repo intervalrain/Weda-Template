@@ -2,23 +2,25 @@ using ErrorOr;
 
 using Mediator;
 
-using Weda.Template.Domain.Employees.Entities;
+using Weda.Template.Application.Employees.Mapping;
+using Weda.Template.Contracts.Employees.Dtos;
+using Weda.Template.Contracts.Employees.Queries;
 using Weda.Template.Domain.Employees.Errors;
 using Weda.Template.Domain.Employees.Repositories;
 
 namespace Weda.Template.Application.Employees.Queries.GetEmployee;
 
 public class GetEmployeeQueryHandler(
-    IEmployeeRepository _employeeRepository) : IRequestHandler<GetEmployeeQuery, ErrorOr<Employee>>
+    IEmployeeRepository employeeRepository) : IRequestHandler<GetEmployeeQuery, ErrorOr<EmployeeDto>>
 {
-    public async ValueTask<ErrorOr<Employee>> Handle(GetEmployeeQuery request, CancellationToken cancellationToken)
+    public async ValueTask<ErrorOr<EmployeeDto>> Handle(GetEmployeeQuery request, CancellationToken cancellationToken)
     {
-        var employee = await _employeeRepository.GetByIdAsync(request.Id, cancellationToken);
+        var employee = await employeeRepository.GetByIdAsync(request.Id, cancellationToken);
         if (employee is null)
         {
             return EmployeeErrors.NotFound;
         }
 
-        return employee;
+        return EmployeeMapper.ToDto(employee);
     }
 }

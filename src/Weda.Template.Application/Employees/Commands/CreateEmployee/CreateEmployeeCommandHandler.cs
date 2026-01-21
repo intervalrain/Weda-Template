@@ -2,6 +2,9 @@ using ErrorOr;
 
 using Mediator;
 
+using Weda.Template.Application.Employees.Mapping;
+using Weda.Template.Contracts.Employees.Commands;
+using Weda.Template.Contracts.Employees.Dtos;
 using Weda.Template.Domain.Employees.DomainServices;
 using Weda.Template.Domain.Employees.Entities;
 using Weda.Template.Domain.Employees.Repositories;
@@ -9,10 +12,10 @@ using Weda.Template.Domain.Employees.Repositories;
 namespace Weda.Template.Application.Employees.Commands.CreateEmployee;
 
 public class CreateEmployeeCommandHandler(
-    IEmployeeRepository _employeeRepository,
-    IEmployeeHierarchyService _hierarchyService) : IRequestHandler<CreateEmployeeCommand, ErrorOr<Employee>>
+    IEmployeeRepository employeeRepository,
+    IEmployeeHierarchyService hierarchyService) : IRequestHandler<CreateEmployeeCommand, ErrorOr<EmployeeDto>>
 {
-    public async ValueTask<ErrorOr<Employee>> Handle(CreateEmployeeCommand request, CancellationToken cancellationToken)
+    public async ValueTask<ErrorOr<EmployeeDto>> Handle(CreateEmployeeCommand request, CancellationToken cancellationToken)
     {
         var employeeResult = Employee.Create(
             request.Name,
@@ -30,15 +33,15 @@ public class CreateEmployeeCommandHandler(
 
         if (request.SupervisorId.HasValue)
         {
-            var assignResult = await _hierarchyService.AssignSupervisorAsync(employee, request.SupervisorId);
+            var assignResult = await hierarchyService.AssignSupervisorAsync(employee, request.SupervisorId);
             if (assignResult.IsError)
             {
                 return assignResult.Errors;
             }
         }
 
-        await _employeeRepository.AddAsync(employee, cancellationToken);
+        await employeeRepository.AddAsync(employee, cancellationToken);
 
-        return employee;
+        return EmployeeMapper.ToDto(employee);
     }
 }

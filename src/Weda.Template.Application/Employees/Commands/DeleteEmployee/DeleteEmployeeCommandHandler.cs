@@ -2,6 +2,7 @@ using ErrorOr;
 
 using Mediator;
 
+using Weda.Template.Contracts.Employees.Commands;
 using Weda.Template.Domain.Employees.Errors;
 using Weda.Template.Domain.Employees.Repositories;
 

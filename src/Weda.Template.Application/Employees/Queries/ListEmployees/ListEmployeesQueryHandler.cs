@@ -2,17 +2,19 @@ using ErrorOr;
 
 using Mediator;
 
-using Weda.Template.Domain.Employees.Entities;
+using Weda.Template.Application.Employees.Mapping;
+using Weda.Template.Contracts.Employees.Dtos;
+using Weda.Template.Contracts.Employees.Queries;
 using Weda.Template.Domain.Employees.Repositories;
 
 namespace Weda.Template.Application.Employees.Queries.ListEmployees;
 
 public class ListEmployeesQueryHandler(
-    IEmployeeRepository _employeeRepository) : IRequestHandler<ListEmployeesQuery, ErrorOr<List<Employee>>>
+    IEmployeeRepository employeeRepository) : IRequestHandler<ListEmployeesQuery, ErrorOr<List<EmployeeDto>>>
 {
-    public async ValueTask<ErrorOr<List<Employee>>> Handle(ListEmployeesQuery request, CancellationToken cancellationToken)
+    public async ValueTask<ErrorOr<List<EmployeeDto>>> Handle(ListEmployeesQuery request, CancellationToken cancellationToken)
     {
-        var employees = await _employeeRepository.GetAllAsync(cancellationToken);
-        return employees;
+        var employees = await employeeRepository.GetAllAsync(cancellationToken);
+        return EmployeeMapper.ToDtoList(employees);
     }
 }

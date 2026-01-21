@@ -1,7 +1,7 @@
 namespace Weda.Template.Contracts.Employees.Events;
 
 /// <summary>
-/// NATS Subject 格式: {protoVer}.{groupId}.{employeeId}.{requestor}.{responder}.{command}.{subCommand}
+/// NATS Subject 格式: `{protoVer}.{groupId}.{employeeId}.{requestor}.{responder}.{command}.{subCommand}`.
 /// </summary>
 public static class EmployeeNatsSubjects
 {
@@ -16,11 +16,20 @@ public static class EmployeeNatsSubjects
     // eco1j.weda.{id}.*.emp.get.status
     public const string GetStatusPattern = $"{ProtoVer}.{GroupId}.*.*.{ServiceName}.get.status";
 
+    // eco1j.weda.0.*.emp.create
+    public const string CreatePattern = $"{ProtoVer}.{GroupId}.0.*.{ServiceName}.create";
+
+    // eco1j.weda.0.*.emp.update
+    public const string UpdatePattern = $"{ProtoVer}.{GroupId}.0.*.{ServiceName}.udpate";
+
     // eco1j.weda.0.*.emp.list
     public const string ListPattern = $"{ProtoVer}.{GroupId}.0.*.{ServiceName}.list";
 
     // eco1j.weda.0.*.emp.list.idle
     public const string ListIdlePattern = $"{ProtoVer}.{GroupId}.0.*.{ServiceName}.list.idle";
+
+    // eco1j.weda.0.*.emp.delete
+    public const string DeletePattern = $"{ProtoVer}.{GroupId}.0.*.{ServiceName}.delete";
 
     // eco1j.weda.{id}.emp.*.event.created
     public const string CreatedEvent = $"{ProtoVer}.{GroupId}.*.{ServiceName}.*.event.created";

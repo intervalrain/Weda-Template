@@ -2,20 +2,22 @@ using ErrorOr;
 
 using Mediator;
 
+using Weda.Template.Application.Employees.Mapping;
+using Weda.Template.Contracts.Employees.Commands;
+using Weda.Template.Contracts.Employees.Dtos;
 using Weda.Template.Domain.Employees.DomainServices;
-using Weda.Template.Domain.Employees.Entities;
 using Weda.Template.Domain.Employees.Errors;
 using Weda.Template.Domain.Employees.Repositories;
 
 namespace Weda.Template.Application.Employees.Commands.UpdateEmployee;
 
 public class UpdateEmployeeCommandHandler(
-    IEmployeeRepository _employeeRepository,
-    IEmployeeHierarchyService _hierarchyService) : IRequestHandler<UpdateEmployeeCommand, ErrorOr<Employee>>
+    IEmployeeRepository employeeRepository,
+    IEmployeeHierarchyService hierarchyService) : IRequestHandler<UpdateEmployeeCommand, ErrorOr<EmployeeDto>>
 {
-    public async ValueTask<ErrorOr<Employee>> Handle(UpdateEmployeeCommand request, CancellationToken cancellationToken)
+    public async ValueTask<ErrorOr<EmployeeDto>> Handle(UpdateEmployeeCommand request, CancellationToken cancellationToken)
     {
-        var employee = await _employeeRepository.GetByIdAsync(request.Id, cancellationToken);
+        var employee = await employeeRepository.GetByIdAsync(request.Id, cancellationToken);
         if (employee is null)
         {
             return EmployeeErrors.NotFound;
@@ -39,15 +41,15 @@ public class UpdateEmployeeCommandHandler(
 
         if (request.SupervisorId != employee.SupervisorId)
         {
-            var supervisorResult = await _hierarchyService.AssignSupervisorAsync(employee, request.SupervisorId);
+            var supervisorResult = await hierarchyService.AssignSupervisorAsync(employee, request.SupervisorId);
             if (supervisorResult.IsError)
             {
                 return supervisorResult.Errors;
             }
         }
 
-        await _employeeRepository.UpdateAsync(employee, cancellationToken);
+        await employeeRepository.UpdateAsync(employee, cancellationToken);
 
-        return employee;
+        return EmployeeMapper.ToDto(employee);
     }
 }

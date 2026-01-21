@@ -4,4 +4,8 @@
     <PackageReference Include="Swashbuckle.AspNetCore.Filters" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Weda.Template.Domain\Weda.Template.Domain.csproj" />
+  </ItemGroup>
+
 </Project>

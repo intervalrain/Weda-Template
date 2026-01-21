@@ -1,6 +1,6 @@
 using Swashbuckle.AspNetCore.Filters;
 
-namespace Weda.Template.Contracts.Employees;
+namespace Weda.Template.Contracts.Employees.Requests;
 
 public record UpdateEmployeeRequest(
     string Name,
