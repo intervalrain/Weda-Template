@@ -43,7 +43,7 @@ public static class WedaTemplateInfrastructureModule
         services.AddDbContext<AppDbContext>(options => options.UseSqlite("Data Source = Weda.Template.sqlite"));
 
         services.AddScoped<IEmployeeRepository, EmployeeRepository>();
-        services.AddScoped<IEmployeeHierarchyService, EmployeeHierarchyService>();
+        services.AddScoped<EmployeeHierarchyManager>();
 
         return services;
     }

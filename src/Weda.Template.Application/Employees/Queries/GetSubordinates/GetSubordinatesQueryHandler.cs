@@ -13,7 +13,7 @@ namespace Weda.Template.Application.Employees.Queries.GetSubordinates;
 
 public class GetSubordinatesQueryHandler(
     IEmployeeRepository employeeRepository,
-    IEmployeeHierarchyService hierarchyService) : IRequestHandler<GetSubordinatesQuery, ErrorOr<List<EmployeeDto>>>
+    EmployeeHierarchyManager hierarchyManager) : IRequestHandler<GetSubordinatesQuery, ErrorOr<List<EmployeeDto>>>
 {
     public async ValueTask<ErrorOr<List<EmployeeDto>>> Handle(GetSubordinatesQuery request, CancellationToken cancellationToken)
     {
@@ -23,7 +23,7 @@ public class GetSubordinatesQueryHandler(
             return EmployeeErrors.NotFound;
         }
 
-        var subordinates = await hierarchyService.GetAllReportsAsync(request.SupervisorId);
+        var subordinates = await hierarchyManager.GetAllReportsAsync(request.SupervisorId);
         return EmployeeMapper.ToDtoList(subordinates);
     }
 }

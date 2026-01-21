@@ -6,9 +6,9 @@ using Weda.Template.Domain.Employees.Repositories;
 namespace Weda.Template.Domain.Employees.DomainServices;
 
 /// <summary>
-/// Implementation of the employee hierarchy domain service.
+/// Domain service for managing employee hierarchy operations.
 /// </summary>
-public class EmployeeHierarchyService(IEmployeeRepository _employeeRepository) : IEmployeeHierarchyService
+public class EmployeeHierarchyManager(IEmployeeRepository employeeRepository)
 {
     public async Task<ErrorOr<Success>> AssignSupervisorAsync(Employee employee, int? supervisorId)
     {
@@ -17,7 +17,7 @@ public class EmployeeHierarchyService(IEmployeeRepository _employeeRepository) :
             return employee.AssignSupervisor(null);
         }
 
-        var supervisor = await _employeeRepository.GetByIdAsync(supervisorId.Value);
+        var supervisor = await employeeRepository.GetByIdAsync(supervisorId.Value);
         if (supervisor is null)
         {
             return EmployeeErrors.SupervisorNotFound;
@@ -38,13 +38,13 @@ public class EmployeeHierarchyService(IEmployeeRepository _employeeRepository) :
 
         while (true)
         {
-            var employee = await _employeeRepository.GetByIdAsync(currentId);
+            var employee = await employeeRepository.GetByIdAsync(currentId);
             if (employee?.SupervisorId is null)
             {
                 break;
             }
 
-            var supervisor = await _employeeRepository.GetByIdAsync(employee.SupervisorId.Value);
+            var supervisor = await employeeRepository.GetByIdAsync(employee.SupervisorId.Value);
             if (supervisor is null)
             {
                 break;
@@ -60,7 +60,7 @@ public class EmployeeHierarchyService(IEmployeeRepository _employeeRepository) :
     public async Task<List<Employee>> GetAllReportsAsync(int supervisorId)
     {
         var allReports = new List<Employee>();
-        var directReports = await _employeeRepository.GetBySupervisorIdAsync(supervisorId);
+        var directReports = await employeeRepository.GetBySupervisorIdAsync(supervisorId);
 
         foreach (var report in directReports)
         {
@@ -86,7 +86,7 @@ public class EmployeeHierarchyService(IEmployeeRepository _employeeRepository) :
 
             visited.Add(currentId);
 
-            var current = await _employeeRepository.GetByIdAsync(currentId);
+            var current = await employeeRepository.GetByIdAsync(currentId);
             if (current?.SupervisorId is null)
             {
                 return false;

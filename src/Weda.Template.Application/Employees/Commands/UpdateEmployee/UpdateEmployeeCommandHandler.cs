@@ -13,7 +13,7 @@ namespace Weda.Template.Application.Employees.Commands.UpdateEmployee;
 
 public class UpdateEmployeeCommandHandler(
     IEmployeeRepository employeeRepository,
-    IEmployeeHierarchyService hierarchyService) : IRequestHandler<UpdateEmployeeCommand, ErrorOr<EmployeeDto>>
+    EmployeeHierarchyManager hierarchyManager) : IRequestHandler<UpdateEmployeeCommand, ErrorOr<EmployeeDto>>
 {
     public async ValueTask<ErrorOr<EmployeeDto>> Handle(UpdateEmployeeCommand request, CancellationToken cancellationToken)
     {
@@ -41,7 +41,7 @@ public class UpdateEmployeeCommandHandler(
 
         if (request.SupervisorId != employee.SupervisorId)
         {
-            var supervisorResult = await hierarchyService.AssignSupervisorAsync(employee, request.SupervisorId);
+            var supervisorResult = await hierarchyManager.AssignSupervisorAsync(employee, request.SupervisorId);
             if (supervisorResult.IsError)
             {
                 return supervisorResult.Errors;
