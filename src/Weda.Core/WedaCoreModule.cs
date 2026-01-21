@@ -1,16 +1,26 @@
 using System.Reflection;
+using System.Runtime.CompilerServices;
+
 using Asp.Versioning;
+
+using EdgeSync.ServiceFramework.DependencyInjection;
+
 using FluentValidation;
+
 using Mediator;
+
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+
 using Swashbuckle.AspNetCore.Filters;
 using Swashbuckle.AspNetCore.SwaggerGen;
+
+using Weda.Core.Api.Swagger;
 using Weda.Core.Application.Behaviors;
+using Weda.Core.Infrastructure.Messaging;
 using Weda.Core.Infrastructure.Middleware;
-using Weda.Core.Swagger;
 
 namespace Weda.Core;
 
@@ -27,6 +37,11 @@ public static class WedaCoreModule
         services.AddProblemDetails();
 
         configureMediator(services);
+
+        if (options.Messaging.Enabled)
+        {
+            services.AddMessaging(options.Messaging);
+        }
 
         services.AddScoped(typeof(IPipelineBehavior<,>), typeof(AuthorizationBehavior<,>));
         services.AddScoped(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
@@ -124,6 +139,25 @@ public static class WedaCoreModule
             swaggerOptions.AddWedaCoreSwagger();
 
             options.ConfigureSwagger?.Invoke(swaggerOptions);
+        });
+
+        return services;
+    }
+
+    private static IServiceCollection AddMessaging(this IServiceCollection services, WedaMessagingOptions options)
+    {
+        services.AddServiceFramework(sfOptions =>
+        {
+            sfOptions.DefaultConnection = options.DefaultConnection;
+
+            foreach (var conn in options.Connections)
+            {
+                var builder = sfOptions.AddConnection(conn.Name, conn.Url);
+                if (!string.IsNullOrEmpty(conn.CredFile))
+                {
+                    builder.WithCredFile(conn.CredFile);
+                }
+            }
         });
 
         return services;

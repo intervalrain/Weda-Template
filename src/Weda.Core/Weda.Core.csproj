@@ -3,6 +3,8 @@
   <ItemGroup>
     <PackageReference Include="Asp.Versioning.Mvc" />
     <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" />
+    <PackageReference Include="EdgeSync.ServiceFramework.Abstractions" />
+    <PackageReference Include="EdgeSync.ServiceFramework.DependencyInjection" />
     <PackageReference Include="ErrorOr" />
     <PackageReference Include="FluentValidation" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />

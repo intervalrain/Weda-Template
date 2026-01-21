@@ -4,7 +4,7 @@ using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.Filters;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
-namespace Weda.Core.Swagger;
+namespace Weda.Core.Api.Swagger;
 
 public class ResponseExampleSchemaFilter(IServiceProvider serviceProvider) : ISchemaFilter
 {

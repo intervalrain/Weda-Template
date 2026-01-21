@@ -3,6 +3,8 @@ using Asp.Versioning;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using Swashbuckle.AspNetCore.SwaggerUI;
 
+using Weda.Core.Infrastructure.Messaging;
+
 namespace Weda.Core;
 
 public class WedaCoreOptions
@@ -14,6 +16,8 @@ public class WedaCoreOptions
     public List<Assembly> XmlCommentAssemblies { get; set; } = [];
 
     public Action<SwaggerGenOptions>? ConfigureSwagger { get; set; }
+
+    public WedaMessagingOptions Messaging { get; } = new();
 }
 
 public class WedaCoreAppOptions
