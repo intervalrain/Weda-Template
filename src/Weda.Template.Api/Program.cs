@@ -1,3 +1,4 @@
+using System.Reflection;
 using Mediator;
 using Weda.Core;
 using Weda.Template.Application;
@@ -15,7 +16,11 @@ var builder = WebApplication.CreateBuilder(args);
             {
                 options.ServiceLifetime = ServiceLifetime.Scoped;
                 options.Assemblies = [typeof(IApplicationMarker).Assembly];
-            }));
+            }),
+            options =>
+            {
+                options.XmlCommentAssemblies = [Assembly.GetExecutingAssembly()];
+            });
 }
 
 var app = builder.Build();

@@ -110,11 +110,14 @@ public static class WedaCoreModule
 
         services.AddSwaggerGen(swaggerOptions =>
         {
-            var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-            var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFilename);
-            if (File.Exists(xmlPath))
+            foreach (var assembly in options.XmlCommentAssemblies)
             {
-                swaggerOptions.IncludeXmlComments(xmlPath);
+                var xmlFilename = $"{assembly.GetName().Name}.xml";
+                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFilename);
+                if (File.Exists(xmlPath))
+                {
+                    swaggerOptions.IncludeXmlComments(xmlPath);
+                }
             }
 
             swaggerOptions.ExampleFilters();

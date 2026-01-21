@@ -1,3 +1,4 @@
+using System.Reflection;
 using Asp.Versioning;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using Swashbuckle.AspNetCore.SwaggerUI;
@@ -9,6 +10,8 @@ public class WedaCoreOptions
     public ApiVersion DefaultApiVersion { get; set; } = new(1, 0);
 
     public string ApiVersionGroupNameFormat { get; set; } = "'v'VVV";
+
+    public List<Assembly> XmlCommentAssemblies { get; set; } = [];
 
     public Action<SwaggerGenOptions>? ConfigureSwagger { get; set; }
 }
