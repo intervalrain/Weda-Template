@@ -1,6 +1,4 @@
-using Mediator;
 using Microsoft.Extensions.DependencyInjection;
-using Weda.Core.Application.Behaviors;
 
 namespace Weda.Template.Application;
 

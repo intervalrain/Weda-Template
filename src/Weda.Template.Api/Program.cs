@@ -1,5 +1,8 @@
 using System.Reflection;
 using Mediator;
+
+using Microsoft.OpenApi;
+
 using Weda.Core;
 using Weda.Template.Application;
 using Weda.Template.Contracts;
@@ -12,6 +15,7 @@ var builder = WebApplication.CreateBuilder(args);
         .AddApplication()
         .AddInfrastructure(builder.Configuration)
         .AddWedaCore<IContractsMarker, IApplicationMarker>(
+            builder.Configuration,
             services => services.AddMediator(options =>
             {
                 options.ServiceLifetime = ServiceLifetime.Scoped;
@@ -20,6 +24,11 @@ var builder = WebApplication.CreateBuilder(args);
             options =>
             {
                 options.XmlCommentAssemblies = [Assembly.GetExecutingAssembly()];
+                options.OpenApiInfo = new OpenApiInfo
+                {
+                    Title = "Weda API",
+                    Version = "v1",
+                };
             });
 }
 

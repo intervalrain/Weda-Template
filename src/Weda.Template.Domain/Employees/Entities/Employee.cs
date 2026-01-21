@@ -81,6 +81,14 @@ public class Employee : AggregateRoot<int>
     /// <summary>
     /// Creates a new Employee instance.
     /// </summary>
+    /// <param name="name">The employee's full name.</param>
+    /// <param name="email">The employee's email address.</param>
+    /// <param name="department">The department the employee belongs to.</param>
+    /// <param name="position">The employee's job position/title.</param>
+    /// <param name="hireDate">The date when the employee was hired.</param>
+    /// <param name="supervisorId">The ID of the employee's direct supervisor (optional).</param>
+    /// <param name="createdAt">The creation timestamp (optional, defaults to UTC now).</param>
+    /// <returns>A new Employee instance or validation errors.</returns>
     public static ErrorOr<Employee> Create(
         string name,
         string email,
@@ -129,6 +137,8 @@ public class Employee : AggregateRoot<int>
     /// <summary>
     /// Updates the employee's name.
     /// </summary>
+    /// <param name="newName">The new name for the employee.</param>
+    /// <returns>Success or validation errors.</returns>
     public ErrorOr<Success> UpdateName(string newName)
     {
         if (Status == EmployeeStatus.Inactive)
@@ -150,6 +160,8 @@ public class Employee : AggregateRoot<int>
     /// <summary>
     /// Updates the employee's email.
     /// </summary>
+    /// <param name="newEmail">The new email address for the employee.</param>
+    /// <returns>Success or validation errors.</returns>
     public ErrorOr<Success> UpdateEmail(string newEmail)
     {
         if (Status == EmployeeStatus.Inactive)
@@ -171,6 +183,8 @@ public class Employee : AggregateRoot<int>
     /// <summary>
     /// Updates the employee's department.
     /// </summary>
+    /// <param name="newDepartment">The new department for the employee.</param>
+    /// <returns>Success or validation errors.</returns>
     public ErrorOr<Success> UpdateDepartment(Department newDepartment)
     {
         if (Status == EmployeeStatus.Inactive)
@@ -186,6 +200,8 @@ public class Employee : AggregateRoot<int>
     /// <summary>
     /// Updates the employee's position.
     /// </summary>
+    /// <param name="newPosition">The new position/title for the employee.</param>
+    /// <returns>Success or validation errors.</returns>
     public ErrorOr<Success> UpdatePosition(string newPosition)
     {
         if (Status == EmployeeStatus.Inactive)
@@ -211,6 +227,8 @@ public class Employee : AggregateRoot<int>
     /// <summary>
     /// Assigns a supervisor to this employee.
     /// </summary>
+    /// <param name="supervisorId">The ID of the supervisor to assign, or null to remove supervisor.</param>
+    /// <returns>Success or validation errors.</returns>
     public ErrorOr<Success> AssignSupervisor(int? supervisorId)
     {
         if (Status == EmployeeStatus.Inactive)
@@ -226,14 +244,14 @@ public class Employee : AggregateRoot<int>
         SupervisorId = supervisorId;
         UpdatedAt = DateTime.UtcNow;
 
-        RaiseDomainEvent(new SupervisorAssignedEvent(this, supervisorId));
-
         return Result.Success;
     }
 
     /// <summary>
     /// Updates the employee's status.
     /// </summary>
+    /// <param name="newStatus">The new status for the employee.</param>
+    /// <returns>Success or validation errors.</returns>
     public ErrorOr<Success> UpdateStatus(EmployeeStatus newStatus)
     {
         if (Status == EmployeeStatus.Inactive && newStatus != EmployeeStatus.Active)
@@ -249,6 +267,7 @@ public class Employee : AggregateRoot<int>
     /// <summary>
     /// Sets the employee status to on leave.
     /// </summary>
+    /// <returns>Success or validation errors.</returns>
     public ErrorOr<Success> SetOnLeave()
     {
         if (Status == EmployeeStatus.Inactive)
@@ -264,6 +283,7 @@ public class Employee : AggregateRoot<int>
     /// <summary>
     /// Reactivates an employee from on leave status.
     /// </summary>
+    /// <returns>Success or validation errors.</returns>
     public ErrorOr<Success> Activate()
     {
         if (Status == EmployeeStatus.Active)
@@ -284,6 +304,7 @@ public class Employee : AggregateRoot<int>
     /// <summary>
     /// Deactivates the employee (termination or resignation).
     /// </summary>
+    /// <returns>Success or validation errors.</returns>
     public ErrorOr<Success> Deactivate()
     {
         if (Status == EmployeeStatus.Inactive)
@@ -296,9 +317,6 @@ public class Employee : AggregateRoot<int>
         return Result.Success;
     }
 
-    /// <summary>
-    /// Private parameterless constructor for EF Core.
-    /// </summary>
     private Employee()
     {
         Name = null!;

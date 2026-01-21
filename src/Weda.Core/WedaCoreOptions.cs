@@ -1,5 +1,8 @@
 using System.Reflection;
 using Asp.Versioning;
+
+using Microsoft.OpenApi;
+
 using Swashbuckle.AspNetCore.SwaggerGen;
 using Swashbuckle.AspNetCore.SwaggerUI;
 
@@ -18,6 +21,8 @@ public class WedaCoreOptions
     public Action<SwaggerGenOptions>? ConfigureSwagger { get; set; }
 
     public WedaMessagingOptions Messaging { get; } = new();
+
+    public OpenApiInfo OpenApiInfo { get; set; } = new();
 }
 
 public class WedaCoreAppOptions

@@ -60,6 +60,7 @@ public static class WedaTemplateInfrastructureModule
     private static IServiceCollection AddAuthentication(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.Section));
+        services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
 
         services
             .ConfigureOptions<JwtBearerTokenValidationConfiguration>()

@@ -2,13 +2,22 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Weda.Core\Weda.Core.csproj" />
+    <ProjectReference Include="..\Weda.Template.Contracts\Weda.Template.Contracts.csproj" />
     <ProjectReference Include="..\Weda.Template.Domain\Weda.Template.Domain.csproj" />
   </ItemGroup>
+
+  <PropertyGroup>
+    <NoWarn>$(NoWarn);MSG0005</NoWarn>
+  </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="FluentValidation" />
     <PackageReference Include="FluentValidation.AspNetCore" />
     <PackageReference Include="Mediator.Abstractions" />
+    <PackageReference Include="Mediator.SourceGenerator">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
 </Project>

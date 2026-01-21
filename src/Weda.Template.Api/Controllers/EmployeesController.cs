@@ -11,7 +11,6 @@ using Weda.Template.Application.Employees.Queries.GetSubordinates;
 using Weda.Template.Application.Employees.Queries.ListEmployees;
 using Weda.Template.Contracts.Employees;
 using Weda.Template.Domain.Employees.Enums;
-
 using Weda.Core.Api;
 
 namespace Weda.Template.Api.Controllers;
@@ -20,9 +19,7 @@ namespace Weda.Template.Api.Controllers;
 /// Manages employee operations including CRUD and organizational hierarchy.
 /// </summary>
 [ApiVersion("1.0")]
-[Route("api/v{version:apiVersion}/[controller]")]
-[Produces("application/json")]
-public class EmployeesController(IMediator _mediator) : ApiController
+public class EmployeesController(IMediator mediator) : ApiController
 {
     /// <summary>
     /// Retrieves all employees.
@@ -35,7 +32,7 @@ public class EmployeesController(IMediator _mediator) : ApiController
     public async Task<IActionResult> GetAll()
     {
         var query = new ListEmployeesQuery();
-        var result = await _mediator.Send(query);
+        var result = await mediator.Send(query);
 
         return result.Match(
             employees => Ok(EmployeeMapper.ToResponseList(employees)),
@@ -56,7 +53,7 @@ public class EmployeesController(IMediator _mediator) : ApiController
     public async Task<IActionResult> GetById(int id)
     {
         var query = new GetEmployeeQuery(id);
-        var result = await _mediator.Send(query);
+        var result = await mediator.Send(query);
 
         return result.Match(
             employee => Ok(EmployeeMapper.ToResponse(employee)),
@@ -88,7 +85,7 @@ public class EmployeesController(IMediator _mediator) : ApiController
             request.HireDate,
             request.SupervisorId);
 
-        var result = await _mediator.Send(command);
+        var result = await mediator.Send(command);
 
         return result.Match(
             employee => CreatedAtAction(
@@ -132,7 +129,7 @@ public class EmployeesController(IMediator _mediator) : ApiController
             status,
             request.SupervisorId);
 
-        var result = await _mediator.Send(command);
+        var result = await mediator.Send(command);
 
         return result.Match(
             employee => Ok(EmployeeMapper.ToResponse(employee)),
@@ -154,7 +151,7 @@ public class EmployeesController(IMediator _mediator) : ApiController
     public async Task<IActionResult> Delete(int id)
     {
         var command = new DeleteEmployeeCommand(id);
-        var result = await _mediator.Send(command);
+        var result = await mediator.Send(command);
 
         return result.Match(
             _ => NoContent(),
@@ -174,7 +171,7 @@ public class EmployeesController(IMediator _mediator) : ApiController
     public async Task<IActionResult> GetSubordinates(int id)
     {
         var query = new GetSubordinatesQuery(id);
-        var result = await _mediator.Send(query);
+        var result = await mediator.Send(query);
 
         return result.Match(
             subordinates => Ok(EmployeeMapper.ToResponseList(subordinates)),

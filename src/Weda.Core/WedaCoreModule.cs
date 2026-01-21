@@ -1,25 +1,17 @@
-using System.Reflection;
-using System.Runtime.CompilerServices;
-
 using Asp.Versioning;
-
 using EdgeSync.ServiceFramework.DependencyInjection;
-
 using FluentValidation;
-
 using Mediator;
-
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-
+using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.Filters;
 using Swashbuckle.AspNetCore.SwaggerGen;
-
 using Weda.Core.Api.Swagger;
 using Weda.Core.Application.Behaviors;
-using Weda.Core.Infrastructure.Messaging;
 using Weda.Core.Infrastructure.Middleware;
 
 namespace Weda.Core;
@@ -28,6 +20,7 @@ public static class WedaCoreModule
 {
     public static IServiceCollection AddWedaCore<TContractsMarker, TApplicationMarker>(
         this IServiceCollection services,
+        IConfiguration configuration,
         Action<IServiceCollection> configureMediator,
         Action<WedaCoreOptions>? configure = null)
     {
@@ -40,7 +33,7 @@ public static class WedaCoreModule
 
         if (options.Messaging.Enabled)
         {
-            services.AddMessaging(options.Messaging);
+            services.AddMessaging(configuration);
         }
 
         services.AddScoped(typeof(IPipelineBehavior<,>), typeof(AuthorizationBehavior<,>));
@@ -52,9 +45,25 @@ public static class WedaCoreModule
         return services;
     }
 
-    public static void AddWedaCoreSwagger(this SwaggerGenOptions options)
+    public static void AddWedaCoreSwagger(this SwaggerGenOptions options, OpenApiInfo info)
     {
+        options.SwaggerDoc(info.Version, info);
+
         options.SchemaFilter<ResponseExampleSchemaFilter>();
+
+        options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+        {
+            Name = "Authorization",
+            Type = SecuritySchemeType.Http,
+            Scheme = "bearer",
+            BearerFormat = "JWT",
+            In = ParameterLocation.Header,
+            Description = "JWT Authorization header using the Bearer scheme.\n\n" +
+                          "Enter your token in the text input below.\n\n" +
+                          "Example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+        });
+
+        options.OperationFilter<AuthorizeCheckOperationFilter>();
     }
 
     public static WebApplication UseWedaCore<TDbContext>(
@@ -86,6 +95,7 @@ public static class WedaCoreModule
         }
 
         app.UseHttpsRedirection();
+        app.UseAuthentication();
         app.UseAuthorization();
         app.MapControllers();
 
@@ -136,7 +146,7 @@ public static class WedaCoreModule
             }
 
             swaggerOptions.ExampleFilters();
-            swaggerOptions.AddWedaCoreSwagger();
+            swaggerOptions.AddWedaCoreSwagger(options.OpenApiInfo);
 
             options.ConfigureSwagger?.Invoke(swaggerOptions);
         });
@@ -144,21 +154,12 @@ public static class WedaCoreModule
         return services;
     }
 
-    private static IServiceCollection AddMessaging(this IServiceCollection services, WedaMessagingOptions options)
+    private static IServiceCollection AddMessaging(
+        this IServiceCollection services,
+        IConfiguration configuration)
     {
-        services.AddServiceFramework(sfOptions =>
-        {
-            sfOptions.DefaultConnection = options.DefaultConnection;
-
-            foreach (var conn in options.Connections)
-            {
-                var builder = sfOptions.AddConnection(conn.Name, conn.Url);
-                if (!string.IsNullOrEmpty(conn.CredFile))
-                {
-                    builder.WithCredFile(conn.CredFile);
-                }
-            }
-        });
+        // ServiceFramework 內建支援從 NatsApi section 讀取設定
+        services.AddServiceFramework(configuration);
 
         return services;
     }

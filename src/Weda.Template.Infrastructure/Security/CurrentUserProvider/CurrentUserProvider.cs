@@ -16,11 +16,10 @@ public class CurrentUserProvider(IHttpContextAccessor _httpContextAccessor) : IC
         var id = Guid.Parse(GetSingleClaimValue("id"));
         var permissions = GetClaimValues("permissions");
         var roles = GetClaimValues(ClaimTypes.Role);
-        var firstName = GetSingleClaimValue(JwtRegisteredClaimNames.Name);
-        var lastName = GetSingleClaimValue(ClaimTypes.Surname);
+        var name = GetSingleClaimValue(JwtRegisteredClaimNames.Name);
         var email = GetSingleClaimValue(ClaimTypes.Email);
 
-        return new CurrentUser(id, firstName, lastName, email, permissions, roles);
+        return new CurrentUser(id, name, email, permissions, roles);
     }
 
     private List<string> GetClaimValues(string claimType) =>

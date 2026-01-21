@@ -8,6 +8,8 @@ namespace Weda.Core.Api;
 
 [ApiController]
 [Authorize]
+[Route("api/v{version:apiVersion}/[controller]")]
+[Produces("application/json")]
 public class ApiController : ControllerBase
 {
     protected ActionResult Problem(List<Error> errors)
