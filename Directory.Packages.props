@@ -20,7 +20,10 @@
     <!-- Entity Framework -->
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.2" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.2" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.2" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.2" />
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
+    <PackageVersion Include="MongoDB.EntityFrameworkCore" Version="9.0.0" />
     <!-- Awesome open-source packages -->
     <PackageVersion Include="ErrorOr" Version="2.0.1" />
     <PackageVersion Include="Riok.Mapperly" Version="4.2.1" />

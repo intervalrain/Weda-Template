@@ -4,6 +4,7 @@ using Weda.Template.Domain.Employees.DomainServices;
 using Weda.Template.Domain.Employees.Repositories;
 using Weda.Template.Infrastructure.Common.Persistence;
 using Weda.Template.Infrastructure.Employees.Persistence;
+using Weda.Template.Infrastructure.Persistence;
 using Weda.Template.Infrastructure.Security;
 using Weda.Template.Infrastructure.Security.CurrentUserProvider;
 using Weda.Template.Infrastructure.Security.PolicyEnforcer;
@@ -19,14 +20,27 @@ namespace Weda.Template.Infrastructure;
 
 public static class WedaTemplateInfrastructureModule
 {
+    private const string DatabaseSection = "Database";
+    private const string AuthenticationSection = "Authentication";
+
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
+        var databaseOptions = configuration.GetSection(DatabaseSection).Get<DatabaseOptions>() ?? new DatabaseOptions();
+        var authOptions = configuration.GetSection(AuthenticationSection).Get<AuthenticationOptions>() ?? new AuthenticationOptions();
+
         services
+            .Configure<DatabaseOptions>(configuration.GetSection(DatabaseSection))
+            .Configure<AuthenticationOptions>(configuration.GetSection(AuthenticationSection))
             .AddHttpContextAccessor()
             .AddServices()
-            .AddAuthentication(configuration)
-            .AddAuthorization()
-            .AddPersistence();
+            .AddPersistence(databaseOptions);
+
+        if (authOptions.Enabled)
+        {
+            services
+                .AddJwtAuthentication(configuration)
+                .AddAuthorization();
+        }
 
         return services;
     }
@@ -38,9 +52,26 @@ public static class WedaTemplateInfrastructureModule
         return services;
     }
 
-    private static IServiceCollection AddPersistence(this IServiceCollection services)
+    private static IServiceCollection AddPersistence(this IServiceCollection services, DatabaseOptions options)
     {
-        services.AddDbContext<AppDbContext>(options => options.UseSqlite("Data Source = Weda.Template.sqlite"));
+        services.AddDbContext<AppDbContext>(dbOptions =>
+        {
+            switch (options.Provider)
+            {
+                case DatabaseProvider.Sqlite:
+                    dbOptions.UseSqlite(options.ConnectionString);
+                    break;
+                case DatabaseProvider.PostgreSql:
+                    dbOptions.UseNpgsql(options.ConnectionString);
+                    break;
+                case DatabaseProvider.MongoDb:
+                    dbOptions.UseMongoDB(options.ConnectionString, options.DatabaseName);
+                    break;
+                case DatabaseProvider.InMemory:
+                    dbOptions.UseInMemoryDatabase(options.DatabaseName);
+                    break;
+            }
+        });
 
         services.AddScoped<IEmployeeRepository, EmployeeRepository>();
         services.AddScoped<EmployeeHierarchyManager>();
@@ -57,7 +88,7 @@ public static class WedaTemplateInfrastructureModule
         return services;
     }
 
-    private static IServiceCollection AddAuthentication(this IServiceCollection services, IConfiguration configuration)
+    private static IServiceCollection AddJwtAuthentication(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.Section));
         services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();

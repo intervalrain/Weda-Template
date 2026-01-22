@@ -29,11 +29,21 @@ public class EmployeeCreatedEventHandler(
             employee.Position,
             employee.CreatedAt);
 
-        await _bus.PublishAsync(subject, natsEvent, cancellationToken: cancellationToken);
+        try
+        {
+            await _bus.NatsPublishAsync(subject, natsEvent, _cancellationToken: cancellationToken);
 
-        logger.LogInformation(
-            "Published EmployeeCreatedNatsEvent for Employee {EmployeeId} to {Subject}",
-            employee.Id,
-            subject);
+            logger.LogInformation(
+                "Published EmployeeCreatedNatsEvent for Employee {EmployeeId} to {Subject}",
+                employee.Id,
+                subject);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(
+                ex,
+                "Failed to publish EmployeeCreatedNatsEvent for Employee {EmployeeId}. NATS may not be available.",
+                employee.Id);
+        }
     }
 }
