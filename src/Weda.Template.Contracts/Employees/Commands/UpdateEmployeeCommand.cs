@@ -11,7 +11,7 @@ public record UpdateEmployeeCommand(
     int Id,
     string Name,
     string Email,
-    Department Department,
+    string Department,
     string Position,
     EmployeeStatus Status,
     int? SupervisorId) : IRequest<ErrorOr<EmployeeDto>>;

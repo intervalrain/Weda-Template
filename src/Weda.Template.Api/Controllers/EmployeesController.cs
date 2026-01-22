@@ -69,15 +69,10 @@ public class EmployeesController(IMediator mediator) : ApiController
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] CreateEmployeeRequest request)
     {
-        if (!Enum.TryParse<Department>(request.Department, ignoreCase: true, out var department))
-        {
-            return BadRequest($"Invalid department: {request.Department}");
-        }
-
         var command = new CreateEmployeeCommand(
             request.Name,
             request.Email,
-            department,
+            request.Department,
             request.Position,
             request.HireDate,
             request.SupervisorId);
@@ -107,11 +102,6 @@ public class EmployeesController(IMediator mediator) : ApiController
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Update(int id, [FromBody] UpdateEmployeeRequest request)
     {
-        if (!Enum.TryParse<Department>(request.Department, ignoreCase: true, out var department))
-        {
-            return BadRequest($"Invalid department: {request.Department}");
-        }
-
         if (!Enum.TryParse<EmployeeStatus>(request.Status, ignoreCase: true, out var status))
         {
             return BadRequest($"Invalid status: {request.Status}");
@@ -121,7 +111,7 @@ public class EmployeesController(IMediator mediator) : ApiController
             id,
             request.Name,
             request.Email,
-            department,
+            request.Department,
             request.Position,
             status,
             request.SupervisorId);

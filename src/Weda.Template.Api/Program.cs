@@ -4,6 +4,7 @@ using Mediator;
 using Microsoft.OpenApi;
 
 using Weda.Core;
+using Weda.Template.Api;
 using Weda.Template.Application;
 using Weda.Template.Contracts;
 using Weda.Template.Infrastructure;
@@ -14,7 +15,7 @@ var builder = WebApplication.CreateBuilder(args);
     builder.Services
         .AddApplication()
         .AddInfrastructure(builder.Configuration)
-        .AddWedaCore<IContractsMarker, IApplicationMarker>(
+        .AddWedaCore<IAssemblyMarker, IContractsMarker, IApplicationMarker>(
             builder.Configuration,
             services => services.AddMediator(options =>
             {

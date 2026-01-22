@@ -321,6 +321,7 @@ public class Employee : AggregateRoot<int>
     {
         Name = null!;
         Email = null!;
+        Department = null!;
         Position = null!;
     }
 }

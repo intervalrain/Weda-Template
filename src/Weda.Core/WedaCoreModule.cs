@@ -1,4 +1,6 @@
+using System.Reflection;
 using Asp.Versioning;
+using EdgeSync.ServiceFramework.Core;
 using EdgeSync.ServiceFramework.DependencyInjection;
 using FluentValidation;
 using Mediator;
@@ -18,7 +20,7 @@ namespace Weda.Core;
 
 public static class WedaCoreModule
 {
-    public static IServiceCollection AddWedaCore<TContractsMarker, TApplicationMarker>(
+    public static IServiceCollection AddWedaCore<TAssemblyMarker, TContractsMarker, TApplicationMarker>(
         this IServiceCollection services,
         IConfiguration configuration,
         Action<IServiceCollection> configureMediator,
@@ -41,6 +43,7 @@ public static class WedaCoreModule
         services.AddValidatorsFromAssemblyContaining<TApplicationMarker>();
 
         services.AddPresentation<TContractsMarker>(options);
+        services.AddDistributedEventHandlers<TAssemblyMarker>();
 
         return services;
     }
@@ -100,6 +103,40 @@ public static class WedaCoreModule
         app.MapControllers();
 
         return app;
+    }
+
+    /// <summary>
+    /// Scans the specified assembly for all types that inherit from DistributedEventHandler
+    /// and registers them as hosted services.
+    /// </summary>
+    /// <typeparam name="TMarker">A marker type in the assembly to scan.</typeparam>
+    /// <param name="services">The service collection.</param>
+    /// <returns>The service collection for chaining.</returns>
+    private static IServiceCollection AddDistributedEventHandlers<TMarker>(this IServiceCollection services)
+    {
+        return services.AddDistributedEventHandlers(typeof(TMarker).Assembly);
+    }
+
+    /// <summary>
+    /// Scans the specified assembly for all types that inherit from DistributedEventHandler
+    /// and registers them as hosted services.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="assembly">The assembly to scan.</param>
+    /// <returns>The service collection for chaining.</returns>
+    private static IServiceCollection AddDistributedEventHandlers(this IServiceCollection services, Assembly assembly)
+    {
+        var handlerTypes = assembly.GetTypes()
+            .Where(t => !t.IsAbstract &&
+                        !t.IsInterface &&
+                        IsDistributedEventHandler(t));
+
+        foreach (var handlerType in handlerTypes)
+        {
+            services.AddSingleton(typeof(IHostedService), handlerType);
+        }
+
+        return services;
     }
 
     private static IApplicationBuilder EnsureDatabaseCreated<TDbContext>(this IApplicationBuilder app)
@@ -170,5 +207,27 @@ public static class WedaCoreModule
         app.UseMiddleware<EventualConsistencyMiddleware<TDbContext>>();
 
         return app;
+    }
+
+    private static bool IsDistributedEventHandler(Type type)
+    {
+        var current = type.BaseType;
+        while (current != null)
+        {
+            if (current.IsGenericType &&
+                current.GetGenericTypeDefinition().Name.StartsWith("DistributedEventHandler"))
+            {
+                return true;
+            }
+
+            if (current == typeof(BaseEventHandler))
+            {
+                return true;
+            }
+
+            current = current.BaseType;
+        }
+
+        return false;
     }
 }

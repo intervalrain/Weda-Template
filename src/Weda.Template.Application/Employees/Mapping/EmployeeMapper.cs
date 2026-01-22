@@ -23,7 +23,7 @@ public static partial class EmployeeMapper
 
     private static string MapEmail(Email email) => email.Value;
 
-    private static string MapDepartment(Department department) => department.ToString();
+    private static string MapDepartment(Department department) => department.Value;
 
     private static string MapStatus(EmployeeStatus status) => status.ToString();
 }

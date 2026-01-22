@@ -8,6 +8,7 @@ using Weda.Template.Contracts.Employees.Dtos;
 using Weda.Template.Domain.Employees.DomainServices;
 using Weda.Template.Domain.Employees.Errors;
 using Weda.Template.Domain.Employees.Repositories;
+using Weda.Template.Domain.Employees.ValueObjects;
 
 namespace Weda.Template.Application.Employees.Commands.UpdateEmployee;
 
@@ -35,7 +36,13 @@ public class UpdateEmployeeCommandHandler(
             return emailResult.Errors;
         }
 
-        employee.UpdateDepartment(request.Department);
+        var departmentResult = Department.Create(request.Department);
+        if (departmentResult.IsError)
+        {
+            return departmentResult.Errors;
+        }
+
+        employee.UpdateDepartment(departmentResult.Value);
         employee.UpdatePosition(request.Position);
         employee.UpdateStatus(request.Status);
 

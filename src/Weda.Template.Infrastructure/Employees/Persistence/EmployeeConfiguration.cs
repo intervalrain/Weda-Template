@@ -33,8 +33,10 @@ public class EmployeeConfiguration : IEntityTypeConfiguration<Employee>
             .IsUnique();
 
         builder.Property(e => e.Department)
-            .HasConversion<string>()
-            .HasMaxLength(50)
+            .HasConversion(
+                department => department.Value,
+                value => Department.Create(value).Value)
+            .HasMaxLength(32)
             .IsRequired();
 
         builder.Property(e => e.Position)

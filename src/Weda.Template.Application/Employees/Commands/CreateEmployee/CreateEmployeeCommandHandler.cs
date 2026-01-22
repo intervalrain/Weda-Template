@@ -8,6 +8,7 @@ using Weda.Template.Contracts.Employees.Dtos;
 using Weda.Template.Domain.Employees.DomainServices;
 using Weda.Template.Domain.Employees.Entities;
 using Weda.Template.Domain.Employees.Repositories;
+using Weda.Template.Domain.Employees.ValueObjects;
 
 namespace Weda.Template.Application.Employees.Commands.CreateEmployee;
 
@@ -17,10 +18,16 @@ public class CreateEmployeeCommandHandler(
 {
     public async ValueTask<ErrorOr<EmployeeDto>> Handle(CreateEmployeeCommand request, CancellationToken cancellationToken)
     {
+        var departmentResult = Department.Create(request.Department);
+        if (departmentResult.IsError)
+        {
+            return departmentResult.Errors;
+        }
+
         var employeeResult = Employee.Create(
             request.Name,
             request.Email,
-            request.Department,
+            departmentResult.Value,
             request.Position,
             request.HireDate);
 

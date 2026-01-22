@@ -42,6 +42,15 @@ public static class EmployeeErrors
         code: "Employee.DuplicateEmail",
         description: "An employee with this email already exists.");
 
+    // Validation Errors - Department
+    public static readonly Error EmptyDepartment = Error.Validation(
+        code: "Employee.EmptyDepartment",
+        description: "Employee department cannot be empty.");
+
+    public static readonly Error DepartmentTooLong = Error.Validation(
+        code: "Employee.DepartmentTooLong",
+        description: "Employee department cannot exceed 32 characters.");
+
     // Validation Errors - Position
     public static readonly Error EmptyPosition = Error.Validation(
         code: "Employee.EmptyPosition",
