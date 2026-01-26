@@ -1,20 +1,25 @@
 using System.Reflection;
+
 using Asp.Versioning;
-using EdgeSync.ServiceFramework.Core;
-using EdgeSync.ServiceFramework.DependencyInjection;
+
 using FluentValidation;
+
 using Mediator;
+
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi;
+
 using Swashbuckle.AspNetCore.Filters;
 using Swashbuckle.AspNetCore.SwaggerGen;
+
 using Weda.Core.Api.Swagger;
 using Weda.Core.Application.Behaviors;
 using Weda.Core.Infrastructure.Middleware;
+using Weda.Core.Infrastructure.Nats.Configuration;
 
 namespace Weda.Core;
 
@@ -35,7 +40,7 @@ public static class WedaCoreModule
 
         if (options.Messaging.Enabled)
         {
-            services.AddMessaging(configuration);
+            services.AddMessaging<TAssemblyMarker>(configuration);
         }
 
         services.AddScoped(typeof(IPipelineBehavior<,>), typeof(AuthorizationBehavior<,>));
@@ -43,7 +48,6 @@ public static class WedaCoreModule
         services.AddValidatorsFromAssemblyContaining<TApplicationMarker>();
 
         services.AddPresentation<TContractsMarker>(options);
-        services.AddDistributedEventHandlers<TAssemblyMarker>();
 
         return services;
     }
@@ -96,47 +100,16 @@ public static class WedaCoreModule
                 options.ConfigureSwaggerUI?.Invoke(uiOptions);
             });
         }
-
-        app.UseHttpsRedirection();
+        else
+        {
+            // Only use HTTPS redirection in non-development environments
+            app.UseHttpsRedirection();
+        }
         app.UseAuthentication();
         app.UseAuthorization();
         app.MapControllers();
 
         return app;
-    }
-
-    /// <summary>
-    /// Scans the specified assembly for all types that inherit from DistributedEventHandler
-    /// and registers them as hosted services.
-    /// </summary>
-    /// <typeparam name="TMarker">A marker type in the assembly to scan.</typeparam>
-    /// <param name="services">The service collection.</param>
-    /// <returns>The service collection for chaining.</returns>
-    private static IServiceCollection AddDistributedEventHandlers<TMarker>(this IServiceCollection services)
-    {
-        return services.AddDistributedEventHandlers(typeof(TMarker).Assembly);
-    }
-
-    /// <summary>
-    /// Scans the specified assembly for all types that inherit from DistributedEventHandler
-    /// and registers them as hosted services.
-    /// </summary>
-    /// <param name="services">The service collection.</param>
-    /// <param name="assembly">The assembly to scan.</param>
-    /// <returns>The service collection for chaining.</returns>
-    private static IServiceCollection AddDistributedEventHandlers(this IServiceCollection services, Assembly assembly)
-    {
-        var handlerTypes = assembly.GetTypes()
-            .Where(t => !t.IsAbstract &&
-                        !t.IsInterface &&
-                        IsDistributedEventHandler(t));
-
-        foreach (var handlerType in handlerTypes)
-        {
-            services.AddSingleton(typeof(IHostedService), handlerType);
-        }
-
-        return services;
     }
 
     private static IApplicationBuilder EnsureDatabaseCreated<TDbContext>(this IApplicationBuilder app)
@@ -191,12 +164,34 @@ public static class WedaCoreModule
         return services;
     }
 
-    private static IServiceCollection AddMessaging(
+    private static IServiceCollection AddMessaging<TAssemblyMarker>(
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        // ServiceFramework 內建支援從 NatsApi section 讀取設定
-        services.AddServiceFramework(configuration);
+        // NATS EventController - replaced ServiceFramework
+        services.AddNats(builder =>
+        {
+            var natsSection = configuration.GetSection("Nats");
+            var defaultUrl = natsSection.GetValue<string>("Url") ?? "nats://localhost:4222";
+
+            // Default connection
+            builder.AddConnection("default", defaultUrl);
+
+            // Additional connections from configuration
+            var connectionsSection = natsSection.GetSection("Connections");
+            foreach (var connectionConfig in connectionsSection.GetChildren())
+            {
+                var name = connectionConfig.Key;
+                var url = connectionConfig.GetValue<string>("Url");
+                if (!string.IsNullOrEmpty(url) && name != "default")
+                {
+                    builder.AddConnection(name, url);
+                }
+            }
+        });
+
+        // Register EventControllers from the API assembly (where controllers are defined)
+        services.AddEventControllers(typeof(TAssemblyMarker).Assembly);
 
         return services;
     }
@@ -207,27 +202,5 @@ public static class WedaCoreModule
         app.UseMiddleware<EventualConsistencyMiddleware<TDbContext>>();
 
         return app;
-    }
-
-    private static bool IsDistributedEventHandler(Type type)
-    {
-        var current = type.BaseType;
-        while (current != null)
-        {
-            if (current.IsGenericType &&
-                current.GetGenericTypeDefinition().Name.StartsWith("DistributedEventHandler"))
-            {
-                return true;
-            }
-
-            if (current == typeof(BaseEventHandler))
-            {
-                return true;
-            }
-
-            current = current.BaseType;
-        }
-
-        return false;
     }
 }

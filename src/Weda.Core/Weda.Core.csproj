@@ -3,8 +3,6 @@
   <ItemGroup>
     <PackageReference Include="Asp.Versioning.Mvc" />
     <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" />
-    <PackageReference Include="EdgeSync.ServiceFramework.Abstractions" />
-    <PackageReference Include="EdgeSync.ServiceFramework.DependencyInjection" />
     <PackageReference Include="ErrorOr" />
     <PackageReference Include="FluentValidation" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" />
@@ -13,6 +11,8 @@
     <PackageReference Include="Microsoft.AspNetCore.Mvc" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.OpenApi" />
+    <PackageReference Include="NATS.Client.Serializers.Json" />
+    <PackageReference Include="NATS.Net" />
     <PackageReference Include="Swashbuckle.AspNetCore" />
     <PackageReference Include="Swashbuckle.AspNetCore.Filters" />
   </ItemGroup>
