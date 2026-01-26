@@ -1,15 +1,21 @@
 using Weda.Core.Application.Interfaces;
 using Weda.Core.Application.Security;
+using Weda.Core.Application.Security.CurrentUserProvider;
+using Weda.Core.Application.Security.PasswordHasher;
 using Weda.Template.Domain.Employees.DomainServices;
 using Weda.Template.Domain.Employees.Repositories;
+using Weda.Template.Domain.Users.Repositories;
 using Weda.Template.Infrastructure.Common.Persistence;
 using Weda.Template.Infrastructure.Employees.Persistence;
 using Weda.Template.Infrastructure.Persistence;
 using Weda.Template.Infrastructure.Security;
-using Weda.Template.Infrastructure.Security.CurrentUserProvider;
 using Weda.Template.Infrastructure.Security.PolicyEnforcer;
 using Weda.Template.Infrastructure.Security.TokenValidation;
 using Weda.Template.Infrastructure.Services;
+using Weda.Template.Infrastructure.Users.Persistence;
+
+using InfraCurrentUserProvider = Weda.Template.Infrastructure.Security.CurrentUserProvider.CurrentUserProvider;
+using InfraPasswordHasher = Weda.Template.Infrastructure.Security.PasswordHasher.BCryptPasswordHasher;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -76,13 +82,17 @@ public static class WedaTemplateInfrastructureModule
         services.AddScoped<IEmployeeRepository, EmployeeRepository>();
         services.AddScoped<EmployeeHierarchyManager>();
 
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddSingleton<IPasswordHasher, InfraPasswordHasher>();
+        services.AddScoped<AppDbContextSeeder>();
+
         return services;
     }
 
     private static IServiceCollection AddAuthorization(this IServiceCollection services)
     {
         services.AddScoped<IAuthorizationService, AuthorizationService>();
-        services.AddScoped<ICurrentUserProvider, CurrentUserProvider>();
+        services.AddScoped<ICurrentUserProvider, InfraCurrentUserProvider>();
         services.AddSingleton<IPolicyEnforcer, PolicyEnforcer>();
 
         return services;

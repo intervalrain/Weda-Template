@@ -1,4 +1,4 @@
-using Weda.Template.Infrastructure.Security.CurrentUserProvider;
+using Weda.Core.Application.Security.CurrentUserProvider;
 
 namespace Weda.Template.TestCommon.Security;
 

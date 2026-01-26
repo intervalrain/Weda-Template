@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Http;
 
 using Throw;
 
+using Weda.Core.Application.Security.CurrentUserProvider;
+
 namespace Weda.Template.Infrastructure.Security.CurrentUserProvider;
 
 public class CurrentUserProvider(IHttpContextAccessor _httpContextAccessor) : ICurrentUserProvider

@@ -1,0 +1,43 @@
+using ErrorOr;
+
+using Mediator;
+
+using Weda.Core.Application.Security.CurrentUserProvider;
+using Weda.Core.Application.Security.Roles;
+using Weda.Template.Contracts.Users.Commands;
+using Weda.Template.Domain.Users.Errors;
+using Weda.Template.Domain.Users.Repositories;
+
+namespace Weda.Template.Application.Users.Commands.DeleteUser;
+
+public class DeleteUserCommandHandler(
+    IUserRepository userRepository,
+    ICurrentUserProvider currentUserProvider) : IRequestHandler<DeleteUserCommand, ErrorOr<Deleted>>
+{
+    public async ValueTask<ErrorOr<Deleted>> Handle(DeleteUserCommand request, CancellationToken cancellationToken)
+    {
+        var user = await userRepository.GetByIdAsync(request.Id, cancellationToken);
+        if (user is null)
+        {
+            return UserErrors.NotFound;
+        }
+
+        var currentUser = currentUserProvider.GetCurrentUser();
+
+        // Prevent deleting yourself
+        if (user.Id == currentUser.Id)
+        {
+            return UserErrors.CannotDeleteSelf;
+        }
+
+        // Prevent non-SuperAdmin from deleting SuperAdmin
+        if (user.Roles.Contains(Role.SuperAdmin) && !currentUser.Roles.Contains(Role.SuperAdmin))
+        {
+            return UserErrors.CannotDeleteSuperAdmin;
+        }
+
+        await userRepository.DeleteAsync(user, cancellationToken);
+
+        return Result.Deleted;
+    }
+}
