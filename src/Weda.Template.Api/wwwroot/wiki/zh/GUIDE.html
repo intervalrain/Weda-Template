@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="WikiGenerator">
+    <link rel="stylesheet" href="../wiki.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/vs2015.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+</head>
+<body>
+    <article class="markdown-body">
+    <h1 id="weda-clean-architecture-template">WEDA Clean Architecture Template - 學習指南</h1>
+<blockquote>
+<p>從零開始到專精：內部團隊培訓的完整指南</p>
+</blockquote>
+<h2 id="part-1">Part 1: 基礎概念</h2>
+<h3 id="clean-architecture">1. Clean Architecture 概觀</h3>
+<ul>
+<li>Uncle Bob 的 Clean Architecture 原則</li>
+<li>Dependency Rule：依賴方向指向內層</li>
+<li>獨立於 Framework、UI、Database 及外部代理</li>
+<li>以可測試性為設計核心</li>
+</ul>
+<h3 id="layer">2. 專案結構與 Layer 依賴關係</h3>
+<ul>
+<li>Solution 組織架構：Domain → Application → Infrastructure → Api</li>
+<li>Project Reference 與依賴方向</li>
+<li>Contracts Project：Layer 間共用的 DTO</li>
+<li>為何分層對維護性至關重要</li>
+</ul>
+<h3 id="domain-driven-design-ddd">3. Domain-Driven Design (DDD) 基礎</h3>
+<ul>
+<li>Ubiquitous Language</li>
+<li>Bounded Context</li>
+<li>Entity vs Value Object</li>
+<li>Aggregate 與 Aggregate Root</li>
+</ul>
+<hr />
+<h2 id="part-2-domain-layer">Part 2: Domain Layer</h2>
+<h3 id="entity-aggregate-root">4. Entity 與 Aggregate Root</h3>
+<ul>
+<li>具有 Id 與 Domain Event 的 Entity Base Class</li>
+<li>Aggregate Root 作為一致性邊界</li>
+<li>Encapsulation：Private Setter、受控的狀態變更</li>
+<li>範例：<code>Employee</code> 作為 Aggregate Root</li>
+</ul>
+<h3 id="value-object">5. Value Object</h3>
+<ul>
+<li>Immutability 與 Value Equality</li>
+<li>自我驗證的物件</li>
+<li>何時使用 Value Object vs Entity</li>
+<li>範例：<code>Email</code>、<code>Money</code>、<code>Address</code></li>
+</ul>
+<h3 id="factory-method-pattern">6. Factory Method Pattern</h3>
+<ul>
+<li>為何 Constructor 應該是 Private</li>
+<li>回傳 <code>ErrorOr&lt;T&gt;</code> 的 <code>Create()</code> 方法</li>
+<li>建立時進行驗證</li>
+<li>Domain Invariant 的強制執行</li>
+</ul>
+<h3 id="domain-error-erroror-pattern">7. Domain Error (ErrorOr Pattern)</h3>
+<ul>
+<li>Railway-Oriented Programming</li>
+<li>使用 <code>ErrorOr&lt;T&gt;</code> 進行明確的錯誤處理</li>
+<li>在 <code>*Errors</code> Class 中定義 Static Error</li>
+<li>Error 類型：Validation、NotFound、Conflict、Unauthorized</li>
+</ul>
+<h3 id="domain-event">8. Domain Event</h3>
+<ul>
+<li>什麼是 Domain Event</li>
+<li><code>IDomainEvent</code> Interface</li>
+<li>在 Aggregate Root 中 Raise Event</li>
+<li>Event Collection 與 Publishing Pattern</li>
+</ul>
+<hr />
+<h2 id="part-3-application-layer">Part 3: Application Layer</h2>
+<h3 id="cqrs-pattern-command-query-responsibility-segregation">9. CQRS Pattern (Command Query Responsibility Segregation)</h3>
+<ul>
+<li>Command：改變狀態的寫入操作</li>
+<li>Query：回傳資料的讀取操作</li>
+<li>為何要分離 Command 與 Query</li>
+<li>資料夾結構：<code>Commands/</code> 與 <code>Queries/</code></li>
+</ul>
+<h3 id="mediator-requesthandler-pattern">10. Mediator 與 Request/Handler Pattern</h3>
+<ul>
+<li><code>IRequest&lt;T&gt;</code> 與 <code>IRequestHandler&lt;TRequest, TResponse&gt;</code></li>
+<li>解耦 Sender 與 Handler</li>
+<li>每個 Request 對應一個 Handler</li>
+<li>透過 Assembly Scanning 進行註冊</li>
+</ul>
+<h3 id="repository-interface-irepository">11. Repository Interface (IRepository<T>)</h3>
+<ul>
+<li>Generic Repository Pattern</li>
+<li><code>IRepository&lt;T&gt;</code> Base Interface</li>
+<li>特化的 Interface：<code>IEmployeeRepository</code></li>
+<li>為何 Interface 應該放在 Application Layer</li>
+</ul>
+<h3 id="pipeline-behavior-validation-authorization">12. Pipeline Behavior (Validation, Authorization)</h3>
+<ul>
+<li>Mediator Pipeline 概念</li>
+<li><code>IPipelineBehavior&lt;TRequest, TResponse&gt;</code></li>
+<li>Cross-Cutting Concern：Logging、Validation、Authorization</li>
+<li>執行順序與串接</li>
+</ul>
+<h3 id="fluentvalidation">13. FluentValidation</h3>
+<ul>
+<li>使用 <code>AbstractValidator&lt;T&gt;</code> 進行 Request 驗證</li>
+<li>Validation Rule 與 Error Message</li>
+<li>與 Mediator Pipeline 整合</li>
+<li>自訂 Validator</li>
+</ul>
+<hr />
+<h2 id="part-4-infrastructure-layer">Part 4: Infrastructure Layer</h2>
+<h3 id="generic-repository">14. Generic Repository 實作</h3>
+<ul>
+<li><code>GenericRepository&lt;T&gt;</code> 實作 <code>IRepository&lt;T&gt;</code></li>
+<li>Entity Framework Core 整合</li>
+<li>CRUD 操作實作</li>
+<li>Unit of Work Pattern（選用）</li>
+</ul>
+<h3 id="entity-framework-core-dbcontext">15. Entity Framework Core 與 DbContext</h3>
+<ul>
+<li><code>AppDbContext</code> 設定</li>
+<li>在 SaveChanges 時發布 Domain Event</li>
+<li>Connection String 管理</li>
+<li>Database Provider：SQLite、PostgreSQL、MongoDB</li>
+</ul>
+<h3 id="database-configuration-ef-configuration">16. Database Configuration (EF Configuration)</h3>
+<ul>
+<li><code>IEntityTypeConfiguration&lt;T&gt;</code></li>
+<li>使用 Fluent API 進行 Mapping</li>
+<li>Value Object 的 Value Converter</li>
+<li>Index 與 Constraint</li>
+</ul>
+<h3 id="dependency-injection-module-pattern">17. Dependency Injection Module Pattern</h3>
+<ul>
+<li><code>*Module.cs</code> 命名慣例</li>
+<li><code>IServiceCollection</code> 的 Extension Method</li>
+<li>Service Lifetime：Singleton、Scoped、Transient</li>
+<li>使用 <code>IOptions&lt;T&gt;</code> 進行 Configuration Binding</li>
+</ul>
+<hr />
+<h2 id="part-5-api-layer">Part 5: API Layer</h2>
+<h3 id="controller-routing">18. Controller 與 Routing</h3>
+<ul>
+<li><code>[ApiController]</code> Attribute</li>
+<li>Route 慣例：<code>[Route(&quot;api/[controller]&quot;)]</code></li>
+<li>Action Method 與 HTTP Verb</li>
+<li>注入 Mediator <code>ISender</code></li>
+</ul>
+<h3 id="contract-dto-mapping">19. Contract (DTO) 與 Mapping</h3>
+<ul>
+<li>Request 與 Response DTO</li>
+<li>為何 Contract 要與 Domain 分離</li>
+<li>手動 Mapping vs Mapperly</li>
+<li>API Versioning 考量</li>
+</ul>
+<h3 id="error-handling-problemdetails">20. Error Handling 與 ProblemDetails</h3>
+<ul>
+<li>Global Exception Handling</li>
+<li><code>ProblemDetails</code> RFC 7807</li>
+<li>將 <code>ErrorOr</code> 對應到 HTTP Response</li>
+<li>一致的錯誤格式</li>
+</ul>
+<h3 id="authentication-authorization">21. Authentication 與 Authorization</h3>
+<ul>
+<li>JWT Bearer Authentication</li>
+<li><code>[Authorize]</code> Attribute</li>
+<li>Policy-Based Authorization</li>
+<li>Current User Provider Pattern</li>
+</ul>
+<hr />
+<h2 id="part-6-testing">Part 6: Testing</h2>
+<h3 id="unit-testing-domain-application">22. Unit Testing (Domain, Application)</h3>
+<ul>
+<li>隔離測試 Domain Logic</li>
+<li>使用 NSubstitute 進行 Mock</li>
+<li>測試 Command/Query Handler</li>
+<li>使用 FluentAssertions 提升可讀性</li>
+</ul>
+<h3 id="integration-testing-webapplicationfactory">23. Integration Testing (WebApplicationFactory)</h3>
+<ul>
+<li><code>WebApplicationFactory&lt;T&gt;</code> 設定</li>
+<li>使用 In-Memory Database 進行測試</li>
+<li>HTTP Client 測試</li>
+<li>Test Fixture 與 Collection</li>
+</ul>
+<h3 id="test-utility-factory">24. Test Utility 與 Factory</h3>
+<ul>
+<li><code>TestCommon</code> 共用專案</li>
+<li>Object Mother 與 Builder</li>
+<li><code>CurrentUserFactory</code> 用於 Auth 測試</li>
+<li>可重複使用的 Test Helper</li>
+</ul>
+<hr />
+<h2 id="part-7">Part 7: 進階主題</h2>
+<h3 id="serviceframework-nats-jetstream">25. ServiceFramework 整合 (NATS, JetStream)</h3>
+<ul>
+<li>EdgeSync.ServiceFramework Package</li>
+<li>用於 Request/Response 的 NatsService</li>
+<li>用於 Event Handling 的 BaseEventHandler</li>
+<li>用於 Event Publishing 的 JetStreamClient</li>
+</ul>
+<h3 id="section">26. 多資料庫支援</h3>
+<ul>
+<li>Database Abstraction 策略</li>
+<li>開發用的 InMemory Repository</li>
+<li>生產環境用的 PostgreSQL</li>
+<li>MongoDB 作為替代方案</li>
+</ul>
+<h3 id="devcontainer-docker-compose">27. DevContainer 與 Docker Compose</h3>
+<ul>
+<li><code>.devcontainer/</code> 設定</li>
+<li><code>docker-compose.yml</code> 用於相依服務</li>
+<li>開發環境建置</li>
+<li>團隊一致的開發環境</li>
+</ul>
+<h3 id="dotnet-new-template">28. dotnet new Template 設定</h3>
+<ul>
+<li><code>template.json</code> 結構</li>
+<li>Template Parameter 與 Symbol</li>
+<li>條件式檔案引入</li>
+<li>發布至 NuGet</li>
+</ul>
+<hr />
+<h2 id="section-1">快速參考</h2>
+<h3 id="layer-1">Layer 依賴關係</h3>
+<pre><code>Api → Application → Domain
+ ↓         ↓
+Infrastructure
+     ↓
+   Domain
+</code></pre>
+<h3 id="pattern">使用的關鍵 Pattern</h3>
+<table>
+<thead>
+<tr>
+<th>Pattern</th>
+<th>位置</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Factory Method</td>
+<td>Domain</td>
+<td>受控的 Entity 建立</td>
+</tr>
+<tr>
+<td>Repository</td>
+<td>Application/Infrastructure</td>
+<td>Data Access 抽象化</td>
+</tr>
+<tr>
+<td>CQRS</td>
+<td>Application</td>
+<td>分離讀寫操作</td>
+</tr>
+<tr>
+<td>Mediator</td>
+<td>Application</td>
+<td>解耦 Request 處理</td>
+</tr>
+<tr>
+<td>Module</td>
+<td>All Layer</td>
+<td>組織 DI 註冊</td>
+</tr>
+</tbody>
+</table>
+<h3 id="error-handling">Error Handling 流程</h3>
+<pre><code>Domain Error → ErrorOr&lt;T&gt; → Handler → Controller → ProblemDetails → HTTP Response
+</code></pre>
+<hr />
+<h2 id="section-2">建議學習路徑</h2>
+<ol>
+<li><strong>第一週</strong>：Part 1-2（基礎概念 + Domain）</li>
+<li><strong>第二週</strong>：Part 3（Application Layer）</li>
+<li><strong>第三週</strong>：Part 4-5（Infrastructure + API）</li>
+<li><strong>第四週</strong>：Part 6（Testing）</li>
+<li><strong>第五週</strong>：Part 7（進階主題）</li>
+</ol>
+<hr />
+<h2 id="section-3">相關資源</h2>
+<ul>
+<li><a href="https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html">Clean Architecture by Robert C. Martin</a></li>
+<li><a href="https://github.com/amantinband/error-or">ErrorOr Library</a></li>
+<li><a href="https://github.com/martinothamar/Mediator">Mediator Documentation</a></li>
+<li><a href="https://docs.fluentvalidation.net/">FluentValidation Documentation</a></li>
+<li><a href="https://github.com/amantinband/clean-architecture">Amantinband Clean Architecture Template</a></li>
+</ul>
+
+    </article>
+</body>
+</html>

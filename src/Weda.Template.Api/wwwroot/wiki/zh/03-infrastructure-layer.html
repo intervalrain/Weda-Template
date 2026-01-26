@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="WikiGenerator">
+    <link rel="stylesheet" href="../wiki.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/vs2015.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+</head>
+<body>
+    <article class="markdown-body">
+    <h1 id="infrastructure-layer">Infrastructure Layer 實作指南</h1>
+<blockquote>
+<p>學習如何實作 Repository、資料庫持久化與外部服務整合</p>
+</blockquote>
+<h2 id="section">概觀</h2>
+<p>Infrastructure Layer 實作 Application 與 Domain Layer 中定義的技術細節，處理資料庫存取、外部服務與 Cross-Cutting Concern。</p>
+<pre><code>src/Weda.Template.Infrastructure/
+├── Common/
+│   ├── Persistence/
+│   │   └── AppDbContext.cs
+│   └── Middleware/
+│       └── EventualConsistencyMiddleware.cs
+├── Employees/
+│   └── Persistence/
+│       ├── EmployeeRepository.cs
+│       └── EmployeeConfiguration.cs
+├── Persistence/
+│   ├── DatabaseOptions.cs
+│   └── DatabaseProvider.cs
+├── Security/
+│   ├── JwtTokenGenerator.cs
+│   ├── JwtSettings.cs
+│   ├── AuthorizationService.cs
+│   ├── CurrentUserProvider/
+│   └── PolicyEnforcer/
+├── Services/
+│   └── SystemDateTimeProvider.cs
+└── WedaTemplateInfrastructureModule.cs
+</code></pre>
+<hr />
+<h2 id="database-context">1. Database Context</h2>
+<h3 id="appdbcontext">1.1 AppDbContext</h3>
+<pre><code class="language-csharp">public class AppDbContext : WedaDbContext
+{
+    public AppDbContext(DbContextOptions&lt;AppDbContext&gt; options)
+        : base(options)
+    {
+    }
+
+    public DbSet&lt;Employee&gt; Employees =&gt; Set&lt;Employee&gt;();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        // 從此 Assembly 套用所有 Configuration
+        modelBuilder.ApplyConfigurationsFromAssembly(
+            typeof(AppDbContext).Assembly);
+
+        base.OnModelCreating(modelBuilder);
+    }
+}
+</code></pre>
+<h3 id="wedadbcontext-base-class-weda.core">1.2 WedaDbContext Base Class（來自 Weda.Core）</h3>
+<p>Base Class 提供：</p>
+<ul>
+<li>自動提取與發布 Domain Event</li>
+<li>所有 DateTime 屬性的 UTC 轉換</li>
+<li>Domain Event 離線佇列機制</li>
+</ul>
+<pre><code class="language-csharp">public abstract class WedaDbContext : DbContext
+{
+    private readonly IMediator _mediator;
+
+    public override async Task&lt;int&gt; SaveChangesAsync(
+        CancellationToken cancellationToken = default)
+    {
+        // 儲存前提取 Domain Event
+        var domainEvents = ChangeTracker.Entries&lt;IAggregateRoot&gt;()
+            .SelectMany(e =&gt; e.Entity.PopDomainEvents())
+            .ToList();
+
+        var result = await base.SaveChangesAsync(cancellationToken);
+
+        // 成功儲存後發布 Domain Event
+        foreach (var domainEvent in domainEvents)
+        {
+            await _mediator.Publish(domainEvent, cancellationToken);
+        }
+
+        return result;
+    }
+
+    protected override void ConfigureConventions(
+        ModelConfigurationBuilder configurationBuilder)
+    {
+        // 將所有 DateTime 轉換為 UTC
+        configurationBuilder.Properties&lt;DateTime&gt;()
+            .HaveConversion&lt;UtcDateTimeConverter&gt;();
+    }
+}
+</code></pre>
+<hr />
+<h2 id="entity-configuration">2. Entity Configuration</h2>
+<h3 id="ientitytypeconfiguration">2.1 IEntityTypeConfiguration</h3>
+<pre><code class="language-csharp">public class EmployeeConfiguration : IEntityTypeConfiguration&lt;Employee&gt;
+{
+    public void Configure(EntityTypeBuilder&lt;Employee&gt; builder)
+    {
+        // 資料表名稱
+        builder.ToTable(&quot;Employees&quot;);
+
+        // 主鍵
+        builder.HasKey(e =&gt; e.Id);
+
+        builder.Property(e =&gt; e.Id)
+            .ValueGeneratedOnAdd();
+
+        // Value Object: EmployeeName
+        builder.Property(e =&gt; e.Name)
+            .HasConversion(
+                v =&gt; v.Value,
+                v =&gt; EmployeeName.Create(v).Value)
+            .HasMaxLength(EmployeeName.MaxLength)
+            .IsRequired();
+
+        // Value Object: Email 含唯一索引
+        builder.Property(e =&gt; e.Email)
+            .HasConversion(
+                v =&gt; v.Value,
+                v =&gt; Email.Create(v).Value)
+            .HasMaxLength(Email.MaxLength)
+            .IsRequired();
+
+        builder.HasIndex(e =&gt; e.Email)
+            .IsUnique();
+
+        // Value Object: Department
+        builder.Property(e =&gt; e.Department)
+            .HasConversion(
+                v =&gt; v.Value,
+                v =&gt; Department.Create(v).Value)
+            .HasMaxLength(Department.MaxLength)
+            .IsRequired();
+
+        // 簡單屬性
+        builder.Property(e =&gt; e.Position)
+            .HasMaxLength(100)
+            .IsRequired();
+
+        builder.Property(e =&gt; e.HireDate)
+            .IsRequired();
+
+        // Enum 轉為字串
+        builder.Property(e =&gt; e.Status)
+            .HasConversion&lt;string&gt;()
+            .HasMaxLength(20)
+            .IsRequired();
+
+        // 自我參照關聯
+        builder.HasOne&lt;Employee&gt;()
+            .WithMany()
+            .HasForeignKey(e =&gt; e.SupervisorId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // 時間戳記
+        builder.Property(e =&gt; e.CreatedAt)
+            .IsRequired();
+
+        builder.Property(e =&gt; e.UpdatedAt);
+    }
+}
+</code></pre>
+<h3 id="value-converter-pattern">2.2 Value Converter Pattern</h3>
+<pre><code class="language-csharp">// 為複雜的 Value Object 建立可重複使用的 Converter
+public class EmailConverter : ValueConverter&lt;Email, string&gt;
+{
+    public EmailConverter()
+        : base(
+            v =&gt; v.Value,
+            v =&gt; Email.Create(v).Value)
+    {
+    }
+}
+
+// 在 Configuration 中使用
+builder.Property(e =&gt; e.Email)
+    .HasConversion(new EmailConverter())
+    .HasMaxLength(Email.MaxLength);
+</code></pre>
+<h3 id="configuration">Configuration 檢查清單</h3>
+<ul class="contains-task-list">
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> 指定資料表名稱</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> 設定主鍵與值產生方式</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> Value Object 有轉換設定</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> 標記必填屬性</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> 指定最大長度</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> 為唯一/可搜尋欄位建立索引</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> 設定關聯與刪除行為</li>
+</ul>
+<hr />
+<h2 id="repository">3. Repository 實作</h2>
+<h3 id="genericrepository-base-class">3.1 GenericRepository Base Class</h3>
+<pre><code class="language-csharp">// 來自 Weda.Core
+public class GenericRepository&lt;T, TId, TDbContext&gt; : IRepository&lt;T, TId&gt;
+    where T : Entity&lt;TId&gt;
+    where TDbContext : DbContext
+{
+    protected readonly TDbContext DbContext;
+    protected readonly DbSet&lt;T&gt; DbSet;
+
+    public GenericRepository(TDbContext dbContext)
+    {
+        DbContext = dbContext;
+        DbSet = dbContext.Set&lt;T&gt;();
+    }
+
+    public virtual async Task&lt;T?&gt; GetByIdAsync(
+        TId id,
+        CancellationToken cancellationToken = default)
+    {
+        return await DbSet.FindAsync([id], cancellationToken);
+    }
+
+    public virtual async Task&lt;List&lt;T&gt;&gt; GetAllAsync(
+        CancellationToken cancellationToken = default)
+    {
+        return await DbSet.ToListAsync(cancellationToken);
+    }
+
+    public virtual async Task AddAsync(
+        T entity,
+        CancellationToken cancellationToken = default)
+    {
+        await DbSet.AddAsync(entity, cancellationToken);
+        await DbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    public virtual async Task UpdateAsync(
+        T entity,
+        CancellationToken cancellationToken = default)
+    {
+        DbSet.Update(entity);
+        await DbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    public virtual async Task DeleteAsync(
+        T entity,
+        CancellationToken cancellationToken = default)
+    {
+        DbSet.Remove(entity);
+        await DbContext.SaveChangesAsync(cancellationToken);
+    }
+}
+</code></pre>
+<h3 id="repository-1">3.2 特化的 Repository</h3>
+<pre><code class="language-csharp">public class EmployeeRepository
+    : GenericRepository&lt;Employee, int, AppDbContext&gt;, IEmployeeRepository
+{
+    public EmployeeRepository(AppDbContext dbContext)
+        : base(dbContext)
+    {
+    }
+
+    public async Task&lt;Employee?&gt; GetByEmailAsync(
+        Email email,
+        CancellationToken cancellationToken = default)
+    {
+        return await DbSet
+            .FirstOrDefaultAsync(
+                e =&gt; e.Email == email,
+                cancellationToken);
+    }
+
+    public async Task&lt;List&lt;Employee&gt;&gt; GetBySupervisorIdAsync(
+        int supervisorId,
+        CancellationToken cancellationToken = default)
+    {
+        return await DbSet
+            .Where(e =&gt; e.SupervisorId == supervisorId)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task&lt;bool&gt; ExistsWithEmailAsync(
+        Email email,
+        CancellationToken cancellationToken = default)
+    {
+        return await DbSet
+            .AnyAsync(
+                e =&gt; e.Email == email,
+                cancellationToken);
+    }
+}
+</code></pre>
+<hr />
+<h2 id="section-1">4. 資料庫設定</h2>
+<h3 id="database-options">4.1 Database Options</h3>
+<pre><code class="language-csharp">public class DatabaseOptions
+{
+    public const string SectionName = &quot;Database&quot;;
+
+    public DatabaseProvider Provider { get; set; } = DatabaseProvider.Sqlite;
+    public string ConnectionString { get; set; } = &quot;Data Source=Weda.Template.sqlite&quot;;
+    public string DatabaseName { get; set; } = &quot;WedaTemplate&quot;;
+}
+
+public enum DatabaseProvider
+{
+    Sqlite,
+    PostgreSql,
+    MongoDb,
+    InMemory
+}
+</code></pre>
+<h3 id="appsettings.json">4.2 appsettings.json</h3>
+<pre><code class="language-json">{
+  &quot;Database&quot;: {
+    &quot;Provider&quot;: &quot;Sqlite&quot;,
+    &quot;ConnectionString&quot;: &quot;Data Source=Weda.Template.sqlite&quot;,
+    &quot;DatabaseName&quot;: &quot;WedaTemplate&quot;
+  }
+}
+</code></pre>
+<h3 id="section-2">4.3 多資料庫支援</h3>
+<pre><code class="language-csharp">public static IServiceCollection AddDatabase(
+    this IServiceCollection services,
+    IConfiguration configuration)
+{
+    var options = configuration
+        .GetSection(DatabaseOptions.SectionName)
+        .Get&lt;DatabaseOptions&gt;() ?? new DatabaseOptions();
+
+    services.AddDbContext&lt;AppDbContext&gt;(dbOptions =&gt;
+    {
+        switch (options.Provider)
+        {
+            case DatabaseProvider.Sqlite:
+                dbOptions.UseSqlite(options.ConnectionString);
+                break;
+
+            case DatabaseProvider.PostgreSql:
+                dbOptions.UseNpgsql(options.ConnectionString);
+                break;
+
+            case DatabaseProvider.MongoDb:
+                dbOptions.UseMongoDB(
+                    options.ConnectionString,
+                    options.DatabaseName);
+                break;
+
+            case DatabaseProvider.InMemory:
+                dbOptions.UseInMemoryDatabase(options.DatabaseName);
+                break;
+
+            default:
+                throw new InvalidOperationException(
+                    $&quot;Unsupported database provider: {options.Provider}&quot;);
+        }
+    });
+
+    return services;
+}
+</code></pre>
+<hr />
+<h2 id="security-service">5. Security Service</h2>
+<h3 id="jwt-token-generator">5.1 JWT Token Generator</h3>
+<pre><code class="language-csharp">public class JwtTokenGenerator : IJwtTokenGenerator
+{
+    private readonly JwtSettings _jwtSettings;
+    private readonly IDateTimeProvider _dateTimeProvider;
+
+    public JwtTokenGenerator(
+        IOptions&lt;JwtSettings&gt; jwtSettings,
+        IDateTimeProvider dateTimeProvider)
+    {
+        _jwtSettings = jwtSettings.Value;
+        _dateTimeProvider = dateTimeProvider;
+    }
+
+    public string GenerateToken(
+        int userId,
+        string email,
+        IEnumerable&lt;string&gt; roles,
+        IEnumerable&lt;string&gt; permissions)
+    {
+        var claims = new List&lt;Claim&gt;
+        {
+            new(JwtRegisteredClaimNames.Sub, userId.ToString()),
+            new(JwtRegisteredClaimNames.Email, email),
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+        };
+
+        claims.AddRange(roles.Select(r =&gt; new Claim(ClaimTypes.Role, r)));
+        claims.AddRange(permissions.Select(p =&gt; new Claim(&quot;permissions&quot;, p)));
+
+        var key = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(_jwtSettings.Secret));
+
+        var credentials = new SigningCredentials(
+            key, SecurityAlgorithms.HmacSha256);
+
+        var token = new JwtSecurityToken(
+            issuer: _jwtSettings.Issuer,
+            audience: _jwtSettings.Audience,
+            claims: claims,
+            expires: _dateTimeProvider.UtcNow.AddMinutes(_jwtSettings.ExpiryMinutes),
+            signingCredentials: credentials);
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+}
+</code></pre>
+<h3 id="current-user-provider">5.2 Current User Provider</h3>
+<pre><code class="language-csharp">public class CurrentUserProvider : ICurrentUserProvider
+{
+    private readonly IHttpContextAccessor _httpContextAccessor;
+
+    public CurrentUserProvider(IHttpContextAccessor httpContextAccessor)
+    {
+        _httpContextAccessor = httpContextAccessor;
+    }
+
+    public CurrentUser? GetCurrentUser()
+    {
+        var user = _httpContextAccessor.HttpContext?.User;
+
+        if (user?.Identity?.IsAuthenticated != true)
+            return null;
+
+        var userId = int.Parse(
+            user.FindFirstValue(ClaimTypes.NameIdentifier) ?? &quot;0&quot;);
+
+        var email = user.FindFirstValue(ClaimTypes.Email) ?? string.Empty;
+
+        var roles = user.FindAll(ClaimTypes.Role)
+            .Select(c =&gt; c.Value)
+            .ToList();
+
+        var permissions = user.FindAll(&quot;permissions&quot;)
+            .Select(c =&gt; c.Value)
+            .ToList();
+
+        return new CurrentUser(userId, email, roles, permissions);
+    }
+}
+</code></pre>
+<h3 id="authorization-service">5.3 Authorization Service</h3>
+<pre><code class="language-csharp">public class AuthorizationService : IAuthorizationService
+{
+    private readonly ICurrentUserProvider _currentUserProvider;
+    private readonly IPolicyEnforcer _policyEnforcer;
+
+    public AuthorizationService(
+        ICurrentUserProvider currentUserProvider,
+        IPolicyEnforcer policyEnforcer)
+    {
+        _currentUserProvider = currentUserProvider;
+        _policyEnforcer = policyEnforcer;
+    }
+
+    public ErrorOr&lt;Success&gt; AuthorizeCurrentUser&lt;T&gt;(
+        IAuthorizeableRequest&lt;T&gt; request,
+        List&lt;string&gt; requiredRoles,
+        List&lt;string&gt; requiredPermissions,
+        List&lt;string&gt; requiredPolicies)
+    {
+        var currentUser = _currentUserProvider.GetCurrentUser();
+
+        if (currentUser is null)
+            return Error.Unauthorized(description: &quot;User is not authenticated&quot;);
+
+        // 檢查 Role
+        if (requiredRoles.Count &gt; 0 &amp;&amp;
+            !requiredRoles.Any(r =&gt; currentUser.Roles.Contains(r)))
+        {
+            return Error.Forbidden(description: &quot;Insufficient role&quot;);
+        }
+
+        // 檢查 Permission
+        if (requiredPermissions.Count &gt; 0 &amp;&amp;
+            !requiredPermissions.Any(p =&gt; currentUser.Permissions.Contains(p)))
+        {
+            return Error.Forbidden(description: &quot;Insufficient permissions&quot;);
+        }
+
+        // 檢查 Policy
+        foreach (var policy in requiredPolicies)
+        {
+            var result = _policyEnforcer.Enforce(policy, currentUser, request);
+            if (result.IsError)
+                return result.Errors;
+        }
+
+        return Result.Success;
+    }
+}
+</code></pre>
+<hr />
+<h2 id="infrastructure-module">6. Infrastructure Module</h2>
+<h3 id="module">6.1 Module 註冊</h3>
+<pre><code class="language-csharp">public static class WedaTemplateInfrastructureModule
+{
+    public static IServiceCollection AddInfrastructure(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        // Database
+        services.AddDatabase(configuration);
+
+        // Repository
+        services.AddScoped&lt;IEmployeeRepository, EmployeeRepository&gt;();
+
+        // Domain Service
+        services.AddScoped&lt;EmployeeHierarchyManager&gt;();
+
+        // Security
+        services.Configure&lt;JwtSettings&gt;(
+            configuration.GetSection(JwtSettings.SectionName));
+
+        services.AddScoped&lt;IJwtTokenGenerator, JwtTokenGenerator&gt;();
+        services.AddScoped&lt;ICurrentUserProvider, CurrentUserProvider&gt;();
+        services.AddScoped&lt;IAuthorizationService, AuthorizationService&gt;();
+        services.AddScoped&lt;IPolicyEnforcer, PolicyEnforcer&gt;();
+
+        // Service
+        services.AddSingleton&lt;IDateTimeProvider, SystemDateTimeProvider&gt;();
+
+        return services;
+    }
+
+    private static IServiceCollection AddDatabase(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        var options = configuration
+            .GetSection(DatabaseOptions.SectionName)
+            .Get&lt;DatabaseOptions&gt;() ?? new DatabaseOptions();
+
+        services.AddDbContext&lt;AppDbContext&gt;(dbOptions =&gt;
+        {
+            _ = options.Provider switch
+            {
+                DatabaseProvider.Sqlite =&gt;
+                    dbOptions.UseSqlite(options.ConnectionString),
+                DatabaseProvider.PostgreSql =&gt;
+                    dbOptions.UseNpgsql(options.ConnectionString),
+                DatabaseProvider.MongoDb =&gt;
+                    dbOptions.UseMongoDB(
+                        options.ConnectionString,
+                        options.DatabaseName),
+                DatabaseProvider.InMemory =&gt;
+                    dbOptions.UseInMemoryDatabase(options.DatabaseName),
+                _ =&gt; throw new InvalidOperationException(
+                    $&quot;Unsupported provider: {options.Provider}&quot;)
+            };
+        });
+
+        return services;
+    }
+}
+</code></pre>
+<h3 id="service-lifetime">Service Lifetime 參考</h3>
+<table>
+<thead>
+<tr>
+<th>Lifetime</th>
+<th>使用情境</th>
+<th>範例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Singleton</td>
+<td>Stateless、Thread-Safe 的 Service</td>
+<td><code>IDateTimeProvider</code></td>
+</tr>
+<tr>
+<td>Scoped</td>
+<td>每次 Request 的 Service</td>
+<td><code>IRepository</code>、<code>ICurrentUserProvider</code></td>
+</tr>
+<tr>
+<td>Transient</td>
+<td>輕量、Stateless</td>
+<td>很少使用</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="section-3">7. 外部服務</h2>
+<h3 id="datetime-provider">7.1 DateTime Provider</h3>
+<pre><code class="language-csharp">public interface IDateTimeProvider
+{
+    DateTime UtcNow { get; }
+}
+
+public class SystemDateTimeProvider : IDateTimeProvider
+{
+    public DateTime UtcNow =&gt; DateTime.UtcNow;
+}
+</code></pre>
+<h3 id="options-pattern">7.2 Options Pattern</h3>
+<pre><code class="language-csharp">public class JwtSettings
+{
+    public const string SectionName = &quot;Authentication:Jwt&quot;;
+
+    public string Secret { get; set; } = string.Empty;
+    public string Issuer { get; set; } = string.Empty;
+    public string Audience { get; set; } = string.Empty;
+    public int ExpiryMinutes { get; set; } = 60;
+}
+
+// 註冊
+services.Configure&lt;JwtSettings&gt;(
+    configuration.GetSection(JwtSettings.SectionName));
+
+// 透過 Constructor Injection 使用
+public class SomeService
+{
+    private readonly JwtSettings _settings;
+
+    public SomeService(IOptions&lt;JwtSettings&gt; settings)
+    {
+        _settings = settings.Value;
+    }
+}
+</code></pre>
+<hr />
+<h2 id="section-4">快速參考</h2>
+<h3 id="section-5">檔案命名慣例</h3>
+<table>
+<thead>
+<tr>
+<th>元件</th>
+<th>模式</th>
+<th>範例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>DbContext</td>
+<td><code>AppDbContext.cs</code></td>
+<td><code>AppDbContext.cs</code></td>
+</tr>
+<tr>
+<td>Configuration</td>
+<td><code>{Entity}Configuration.cs</code></td>
+<td><code>EmployeeConfiguration.cs</code></td>
+</tr>
+<tr>
+<td>Repository</td>
+<td><code>{Entity}Repository.cs</code></td>
+<td><code>EmployeeRepository.cs</code></td>
+</tr>
+<tr>
+<td>Options</td>
+<td><code>{Feature}Options.cs</code></td>
+<td><code>DatabaseOptions.cs</code></td>
+</tr>
+<tr>
+<td>Service</td>
+<td><code>{Name}Service.cs</code> 或 <code>{Name}Provider.cs</code></td>
+<td><code>AuthorizationService.cs</code></td>
+</tr>
+<tr>
+<td>Module</td>
+<td><code>{Project}InfrastructureModule.cs</code></td>
+<td><code>WedaTemplateInfrastructureModule.cs</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="section-6">資料夾結構</h3>
+<pre><code>Infrastructure/
+├── Common/
+│   ├── Persistence/
+│   │   └── AppDbContext.cs
+│   └── Middleware/
+├── {AggregateName}/
+│   └── Persistence/
+│       ├── {Entity}Repository.cs
+│       └── {Entity}Configuration.cs
+├── Persistence/
+│   ├── DatabaseOptions.cs
+│   └── DatabaseProvider.cs
+├── Security/
+│   ├── {Service}.cs
+│   └── {Feature}/
+├── Services/
+└── {Project}InfrastructureModule.cs
+</code></pre>
+<hr />
+<h2 id="section-7">相關資源</h2>
+<ul>
+<li><a href="GUIDE.md">GUIDE.md</a> - 學習指南總覽</li>
+<li><a href="02-application-layer.md">02-application-layer.md</a> - Application Layer 指南</li>
+<li><a href="04-api-layer.md">04-api-layer.md</a> - API Layer 指南</li>
+<li><a href="https://learn.microsoft.com/ef/core/">Entity Framework Core Documentation</a></li>
+</ul>
+
+    </article>
+</body>
+</html>

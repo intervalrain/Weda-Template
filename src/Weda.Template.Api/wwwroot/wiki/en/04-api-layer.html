@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="WikiGenerator">
+    <link rel="stylesheet" href="../wiki.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/vs2015.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+</head>
+<body>
+    <article class="markdown-body">
+    <h1 id="api-layer-implementation-guide">API Layer Implementation Guide</h1>
+<blockquote>
+<p>Learn how to build REST APIs and NATS event-driven endpoints</p>
+</blockquote>
+<h2 id="overview">Overview</h2>
+<p>The API Layer provides HTTP endpoints and event-driven interfaces. It orchestrates requests to the Application Layer via Mediator.</p>
+<pre><code>src/Weda.Template.Api/
+├── Controllers/
+│   ├── ApiController.cs
+│   ├── EmployeesController.cs
+│   └── AuthController.cs
+├── EventControllers/
+│   └── EmployeesEventController.cs
+├── Mapping/
+│   └── EmployeeMapper.cs
+├── Program.cs
+├── IAssemblyMarker.cs
+└── WedaTemplateApiModule.cs
+</code></pre>
+<hr />
+<h2 id="rest-controllers">1. REST Controllers</h2>
+<h3 id="base-controller">1.1 Base Controller</h3>
+<pre><code class="language-csharp">// From Weda.Core
+[ApiController]
+[Authorize]
+[Route(&quot;api/v{version:apiVersion}/[controller]&quot;)]
+public class ApiController : ControllerBase
+{
+    protected ActionResult Problem(List&lt;Error&gt; errors)
+    {
+        if (errors.Count == 0)
+            return Problem();
+
+        if (errors.All(e =&gt; e.Type == ErrorType.Validation))
+            return ValidationProblem(errors);
+
+        return Problem(errors[0]);
+    }
+
+    private ActionResult Problem(Error error)
+    {
+        var statusCode = error.Type switch
+        {
+            ErrorType.Validation =&gt; StatusCodes.Status400BadRequest,
+            ErrorType.NotFound =&gt; StatusCodes.Status404NotFound,
+            ErrorType.Conflict =&gt; StatusCodes.Status409Conflict,
+            ErrorType.Unauthorized =&gt; StatusCodes.Status401Unauthorized,
+            ErrorType.Forbidden =&gt; StatusCodes.Status403Forbidden,
+            _ =&gt; StatusCodes.Status500InternalServerError
+        };
+
+        return Problem(
+            statusCode: statusCode,
+            title: error.Code,
+            detail: error.Description);
+    }
+
+    private ActionResult ValidationProblem(List&lt;Error&gt; errors)
+    {
+        var modelState = new ModelStateDictionary();
+
+        foreach (var error in errors)
+        {
+            modelState.AddModelError(error.Code, error.Description);
+        }
+
+        return ValidationProblem(modelState);
+    }
+}
+</code></pre>
+<h3 id="resource-controller">1.2 Resource Controller</h3>
+<pre><code class="language-csharp">[ApiVersion(&quot;1.0&quot;)]
+public class EmployeesController : ApiController
+{
+    private readonly ISender _mediator;
+
+    public EmployeesController(ISender mediator)
+    {
+        _mediator = mediator;
+    }
+
+    /// &lt;summary&gt;
+    /// Get all employees
+    /// &lt;/summary&gt;
+    [HttpGet]
+    [ProducesResponseType(typeof(List&lt;EmployeeResponse&gt;), StatusCodes.Status200OK)]
+    public async Task&lt;IActionResult&gt; ListEmployees(
+        CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(
+            new ListEmployeesQuery(),
+            cancellationToken);
+
+        return result.Match(
+            employees =&gt; Ok(employees.Select(EmployeeMapper.ToResponse)),
+            Problem);
+    }
+
+    /// &lt;summary&gt;
+    /// Get employee by ID
+    /// &lt;/summary&gt;
+    [HttpGet(&quot;{id:int}&quot;)]
+    [ProducesResponseType(typeof(EmployeeResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task&lt;IActionResult&gt; GetEmployee(
+        int id,
+        CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(
+            new GetEmployeeQuery(id),
+            cancellationToken);
+
+        return result.Match(
+            employee =&gt; Ok(EmployeeMapper.ToResponse(employee)),
+            Problem);
+    }
+
+    /// &lt;summary&gt;
+    /// Create a new employee
+    /// &lt;/summary&gt;
+    [HttpPost]
+    [ProducesResponseType(typeof(EmployeeResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    public async Task&lt;IActionResult&gt; CreateEmployee(
+        [FromBody] CreateEmployeeRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new CreateEmployeeCommand(
+            request.Name,
+            request.Email,
+            request.Department,
+            request.Position,
+            request.HireDate,
+            request.SupervisorId);
+
+        var result = await _mediator.Send(command, cancellationToken);
+
+        return result.Match(
+            employee =&gt; CreatedAtAction(
+                nameof(GetEmployee),
+                new { id = employee.Id },
+                EmployeeMapper.ToResponse(employee)),
+            Problem);
+    }
+
+    /// &lt;summary&gt;
+    /// Update an existing employee
+    /// &lt;/summary&gt;
+    [HttpPut(&quot;{id:int}&quot;)]
+    [ProducesResponseType(typeof(EmployeeResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task&lt;IActionResult&gt; UpdateEmployee(
+        int id,
+        [FromBody] UpdateEmployeeRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new UpdateEmployeeCommand(
+            id,
+            request.Name,
+            request.Department,
+            request.Position);
+
+        var result = await _mediator.Send(command, cancellationToken);
+
+        return result.Match(
+            employee =&gt; Ok(EmployeeMapper.ToResponse(employee)),
+            Problem);
+    }
+
+    /// &lt;summary&gt;
+    /// Delete an employee
+    /// &lt;/summary&gt;
+    [HttpDelete(&quot;{id:int}&quot;)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    public async Task&lt;IActionResult&gt; DeleteEmployee(
+        int id,
+        CancellationToken cancellationToken)
+    {
+        var result = await _mediator.Send(
+            new DeleteEmployeeCommand(id),
+            cancellationToken);
+
+        return result.Match(
+            _ =&gt; NoContent(),
+            Problem);
+    }
+
+    /// &lt;summary&gt;
+    /// Get subordinates of an employee
+    /// &lt;/summary&gt;
+    [HttpGet(&quot;{id:int}/subordinates&quot;)]
+    [ProducesResponseType(typeof(List&lt;EmployeeResponse&gt;), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task&lt;IActionResult&gt; GetSubordinates(
+        int id,
+        [FromQuery] bool includeIndirect = false,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _mediator.Send(
+            new GetSubordinatesQuery(id, includeIndirect),
+            cancellationToken);
+
+        return result.Match(
+            subordinates =&gt; Ok(subordinates.Select(EmployeeMapper.ToResponse)),
+            Problem);
+    }
+}
+</code></pre>
+<h3 id="controller-response-pattern">Controller Response Pattern</h3>
+<pre><code>┌────────────────────────────────────────────────────────────────────┐
+│                       Controller Response Flow                     │
+├────────────────────────────────────────────────────────────────────┤
+│                                                                    │
+│  HTTP Request                                                      │
+│       ↓                                                            │
+│  Map Request → Command/Query                                       │
+│       ↓                                                            │
+│  Send via Mediator                                                 │
+│       ↓                                                            │
+│  Receive ErrorOr&lt;T&gt;                                                │
+│       ↓                                                            │
+│  result.Match(                                                     │
+│      success =&gt; Ok/Created/NoContent,                              │
+│      errors =&gt; Problem                                             │
+│  )                                                                 │
+│       ↓                                                            │
+│  HTTP Response                                                     │
+│                                                                    │
+└────────────────────────────────────────────────────────────────────┘
+</code></pre>
+<hr />
+<h2 id="nats-event-controllers">2. NATS Event Controllers</h2>
+<h3 id="eventcontroller-base-from-weda.core">2.1 EventController Base (from Weda.Core)</h3>
+<pre><code class="language-csharp">[Stream(&quot;stream_name&quot;)]
+[Consumer(&quot;consumer_name&quot;)]
+[Connection(&quot;bus&quot;)]
+public abstract class EventController
+{
+    public IMediator Mediator { get; internal set; }
+    public INatsConnectionProvider NatsProvider { get; internal set; }
+    public ILogger Logger { get; internal set; }
+    public string Subject { get; internal set; }
+    public IReadOnlyDictionary&lt;string, string&gt; SubjectValues { get; internal set; }
+}
+</code></pre>
+<h3 id="implementing-event-controller">2.2 Implementing Event Controller</h3>
+<pre><code class="language-csharp">[Stream(&quot;employees_v1_stream&quot;)]
+[Consumer(&quot;employees_v1_consumer&quot;)]
+[Connection(&quot;bus&quot;)]
+public class EmployeesEventController : EventController
+{
+    /// &lt;summary&gt;
+    /// Request-Reply: Get employee by ID
+    /// Returns a response to the requester
+    /// &lt;/summary&gt;
+    [Subject(&quot;employees.v1.{id}.get&quot;)]
+    public async Task&lt;GetEmployeeResponse&gt; GetEmployee(
+        GetEmployeeNatsRequest request,
+        CancellationToken cancellationToken)
+    {
+        var id = int.Parse(SubjectValues[&quot;id&quot;]);
+
+        var result = await Mediator.Send(
+            new GetEmployeeQuery(id),
+            cancellationToken);
+
+        if (result.IsError)
+        {
+            return new GetEmployeeResponse(
+                Success: false,
+                Employee: null,
+                Error: result.Errors.First().Description);
+        }
+
+        return new GetEmployeeResponse(
+            Success: true,
+            Employee: result.Value,
+            Error: null);
+    }
+
+    /// &lt;summary&gt;
+    /// JetStream Consume: Process employee creation events
+    /// Default mode - continuous processing
+    /// &lt;/summary&gt;
+    [Subject(&quot;employees.v1.created&quot;)]
+    public async Task HandleEmployeeCreated(
+        CreateEmployeeNatsEvent @event,
+        CancellationToken cancellationToken)
+    {
+        Logger.LogInformation(
+            &quot;Processing employee created event: {Id} - {Name}&quot;,
+            @event.Id,
+            @event.Name);
+
+        // Process the event
+        await ProcessCreatedEventAsync(@event, cancellationToken);
+    }
+
+    /// &lt;summary&gt;
+    /// JetStream Fetch: Batch process status changes
+    /// &lt;/summary&gt;
+    [Subject(&quot;employees.v1.status-changed&quot;)]
+    [ConsumerMode(NatsConsumerMode.Fetch)]
+    public async Task HandleStatusChanged(
+        EmployeeStatusChangedNatsEvent @event,
+        CancellationToken cancellationToken)
+    {
+        Logger.LogInformation(
+            &quot;Processing status change: {Id} {OldStatus} -&gt; {NewStatus}&quot;,
+            @event.EmployeeId,
+            @event.OldStatus,
+            @event.NewStatus);
+
+        await ProcessStatusChangeAsync(@event, cancellationToken);
+    }
+
+    /// &lt;summary&gt;
+    /// Core Pub-Sub: Fire-and-forget notifications
+    /// &lt;/summary&gt;
+    [Subject(&quot;employees.v1.notifications.&gt;&quot;)]
+    [DeliveryMode(NatsDeliveryMode.Core)]
+    public void HandleNotification(EmployeeNotificationEvent @event)
+    {
+        Logger.LogInformation(
+            &quot;Received notification for employee: {Id}&quot;,
+            @event.EmployeeId);
+
+        // Fire-and-forget processing
+    }
+
+    private async Task ProcessCreatedEventAsync(
+        CreateEmployeeNatsEvent @event,
+        CancellationToken cancellationToken)
+    {
+        // Implementation
+    }
+
+    private async Task ProcessStatusChangeAsync(
+        EmployeeStatusChangedNatsEvent @event,
+        CancellationToken cancellationToken)
+    {
+        // Implementation
+    }
+}
+</code></pre>
+<h3 id="nats-patterns-reference">NATS Patterns Reference</h3>
+<table>
+<thead>
+<tr>
+<th>Pattern</th>
+<th>Return Type</th>
+<th>Attribute</th>
+<th>Use Case</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Request-Reply</td>
+<td><code>Task&lt;TResponse&gt;</code></td>
+<td>Default</td>
+<td>Synchronous query</td>
+</tr>
+<tr>
+<td>JetStream Consume</td>
+<td><code>Task</code> (void)</td>
+<td><code>[ConsumerMode(Consume)]</code></td>
+<td>Continuous processing</td>
+</tr>
+<tr>
+<td>JetStream Fetch</td>
+<td><code>Task</code> (void)</td>
+<td><code>[ConsumerMode(Fetch)]</code></td>
+<td>Batch processing</td>
+</tr>
+<tr>
+<td>Core Pub-Sub</td>
+<td><code>void</code></td>
+<td><code>[DeliveryMode(Core)]</code></td>
+<td>Fire-and-forget</td>
+</tr>
+</tbody>
+</table>
+<h3 id="subject-template-variables">Subject Template Variables</h3>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Description</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>{controller}</code></td>
+<td>Controller name</td>
+<td><code>employees</code></td>
+</tr>
+<tr>
+<td><code>{version}</code></td>
+<td>API version</td>
+<td><code>v1</code></td>
+</tr>
+<tr>
+<td><code>{id}</code></td>
+<td>Resource identifier</td>
+<td><code>123</code></td>
+</tr>
+<tr>
+<td><code>&gt;</code></td>
+<td>Wildcard (any suffix)</td>
+<td><code>notifications.&gt;</code></td>
+</tr>
+<tr>
+<td><code>*</code></td>
+<td>Single token wildcard</td>
+<td><code>*.created</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="contracts">3. Contracts</h2>
+<h3 id="request-dtos">3.1 Request DTOs</h3>
+<pre><code class="language-csharp">// In Contracts layer
+public record CreateEmployeeRequest(
+    string Name,
+    string Email,
+    string Department,
+    string Position,
+    DateTime HireDate,
+    int? SupervisorId);
+
+public record UpdateEmployeeRequest(
+    string Name,
+    string Department,
+    string Position);
+</code></pre>
+<h3 id="response-dtos">3.2 Response DTOs</h3>
+<pre><code class="language-csharp">public record EmployeeResponse(
+    int Id,
+    string Name,
+    string Email,
+    string Department,
+    string Position,
+    DateTime HireDate,
+    string Status,
+    int? SupervisorId,
+    DateTime CreatedAt,
+    DateTime? UpdatedAt);
+</code></pre>
+<h3 id="swagger-examples">3.3 Swagger Examples</h3>
+<pre><code class="language-csharp">public class CreateEmployeeRequestExample
+    : IExamplesProvider&lt;CreateEmployeeRequest&gt;
+{
+    public CreateEmployeeRequest GetExamples()
+    {
+        return new CreateEmployeeRequest(
+            Name: &quot;John Doe&quot;,
+            Email: &quot;john.doe@example.com&quot;,
+            Department: &quot;Engineering&quot;,
+            Position: &quot;Software Engineer&quot;,
+            HireDate: DateTime.UtcNow,
+            SupervisorId: null);
+    }
+}
+</code></pre>
+<hr />
+<h2 id="api-mappers">4. API Mappers</h2>
+<h3 id="mapperly-for-api-layer">4.1 Mapperly for API Layer</h3>
+<pre><code class="language-csharp">[Mapper]
+public static partial class EmployeeMapper
+{
+    public static partial EmployeeResponse ToResponse(EmployeeDto dto);
+
+    public static IEnumerable&lt;EmployeeResponse&gt; ToResponses(
+        IEnumerable&lt;EmployeeDto&gt; dtos)
+    {
+        return dtos.Select(ToResponse);
+    }
+}
+</code></pre>
+<h3 id="mapping-flow">Mapping Flow</h3>
+<pre><code>Domain Entity
+     ↓ (Application Mapper)
+EmployeeDto
+     ↓ (API Mapper)
+EmployeeResponse
+     ↓
+JSON Response
+</code></pre>
+<hr />
+<h2 id="program.cs-configuration">5. Program.cs Configuration</h2>
+<h3 id="application-setup">5.1 Application Setup</h3>
+<pre><code class="language-csharp">var builder = WebApplication.CreateBuilder(args);
+
+// Add layers
+builder.Services
+    .AddApplication()
+    .AddInfrastructure(builder.Configuration);
+
+// Add Weda.Core with all features
+builder.Services.AddWedaCore(builder.Configuration, options =&gt;
+{
+    options.AddMediator(typeof(IApplicationMarker).Assembly);
+    options.AddValidators(typeof(IApplicationMarker).Assembly);
+    options.AddSwagger();
+    options.AddAuthentication();
+    options.AddNats();
+});
+
+// Add API versioning
+builder.Services.AddApiVersioning(options =&gt;
+{
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ReportApiVersions = true;
+})
+.AddApiExplorer(options =&gt;
+{
+    options.GroupNameFormat = &quot;'v'VVV&quot;;
+    options.SubstituteApiVersionInUrl = true;
+});
+
+var app = builder.Build();
+
+// Configure pipeline
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapControllers();
+
+// Initialize database
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService&lt;AppDbContext&gt;();
+    await dbContext.Database.EnsureCreatedAsync();
+}
+
+app.Run();
+</code></pre>
+<h3 id="api-module">5.2 API Module</h3>
+<pre><code class="language-csharp">public static class WedaTemplateApiModule
+{
+    public static IServiceCollection AddApi(this IServiceCollection services)
+    {
+        services.AddControllers();
+        services.AddEndpointsApiExplorer();
+
+        return services;
+    }
+}
+</code></pre>
+<hr />
+<h2 id="authentication-controller">6. Authentication Controller</h2>
+<h3 id="auth-endpoint">6.1 Auth Endpoint</h3>
+<pre><code class="language-csharp">[ApiVersion(&quot;1.0&quot;)]
+[AllowAnonymous]
+public class AuthController : ApiController
+{
+    private readonly IJwtTokenGenerator _tokenGenerator;
+
+    public AuthController(IJwtTokenGenerator tokenGenerator)
+    {
+        _tokenGenerator = tokenGenerator;
+    }
+
+    /// &lt;summary&gt;
+    /// Generate authentication token
+    /// &lt;/summary&gt;
+    [HttpPost(&quot;token&quot;)]
+    [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    public IActionResult GetToken([FromBody] GetAuthRequest request)
+    {
+        // In production, validate credentials against user store
+        if (string.IsNullOrEmpty(request.Email))
+        {
+            return Problem(
+                statusCode: StatusCodes.Status401Unauthorized,
+                title: &quot;Invalid credentials&quot;);
+        }
+
+        var token = _tokenGenerator.GenerateToken(
+            userId: 1,
+            email: request.Email,
+            roles: [&quot;User&quot;],
+            permissions: [&quot;employees:read&quot;, &quot;employees:write&quot;]);
+
+        return Ok(new AuthResponse(token));
+    }
+}
+</code></pre>
+<hr />
+<h2 id="error-handling">7. Error Handling</h2>
+<h3 id="global-exception-handler">7.1 Global Exception Handler</h3>
+<pre><code class="language-csharp">// Configured in Weda.Core
+app.UseExceptionHandler(errorApp =&gt;
+{
+    errorApp.Run(async context =&gt;
+    {
+        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        context.Response.ContentType = &quot;application/problem+json&quot;;
+
+        var error = context.Features.Get&lt;IExceptionHandlerFeature&gt;();
+
+        if (error != null)
+        {
+            var problem = new ProblemDetails
+            {
+                Status = StatusCodes.Status500InternalServerError,
+                Title = &quot;An unexpected error occurred&quot;,
+                Detail = error.Error.Message
+            };
+
+            await context.Response.WriteAsJsonAsync(problem);
+        }
+    });
+});
+</code></pre>
+<h3 id="problemdetails-response">7.2 ProblemDetails Response</h3>
+<pre><code class="language-json">{
+  &quot;type&quot;: &quot;https://tools.ietf.org/html/rfc7807&quot;,
+  &quot;title&quot;: &quot;Employee.NotFound&quot;,
+  &quot;status&quot;: 404,
+  &quot;detail&quot;: &quot;Employee not found&quot;,
+  &quot;traceId&quot;: &quot;00-abc123-def456-00&quot;
+}
+</code></pre>
+<hr />
+<h2 id="quick-reference">Quick Reference</h2>
+<h3 id="file-naming-conventions">File Naming Conventions</h3>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Pattern</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Controller</td>
+<td><code>{Resource}Controller.cs</code></td>
+<td><code>EmployeesController.cs</code></td>
+</tr>
+<tr>
+<td>Event Controller</td>
+<td><code>{Resource}EventController.cs</code></td>
+<td><code>EmployeesEventController.cs</code></td>
+</tr>
+<tr>
+<td>Request</td>
+<td><code>{Action}{Resource}Request.cs</code></td>
+<td><code>CreateEmployeeRequest.cs</code></td>
+</tr>
+<tr>
+<td>Response</td>
+<td><code>{Resource}Response.cs</code></td>
+<td><code>EmployeeResponse.cs</code></td>
+</tr>
+<tr>
+<td>Mapper</td>
+<td><code>{Resource}Mapper.cs</code></td>
+<td><code>EmployeeMapper.cs</code></td>
+</tr>
+<tr>
+<td>Module</td>
+<td><code>{Project}ApiModule.cs</code></td>
+<td><code>WedaTemplateApiModule.cs</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="folder-structure">Folder Structure</h3>
+<pre><code>Api/
+├── Controllers/
+│   ├── ApiController.cs
+│   └── {Resource}Controller.cs
+├── EventControllers/
+│   └── {Resource}EventController.cs
+├── Mapping/
+│   └── {Resource}Mapper.cs
+├── Program.cs
+├── IAssemblyMarker.cs
+└── {Project}ApiModule.cs
+</code></pre>
+<h3 id="http-status-codes">HTTP Status Codes</h3>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Meaning</th>
+<th>When to Use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>200</td>
+<td>OK</td>
+<td>Successful GET, PUT</td>
+</tr>
+<tr>
+<td>201</td>
+<td>Created</td>
+<td>Successful POST</td>
+</tr>
+<tr>
+<td>204</td>
+<td>No Content</td>
+<td>Successful DELETE</td>
+</tr>
+<tr>
+<td>400</td>
+<td>Bad Request</td>
+<td>Validation errors</td>
+</tr>
+<tr>
+<td>401</td>
+<td>Unauthorized</td>
+<td>Missing/invalid auth</td>
+</tr>
+<tr>
+<td>403</td>
+<td>Forbidden</td>
+<td>Insufficient permissions</td>
+</tr>
+<tr>
+<td>404</td>
+<td>Not Found</td>
+<td>Resource doesn't exist</td>
+</tr>
+<tr>
+<td>409</td>
+<td>Conflict</td>
+<td>Duplicate or state conflict</td>
+</tr>
+<tr>
+<td>500</td>
+<td>Server Error</td>
+<td>Unexpected errors</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="related-resources">Related Resources</h2>
+<ul>
+<li><a href="GUIDE.md">GUIDE.md</a> - Learning Guide Overview</li>
+<li><a href="03-infrastructure-layer.md">03-infrastructure-layer.md</a> - Infrastructure Layer Guide</li>
+<li><a href="https://learn.microsoft.com/aspnet/core/">ASP.NET Core Documentation</a></li>
+<li><a href="https://docs.nats.io/">NATS Documentation</a></li>
+</ul>
+
+    </article>
+</body>
+</html>

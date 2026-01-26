@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="WikiGenerator">
+    <link rel="stylesheet" href="../wiki.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/vs2015.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+</head>
+<body>
+    <article class="markdown-body">
+    <h1 id="domain-layer">Domain Layer 實作指南</h1>
+<blockquote>
+<p>學習如何依循 DDD 原則建構 Domain Layer 元件</p>
+</blockquote>
+<h2 id="section">概觀</h2>
+<p>Domain Layer 是 Clean Architecture 的核心，包含業務邏輯與領域模型，且不依賴任何外部套件。所有 DDD Base Class（Entity、AggregateRoot、IDomainEvent、IRepository）皆由 <strong>Weda.Core</strong> 提供。</p>
+<pre><code>src/Weda.Template.Domain/
+└── Employees/
+    ├── Entities/
+    │   └── Employee.cs
+    ├── ValueObjects/
+    │   ├── Email.cs
+    │   ├── EmployeeName.cs
+    │   └── Department.cs
+    ├── Enums/
+    │   └── EmployeeStatus.cs
+    ├── Errors/
+    │   └── EmployeeErrors.cs
+    ├── Events/
+    │   └── EmployeeCreatedEvent.cs
+    ├── DomainServices/
+    │   └── EmployeeHierarchyManager.cs
+    └── Repositories/
+        └── IEmployeeRepository.cs
+</code></pre>
+<blockquote>
+<p>請參閱 <a href="00-weda-core-overview.md">00-weda-core-overview.md</a> 了解 Weda.Core 提供的 Base Class 詳細資訊。</p>
+</blockquote>
+<hr />
+<h2 id="entity-aggregate-root">1. Entity 與 Aggregate Root</h2>
+<h3 id="base-class-weda.core">1.1 Base Class（來自 Weda.Core）</h3>
+<p>Domain Layer 繼承自 <code>Weda.Core</code> 的 Base Class。您不需要在 Domain 專案中建立這些檔案：</p>
+<pre><code class="language-csharp">// Entity&lt;TId&gt; - 所有 Entity 的 Base Class
+public abstract class Entity&lt;TId&gt; : IEquatable&lt;Entity&lt;TId&gt;&gt;
+{
+    public TId Id { get; protected set; }
+
+    // 基於 Id 的相等性比較
+    public override bool Equals(object? obj) =&gt; ...
+    public override int GetHashCode() =&gt; Id?.GetHashCode() ?? 0;
+}
+
+// AggregateRoot&lt;TId&gt; - 作為 Aggregate 邊界的 Entity
+public abstract class AggregateRoot&lt;TId&gt; : Entity&lt;TId&gt;, IAggregateRoot
+{
+    private readonly List&lt;IDomainEvent&gt; _domainEvents = [];
+
+    public List&lt;IDomainEvent&gt; PopDomainEvents() { ... }
+    protected void RaiseDomainEvent(IDomainEvent domainEvent) { ... }
+}
+</code></pre>
+<h3 id="aggregate-root">1.2 實作 Aggregate Root</h3>
+<pre><code class="language-csharp">public class Employee : AggregateRoot&lt;int&gt;
+{
+    // 使用 Private Setter 進行封裝
+    public EmployeeName Name { get; private set; }
+    public Email Email { get; private set; }
+    public Department Department { get; private set; }
+    public string Position { get; private set; }
+    public DateTime HireDate { get; private set; }
+    public EmployeeStatus Status { get; private set; }
+    public int? SupervisorId { get; private set; }
+    public DateTime CreatedAt { get; private init; }
+    public DateTime? UpdatedAt { get; private set; }
+
+    // Private Constructor - 改用 Factory Method
+    private Employee() { }
+
+    // Factory Method Pattern
+    public static ErrorOr&lt;Employee&gt; Create(
+        EmployeeName name,
+        Email email,
+        Department department,
+        string position,
+        DateTime hireDate,
+        int? supervisorId = null)
+    {
+        var employee = new Employee
+        {
+            Name = name,
+            Email = email,
+            Department = department,
+            Position = position,
+            HireDate = hireDate,
+            SupervisorId = supervisorId,
+            Status = EmployeeStatus.Active,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        // 發送 Domain Event
+        employee.RaiseDomainEvent(new EmployeeCreatedEvent(employee));
+
+        return employee;
+    }
+
+    // 狀態變更方法回傳 ErrorOr&lt;Success&gt;
+    public ErrorOr&lt;Success&gt; UpdateInfo(
+        EmployeeName name,
+        Department department,
+        string position)
+    {
+        if (Status == EmployeeStatus.Inactive)
+            return EmployeeErrors.CannotModifyInactive;
+
+        Name = name;
+        Department = department;
+        Position = position;
+        UpdatedAt = DateTime.UtcNow;
+
+        return Result.Success;
+    }
+
+    public ErrorOr&lt;Success&gt; Deactivate()
+    {
+        if (Status == EmployeeStatus.Inactive)
+            return EmployeeErrors.AlreadyInactive;
+
+        Status = EmployeeStatus.Inactive;
+        UpdatedAt = DateTime.UtcNow;
+
+        return Result.Success;
+    }
+}
+</code></pre>
+<h3 id="section-1">核心原則</h3>
+<table>
+<thead>
+<tr>
+<th>原則</th>
+<th>實作方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Encapsulation</td>
+<td>Private Setter，透過 Public Method 變更狀態</td>
+</tr>
+<tr>
+<td>Factory Method</td>
+<td><code>Create()</code> 回傳 <code>ErrorOr&lt;T&gt;</code></td>
+</tr>
+<tr>
+<td>Immutable Creation</td>
+<td><code>private init</code> 用於 CreatedAt</td>
+</tr>
+<tr>
+<td>Domain Event</td>
+<td>在狀態變更時呼叫 <code>RaiseDomainEvent()</code></td>
+</tr>
+<tr>
+<td>Error Handling</td>
+<td>回傳 <code>ErrorOr&lt;Success&gt;</code> 而非拋出 Exception</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="value-object">2. Value Object</h2>
+<p>Value Object 具有 Immutability、自我驗證、以及 Value Equality 特性。</p>
+<h3 id="section-2">2.1 基本結構</h3>
+<pre><code class="language-csharp">public sealed partial class Email : IEquatable&lt;Email&gt;
+{
+    public const int MaxLength = 256;
+    private static readonly Regex EmailRegex = GenerateEmailRegex();
+
+    public string Value { get; }
+
+    private Email(string value) =&gt; Value = value;
+
+    public static ErrorOr&lt;Email&gt; Create(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return EmployeeErrors.EmailRequired;
+
+        if (value.Length &gt; MaxLength)
+            return EmployeeErrors.EmailTooLong;
+
+        if (!EmailRegex.IsMatch(value))
+            return EmployeeErrors.InvalidEmailFormat;
+
+        return new Email(value);
+    }
+
+    // Value Equality
+    public bool Equals(Email? other) =&gt; other?.Value == Value;
+    public override bool Equals(object? obj) =&gt; obj is Email other &amp;&amp; Equals(other);
+    public override int GetHashCode() =&gt; Value.GetHashCode();
+
+    // 便利的隱式轉換
+    public override string ToString() =&gt; Value;
+    public static implicit operator string(Email email) =&gt; email.Value;
+
+    [GeneratedRegex(@&quot;^[^@\s]+@[^@\s]+\.[^@\s]+$&quot;)]
+    private static partial Regex GenerateEmailRegex();
+}
+</code></pre>
+<h3 id="value-object-1">2.2 簡單的 Value Object</h3>
+<pre><code class="language-csharp">public sealed class EmployeeName : IEquatable&lt;EmployeeName&gt;
+{
+    public const int MaxLength = 100;
+
+    public string Value { get; }
+
+    private EmployeeName(string value) =&gt; Value = value;
+
+    public static ErrorOr&lt;EmployeeName&gt; Create(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return EmployeeErrors.NameRequired;
+
+        if (value.Length &gt; MaxLength)
+            return EmployeeErrors.NameTooLong;
+
+        return new EmployeeName(value);
+    }
+
+    public bool Equals(EmployeeName? other) =&gt; other?.Value == Value;
+    public override bool Equals(object? obj) =&gt; obj is EmployeeName other &amp;&amp; Equals(other);
+    public override int GetHashCode() =&gt; Value.GetHashCode();
+    public override string ToString() =&gt; Value;
+    public static implicit operator string(EmployeeName name) =&gt; name.Value;
+}
+</code></pre>
+<h3 id="value-object-2">Value Object 檢查清單</h3>
+<ul class="contains-task-list">
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> Private Constructor</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> Static <code>Create()</code> 方法回傳 <code>ErrorOr&lt;T&gt;</code></li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> 在 <code>Create()</code> 方法中進行驗證</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> Immutable（唯讀屬性）</li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> 實作 <code>IEquatable&lt;T&gt;</code></li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> 覆寫 <code>Equals()</code> 與 <code>GetHashCode()</code></li>
+<li class="task-list-item"><input disabled="disabled" type="checkbox" /> 選用：隱式轉換運算子</li>
+</ul>
+<hr />
+<h2 id="domain-error">3. Domain Error</h2>
+<p>使用 ErrorOr Library 將 Error 定義為 Static Readonly Field。</p>
+<h3 id="error">3.1 Error 分類</h3>
+<pre><code class="language-csharp">public static class EmployeeErrors
+{
+    // Not Found (404)
+    public static readonly Error NotFound = Error.NotFound(
+        code: &quot;Employee.NotFound&quot;,
+        description: &quot;Employee not found&quot;);
+
+    // Validation (400)
+    public static readonly Error NameRequired = Error.Validation(
+        code: &quot;Employee.NameRequired&quot;,
+        description: &quot;Employee name is required&quot;);
+
+    public static readonly Error NameTooLong = Error.Validation(
+        code: &quot;Employee.NameTooLong&quot;,
+        description: $&quot;Employee name cannot exceed {EmployeeName.MaxLength} characters&quot;);
+
+    public static readonly Error EmailRequired = Error.Validation(
+        code: &quot;Employee.EmailRequired&quot;,
+        description: &quot;Email is required&quot;);
+
+    public static readonly Error InvalidEmailFormat = Error.Validation(
+        code: &quot;Employee.InvalidEmailFormat&quot;,
+        description: &quot;Invalid email format&quot;);
+
+    // Business Rule
+    public static readonly Error CannotModifyInactive = Error.Failure(
+        code: &quot;Employee.CannotModifyInactive&quot;,
+        description: &quot;Cannot modify inactive employee&quot;);
+
+    public static readonly Error CannotBeSelfSupervisor = Error.Validation(
+        code: &quot;Employee.CannotBeSelfSupervisor&quot;,
+        description: &quot;Employee cannot be their own supervisor&quot;);
+
+    // Conflict (409)
+    public static readonly Error DuplicateEmail = Error.Conflict(
+        code: &quot;Employee.DuplicateEmail&quot;,
+        description: &quot;An employee with this email already exists&quot;);
+
+    public static readonly Error AlreadyInactive = Error.Conflict(
+        code: &quot;Employee.AlreadyInactive&quot;,
+        description: &quot;Employee is already inactive&quot;);
+}
+</code></pre>
+<h3 id="error-1">Error 類型參考</h3>
+<table>
+<thead>
+<tr>
+<th>類型</th>
+<th>HTTP Status</th>
+<th>使用情境</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Error.Validation</code></td>
+<td>400</td>
+<td>輸入驗證失敗</td>
+</tr>
+<tr>
+<td><code>Error.NotFound</code></td>
+<td>404</td>
+<td>資源不存在</td>
+</tr>
+<tr>
+<td><code>Error.Conflict</code></td>
+<td>409</td>
+<td>重複或狀態衝突</td>
+</tr>
+<tr>
+<td><code>Error.Failure</code></td>
+<td>500</td>
+<td>業務規則違反</td>
+</tr>
+<tr>
+<td><code>Error.Unauthorized</code></td>
+<td>401</td>
+<td>需要驗證</td>
+</tr>
+<tr>
+<td><code>Error.Forbidden</code></td>
+<td>403</td>
+<td>權限不足</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="domain-event">4. Domain Event</h2>
+<p>Domain Event 用於捕捉領域中的重要事件。</p>
+<h3 id="event">4.1 定義 Event</h3>
+<pre><code class="language-csharp">// Weda.Core 的 Base Interface
+public interface IDomainEvent : INotification
+{
+    DateTime OccurredAt { get; }
+}
+
+// 使用 Record 定義 Domain Event
+public record EmployeeCreatedEvent(Employee Employee) : IDomainEvent
+{
+    public DateTime OccurredAt { get; } = DateTime.UtcNow;
+}
+
+public record EmployeeStatusChangedEvent(
+    Employee Employee,
+    EmployeeStatus OldStatus,
+    EmployeeStatus NewStatus) : IDomainEvent
+{
+    public DateTime OccurredAt { get; } = DateTime.UtcNow;
+}
+</code></pre>
+<h3 id="event-1">4.2 發送 Event</h3>
+<pre><code class="language-csharp">public class Employee : AggregateRoot&lt;int&gt;
+{
+    public static ErrorOr&lt;Employee&gt; Create(...)
+    {
+        var employee = new Employee { ... };
+
+        // 建立時發送 Event
+        employee.RaiseDomainEvent(new EmployeeCreatedEvent(employee));
+
+        return employee;
+    }
+
+    public ErrorOr&lt;Success&gt; Deactivate()
+    {
+        var oldStatus = Status;
+        Status = EmployeeStatus.Inactive;
+
+        // 狀態變更時發送 Event
+        RaiseDomainEvent(new EmployeeStatusChangedEvent(this, oldStatus, Status));
+
+        return Result.Success;
+    }
+}
+</code></pre>
+<h3 id="event-2">Event 流程</h3>
+<pre><code>Entity State Change
+       ↓
+RaiseDomainEvent()
+       ↓
+Event 儲存於 _domainEvents List
+       ↓
+DbContext.SaveChanges()
+       ↓
+PopDomainEvents() 提取 Event
+       ↓
+Mediator 發布至 INotificationHandler
+</code></pre>
+<hr />
+<h2 id="domain-service">5. Domain Service</h2>
+<p>當邏輯跨越多個 Aggregate 或需要外部資料時，使用 Domain Service。</p>
+<h3 id="section-3">5.1 實作</h3>
+<pre><code class="language-csharp">public class EmployeeHierarchyManager
+{
+    private readonly IEmployeeRepository _employeeRepository;
+
+    public EmployeeHierarchyManager(IEmployeeRepository employeeRepository)
+    {
+        _employeeRepository = employeeRepository;
+    }
+
+    public async Task&lt;ErrorOr&lt;Success&gt;&gt; AssignSupervisorAsync(
+        Employee employee,
+        int supervisorId,
+        CancellationToken cancellationToken = default)
+    {
+        // 不能是自己的主管
+        if (employee.Id == supervisorId)
+            return EmployeeErrors.CannotBeSelfSupervisor;
+
+        // 檢查主管是否存在
+        var supervisor = await _employeeRepository
+            .GetByIdAsync(supervisorId, cancellationToken);
+
+        if (supervisor is null)
+            return EmployeeErrors.SupervisorNotFound;
+
+        // 檢查是否有循環參照
+        if (await HasCircularReferenceAsync(employee.Id, supervisorId, cancellationToken))
+            return EmployeeErrors.CircularSupervisorReference;
+
+        return employee.AssignSupervisor(supervisorId);
+    }
+
+    private async Task&lt;bool&gt; HasCircularReferenceAsync(
+        int employeeId,
+        int supervisorId,
+        CancellationToken cancellationToken)
+    {
+        var currentId = supervisorId;
+        var visited = new HashSet&lt;int&gt;();
+
+        while (currentId.HasValue)
+        {
+            if (currentId == employeeId)
+                return true;
+
+            if (!visited.Add(currentId.Value))
+                break;
+
+            var current = await _employeeRepository
+                .GetByIdAsync(currentId.Value, cancellationToken);
+            currentId = current?.SupervisorId;
+        }
+
+        return false;
+    }
+}
+</code></pre>
+<h3 id="domain-service-1">何時使用 Domain Service</h3>
+<table>
+<thead>
+<tr>
+<th>情境</th>
+<th>使用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>邏輯只涉及單一 Aggregate</td>
+<td>Entity Method</td>
+</tr>
+<tr>
+<td>邏輯跨越多個 Aggregate</td>
+<td>Domain Service</td>
+</tr>
+<tr>
+<td>需要 Repository 存取</td>
+<td>Domain Service</td>
+</tr>
+<tr>
+<td>需要外部資料的複雜驗證</td>
+<td>Domain Service</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="repository-interface">6. Repository Interface</h2>
+<p>在 Domain Layer 定義 Repository Interface，在 Infrastructure 實作。</p>
+<h3 id="base-interface-weda.core">6.1 Base Interface（來自 Weda.Core）</h3>
+<pre><code class="language-csharp">public interface IRepository&lt;T, TId&gt;
+{
+    Task&lt;T?&gt; GetByIdAsync(TId id, CancellationToken cancellationToken = default);
+    Task&lt;List&lt;T&gt;&gt; GetAllAsync(CancellationToken cancellationToken = default);
+    Task AddAsync(T entity, CancellationToken cancellationToken = default);
+    Task UpdateAsync(T entity, CancellationToken cancellationToken = default);
+    Task DeleteAsync(T entity, CancellationToken cancellationToken = default);
+}
+</code></pre>
+<h3 id="interface">6.2 特化的 Interface</h3>
+<pre><code class="language-csharp">public interface IEmployeeRepository : IRepository&lt;Employee, int&gt;
+{
+    Task&lt;Employee?&gt; GetByEmailAsync(Email email, CancellationToken cancellationToken = default);
+    Task&lt;List&lt;Employee&gt;&gt; GetBySupervisorIdAsync(int supervisorId, CancellationToken cancellationToken = default);
+    Task&lt;bool&gt; ExistsWithEmailAsync(Email email, CancellationToken cancellationToken = default);
+}
+</code></pre>
+<hr />
+<h2 id="section-4">快速參考</h2>
+<h3 id="section-5">檔案命名慣例</h3>
+<table>
+<thead>
+<tr>
+<th>元件</th>
+<th>模式</th>
+<th>範例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Entity</td>
+<td><code>{Name}.cs</code></td>
+<td><code>Employee.cs</code></td>
+</tr>
+<tr>
+<td>Value Object</td>
+<td><code>{Name}.cs</code></td>
+<td><code>Email.cs</code></td>
+</tr>
+<tr>
+<td>Error</td>
+<td><code>{Aggregate}Errors.cs</code></td>
+<td><code>EmployeeErrors.cs</code></td>
+</tr>
+<tr>
+<td>Event</td>
+<td><code>{Aggregate}{Action}Event.cs</code></td>
+<td><code>EmployeeCreatedEvent.cs</code></td>
+</tr>
+<tr>
+<td>Domain Service</td>
+<td><code>{Name}Manager.cs</code> 或 <code>{Name}Service.cs</code></td>
+<td><code>EmployeeHierarchyManager.cs</code></td>
+</tr>
+<tr>
+<td>Repository Interface</td>
+<td><code>I{Aggregate}Repository.cs</code></td>
+<td><code>IEmployeeRepository.cs</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="section-6">資料夾結構</h3>
+<pre><code>Domain/
+└── {AggregateName}/
+    ├── Entities/
+    ├── ValueObjects/
+    ├── Enums/
+    ├── Errors/
+    ├── Events/
+    ├── DomainServices/
+    └── Repositories/
+</code></pre>
+<hr />
+<h2 id="section-7">相關資源</h2>
+<ul>
+<li><a href="GUIDE.md">GUIDE.md</a> - 學習指南總覽</li>
+<li><a href="02-application-layer.md">02-application-layer.md</a> - Application Layer 指南</li>
+<li><a href="https://github.com/amantinband/error-or">ErrorOr Library</a></li>
+</ul>
+
+    </article>
+</body>
+</html>

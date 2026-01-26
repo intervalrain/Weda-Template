@@ -1,7 +1,7 @@
 ---
 title: WEDA Clean Architecture Template Learning Guide
 description: A comprehensive guide from zero to expert for internal team training
-keywords: [Clean Architecture, DDD, CQRS, MediatR, .NET]
+keywords: [Clean Architecture, DDD, CQRS, Mediator, .NET]
 sidebar_position: 1
 ---
 
@@ -37,7 +37,7 @@ sidebar_position: 1
 - Entity base class with Id and domain events
 - Aggregate Root as consistency boundary
 - Encapsulation: private setters, controlled state changes
-- Example: `TaskItem` as an Aggregate Root
+- Example: `Employee` as an Aggregate Root
 
 ### 5. Value Objects
 - Immutability and equality by value
@@ -73,7 +73,7 @@ sidebar_position: 1
 - Why separate Commands from Queries
 - Folder structure: `Commands/` and `Queries/`
 
-### 10. MediatR & Request/Handler Pattern
+### 10. Mediator & Request/Handler Pattern
 - `IRequest<T>` and `IRequestHandler<TRequest, TResponse>`
 - Decoupling sender from handler
 - One handler per request
@@ -82,11 +82,11 @@ sidebar_position: 1
 ### 11. Repository Interface (IRepository<T>)
 - Generic repository pattern
 - `IRepository<T>` base interface
-- Specialized interfaces: `ITaskRepository`
+- Specialized interfaces: `IEmployeeRepository`
 - Why interfaces belong in Application layer
 
 ### 12. Pipeline Behaviors (Validation, Authorization)
-- MediatR pipeline concept
+- Mediator pipeline concept
 - `IPipelineBehavior<TRequest, TResponse>`
 - Cross-cutting concerns: logging, validation, authorization
 - Execution order and chaining
@@ -94,7 +94,7 @@ sidebar_position: 1
 ### 13. FluentValidation
 - `AbstractValidator<T>` for request validation
 - Validation rules and error messages
-- Integration with MediatR pipeline
+- Integration with Mediator pipeline
 - Custom validators
 
 ---
@@ -133,7 +133,7 @@ sidebar_position: 1
 - `[ApiController]` attribute
 - Route conventions: `[Route("api/[controller]")]`
 - Action methods and HTTP verbs
-- Injecting MediatR `ISender`
+- Injecting Mediator `ISender`
 
 ### 19. Contracts (DTOs) & Mapping
 - Request and Response DTOs
@@ -246,6 +246,8 @@ Domain Error → ErrorOr<T> → Handler → Controller → ProblemDetails → HT
 
 - [Clean Architecture by Robert C. Martin](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
 - [ErrorOr Library](https://github.com/amantinband/error-or)
-- [MediatR Documentation](https://github.com/jbogard/MediatR)
+- [Mediator Documentation](https://github.com/martinothamar/Mediator)
 - [FluentValidation Documentation](https://docs.fluentvalidation.net/)
 - [Amantinband Clean Architecture Template](https://github.com/amantinband/clean-architecture)
+
+<\!-- test -->

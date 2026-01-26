@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="WikiGenerator">
+    <link rel="stylesheet" href="../wiki.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/vs2015.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+</head>
+<body>
+    <article class="markdown-body">
+    <h1 id="weda.core-overview">Weda.Core Overview</h1>
+<blockquote>
+<p>Shared infrastructure library for building Clean Architecture applications with DDD, CQRS, and event-driven messaging</p>
+</blockquote>
+<h2 id="what-is-weda.core">What is Weda.Core?</h2>
+<p>Weda.Core is a foundational library that provides all the base classes, abstractions, and infrastructure needed to build applications following Clean Architecture and Domain-Driven Design principles. It eliminates boilerplate code and enforces consistent patterns across projects.</p>
+<pre><code>Weda.Core/
+├── Domain/              # DDD base classes (Entity, AggregateRoot, etc.)
+├── Application/         # CQRS behaviors, security, interfaces
+├── Infrastructure/      # Persistence, NATS messaging, middleware
+├── Api/                 # REST controller base, Swagger configuration
+└── WedaCoreModule.cs    # Service registration and middleware setup
+</code></pre>
+<hr />
+<h2 id="architecture-overview">Architecture Overview</h2>
+<pre><code>┌──────────────────────────────────────────────────────────────────────┐
+│                         Your Application                             │
+├──────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  ┌─────────────┐  ┌─────────────┐  ┌───────────────┐  ┌───────────┐  │
+│  │   Domain    │  │ Application │  │ Infrastructure│  │    Api    │  │
+│  │   Layer     │  │   Layer     │  │     Layer     │  │   Layer   │  │
+│  └──────┬──────┘  └──────┬──────┘  └───────┬───────┘  └─────┬─────┘  │
+│         │                │                 │                │        │
+├─────────┴────────────────┴─────────────────┴────────────────┴────────┤
+│                           Weda.Core                                  │
+├──────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  ┌──────────────┐  ┌──────────────┐  ┌─────────────┐  ┌───────────┐  │
+│  │   Entity     │  │  Behaviors   │  │  DbContext  │  │    Api    │  │
+│  │ AggregateRoot│  │ Validation   │  │  Repository │  │ Controller│  │
+│  │ IDomainEvent │  │ Authorization│  │    NATS     │  │  Swagger  │  │
+│  │ IRepository  │  │  Security    │  │ Middleware  │  │  Filters  │  │
+│  └──────────────┘  └──────────────┘  └─────────────┘  └───────────┘  │
+│                                                                      │
+└──────────────────────────────────────────────────────────────────────┘
+</code></pre>
+<hr />
+<h2 id="domain-abstractions">1. Domain Abstractions</h2>
+<p>Weda.Core provides the foundation for Domain-Driven Design:</p>
+<h3 id="entity">Entity<TId></h3>
+<p>Base class for all domain entities with identity-based equality.</p>
+<pre><code class="language-csharp">public abstract class Entity&lt;TId&gt; : IEquatable&lt;Entity&lt;TId&gt;&gt;
+    where TId : notnull
+{
+    public TId Id { get; protected init; }
+
+    public override bool Equals(object? obj) =&gt;
+        obj is Entity&lt;TId&gt; entity &amp;&amp; Id.Equals(entity.Id);
+
+    public override int GetHashCode() =&gt; Id.GetHashCode();
+}
+</code></pre>
+<h3 id="aggregateroot">AggregateRoot<TId></h3>
+<p>Entity that serves as the aggregate boundary with domain event support.</p>
+<pre><code class="language-csharp">public abstract class AggregateRoot&lt;TId&gt; : Entity&lt;TId&gt;, IAggregateRoot
+    where TId : notnull
+{
+    private readonly List&lt;IDomainEvent&gt; _domainEvents = [];
+
+    public List&lt;IDomainEvent&gt; PopDomainEvents()
+    {
+        var copy = _domainEvents.ToList();
+        _domainEvents.Clear();
+        return copy;
+    }
+
+    protected void RaiseDomainEvent(IDomainEvent domainEvent)
+    {
+        _domainEvents.Add(domainEvent);
+    }
+}
+</code></pre>
+<h3 id="irepositoryt-tid">IRepository&lt;T, TId&gt;</h3>
+<p>Generic repository interface for data access abstraction.</p>
+<pre><code class="language-csharp">public interface IRepository&lt;T, TId&gt;
+    where T : Entity&lt;TId&gt;
+    where TId : notnull
+{
+    Task&lt;T?&gt; GetByIdAsync(TId id, CancellationToken cancellationToken = default);
+    Task&lt;List&lt;T&gt;&gt; GetAllAsync(CancellationToken cancellationToken = default);
+    Task AddAsync(T entity, CancellationToken cancellationToken = default);
+    Task UpdateAsync(T entity, CancellationToken cancellationToken = default);
+    Task DeleteAsync(T entity, CancellationToken cancellationToken = default);
+}
+</code></pre>
+<h3 id="idomainevent">IDomainEvent</h3>
+<p>Marker interface for domain events, extending Mediator's <code>INotification</code>.</p>
+<pre><code class="language-csharp">public interface IDomainEvent : INotification { }
+</code></pre>
+<hr />
+<h2 id="application-layer-components">2. Application Layer Components</h2>
+<h3 id="pipeline-behaviors">Pipeline Behaviors</h3>
+<p>Weda.Core provides Mediator pipeline behaviors for cross-cutting concerns:</p>
+<p><strong>ValidationBehavior</strong></p>
+<ul>
+<li>Intercepts all requests before handler execution</li>
+<li>Uses FluentValidation to validate request objects</li>
+<li>Returns <code>ErrorOr</code> with validation errors if validation fails</li>
+</ul>
+<p><strong>AuthorizationBehavior</strong></p>
+<ul>
+<li>Intercepts <code>IAuthorizeableRequest&lt;T&gt;</code> implementations</li>
+<li>Reads <code>[Authorize]</code> attributes for required roles, permissions, policies</li>
+<li>Delegates to <code>IAuthorizationService</code> for authorization checks</li>
+</ul>
+<h3 id="security-infrastructure">Security Infrastructure</h3>
+<pre><code class="language-csharp">// Attribute for declarative authorization
+[Authorize(Roles = &quot;Admin&quot;, Permissions = &quot;employees:write&quot;)]
+public record CreateEmployeeCommand(...) : IAuthorizeableRequest&lt;ErrorOr&lt;EmployeeDto&gt;&gt;;
+
+// Interface for authorization service
+public interface IAuthorizationService
+{
+    ErrorOr&lt;Success&gt; AuthorizeCurrentUser&lt;T&gt;(
+        IAuthorizeableRequest&lt;T&gt; request,
+        List&lt;string&gt; requiredRoles,
+        List&lt;string&gt; requiredPermissions,
+        List&lt;string&gt; requiredPolicies);
+}
+
+// Interface for JWT token generation
+public interface IJwtTokenGenerator
+{
+    string GenerateToken(
+        int id,
+        string name,
+        string email,
+        List&lt;string&gt; permissions,
+        List&lt;string&gt; roles);
+}
+</code></pre>
+<h3 id="application-interfaces">Application Interfaces</h3>
+<pre><code class="language-csharp">// Abstraction for testable time operations
+public interface IDateTimeProvider
+{
+    DateTime UtcNow { get; }
+}
+</code></pre>
+<hr />
+<h2 id="infrastructure-components">3. Infrastructure Components</h2>
+<h3 id="wedadbcontext">WedaDbContext</h3>
+<p>Base DbContext with automatic domain event publishing and eventual consistency support.</p>
+<pre><code class="language-csharp">public abstract class WedaDbContext : DbContext
+{
+    public override async Task&lt;int&gt; SaveChangesAsync(
+        CancellationToken cancellationToken = default)
+    {
+        // 1. Collect domain events from aggregate roots
+        var domainEvents = ChangeTracker.Entries&lt;IAggregateRoot&gt;()
+            .SelectMany(e =&gt; e.Entity.PopDomainEvents())
+            .ToList();
+
+        // 2. Save changes to database
+        var result = await base.SaveChangesAsync(cancellationToken);
+
+        // 3. Queue or publish domain events
+        if (IsUserOnline)
+            QueueEventsForEventualConsistency(domainEvents);
+        else
+            await PublishEventsImmediately(domainEvents);
+
+        return result;
+    }
+}
+</code></pre>
+<h3 id="genericrepositoryt-tid-tdbcontext">GenericRepository&lt;T, TId, TDbContext&gt;</h3>
+<p>Base repository implementation with EF Core.</p>
+<pre><code class="language-csharp">public class GenericRepository&lt;T, TId, TDbContext&gt; : IRepository&lt;T, TId&gt;
+    where T : Entity&lt;TId&gt;
+    where TId : notnull
+    where TDbContext : DbContext
+{
+    protected readonly TDbContext DbContext;
+    protected readonly DbSet&lt;T&gt; DbSet;
+
+    // Standard CRUD operations with automatic SaveChanges
+}
+</code></pre>
+<h3 id="eventual-consistency-middleware">Eventual Consistency Middleware</h3>
+<p>Ensures domain events are published within the same transaction.</p>
+<pre><code>HTTP Request
+     ↓
+Begin Transaction
+     ↓
+Controller → Handler → Repository.SaveChanges()
+     ↓
+Domain events queued in HttpContext
+     ↓
+Response sent to client
+     ↓
+Publish queued domain events
+     ↓
+Commit Transaction
+</code></pre>
+<h3 id="nats-messaging">NATS Messaging</h3>
+<p>Complete event-driven messaging infrastructure with multiple patterns:</p>
+<table>
+<thead>
+<tr>
+<th>Pattern</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Request-Reply</td>
+<td>Synchronous RPC-style communication</td>
+</tr>
+<tr>
+<td>Core Pub-Sub</td>
+<td>Fire-and-forget messaging</td>
+</tr>
+<tr>
+<td>JetStream Consume</td>
+<td>Persistent, guaranteed delivery with continuous consumption</td>
+</tr>
+<tr>
+<td>JetStream Fetch</td>
+<td>Batch message processing</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="api-components">4. API Components</h2>
+<h3 id="apicontroller">ApiController</h3>
+<p>Base controller with automatic error mapping to ProblemDetails.</p>
+<pre><code class="language-csharp">[ApiController]
+[Authorize]
+[Route(&quot;api/v{version:apiVersion}/[controller]&quot;)]
+public class ApiController : ControllerBase
+{
+    protected ActionResult Problem(List&lt;Error&gt; errors)
+    {
+        // Maps ErrorOr errors to appropriate HTTP status codes
+        // - Validation → 400 Bad Request
+        // - NotFound → 404 Not Found
+        // - Conflict → 409 Conflict
+        // - Unauthorized → 401 Unauthorized
+        // - Forbidden → 403 Forbidden
+    }
+}
+</code></pre>
+<h3 id="eventcontroller">EventController</h3>
+<p>Base class for NATS event-driven endpoints.</p>
+<pre><code class="language-csharp">[Stream(&quot;employees_v1_stream&quot;)]
+[Consumer(&quot;employees_v1_consumer&quot;)]
+[Connection(&quot;bus&quot;)]
+public abstract class EventController
+{
+    public IMediator Mediator { get; }
+    public INatsConnectionProvider NatsProvider { get; }
+    public ILogger Logger { get; }
+    public string Subject { get; }
+    public IReadOnlyDictionary&lt;string, string&gt; SubjectValues { get; }
+}
+</code></pre>
+<h3 id="swagger-integration">Swagger Integration</h3>
+<ul>
+<li>Auto-generates OpenAPI documentation</li>
+<li>Injects request/response examples via <code>IExamplesProvider&lt;T&gt;</code></li>
+<li>Adds Bearer token security for authorized endpoints</li>
+</ul>
+<hr />
+<h2 id="module-registration">5. Module Registration</h2>
+<h3 id="adding-weda.core-to-your-application">Adding Weda.Core to Your Application</h3>
+<pre><code class="language-csharp">// Program.cs
+using System.Reflection;
+using Microsoft.OpenApi;
+using Weda.Core;
+using Weda.Template.Api;
+using Weda.Template.Application;
+using Weda.Template.Contracts;
+using Weda.Template.Infrastructure;
+using Weda.Template.Infrastructure.Common.Persistence;
+
+var builder = WebApplication.CreateBuilder(args);
+{
+    builder.Services
+        .AddApplication()
+        .AddInfrastructure(builder.Configuration)
+        .AddWedaCore&lt;IAssemblyMarker, IContractsMarker, IApplicationMarker&gt;(
+            builder.Configuration,
+            services =&gt; services.AddMediator(options =&gt;
+            {
+                options.ServiceLifetime = ServiceLifetime.Scoped;
+                options.Assemblies = [typeof(IApplicationMarker).Assembly];
+            }),
+            options =&gt;
+            {
+                options.XmlCommentAssemblies = [Assembly.GetExecutingAssembly()];
+                options.OpenApiInfo = new OpenApiInfo
+                {
+                    Title = &quot;Weda API&quot;,
+                    Version = &quot;v1&quot;,
+                };
+            });
+}
+
+var app = builder.Build();
+{
+    app.UseWedaCore&lt;AppDbContext&gt;(options =&gt;
+    {
+        options.EnsureDatabaseCreated = false;
+        options.SwaggerEndpointUrl = &quot;/swagger/v1/swagger.json&quot;;
+        options.SwaggerEndpointName = &quot;Weda API V1&quot;;
+        options.RoutePrefix = &quot;swagger&quot;;
+    });
+
+    app.Run();
+}
+</code></pre>
+<h3 id="addwedacore-parameters">AddWedaCore Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TApiMarker</code></td>
+<td>API assembly marker for EventController scanning</td>
+</tr>
+<tr>
+<td><code>TContractsMarker</code></td>
+<td>Contracts assembly marker for Swagger examples</td>
+</tr>
+<tr>
+<td><code>TApplicationMarker</code></td>
+<td>Application assembly marker for validators</td>
+</tr>
+<tr>
+<td><code>configuration</code></td>
+<td>IConfiguration for reading settings</td>
+</tr>
+<tr>
+<td><code>mediatorAction</code></td>
+<td>Callback to configure Mediator options</td>
+</tr>
+<tr>
+<td><code>optionsAction</code></td>
+<td>Callback to configure WedaCoreOptions</td>
+</tr>
+</tbody>
+</table>
+<h3 id="wedacoreoptions-addwedacore">WedaCoreOptions (AddWedaCore)</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>XmlCommentAssemblies</code></td>
+<td>Assemblies containing XML comments for Swagger</td>
+</tr>
+<tr>
+<td><code>OpenApiInfo</code></td>
+<td>OpenAPI document info (title, version)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="wedacoremiddlewareoptions-usewedacore">WedaCoreMiddlewareOptions (UseWedaCore)</h3>
+<table>
+<thead>
+<tr>
+<th>Option</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>EnsureDatabaseCreated</code></td>
+<td>Auto-create database on startup</td>
+</tr>
+<tr>
+<td><code>SwaggerEndpointUrl</code></td>
+<td>Swagger JSON endpoint URL</td>
+</tr>
+<tr>
+<td><code>SwaggerEndpointName</code></td>
+<td>Swagger endpoint display name</td>
+</tr>
+<tr>
+<td><code>RoutePrefix</code></td>
+<td>Swagger UI route prefix</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="key-dependencies">6. Key Dependencies</h2>
+<p>Weda.Core integrates with these libraries (all MIT licensed):</p>
+<table>
+<thead>
+<tr>
+<th>Library</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>ErrorOr</strong></td>
+<td>Functional error handling</td>
+</tr>
+<tr>
+<td><strong>Mediator</strong></td>
+<td>CQRS and pipeline behaviors (source generator based, high performance)</td>
+</tr>
+<tr>
+<td><strong>Mapperly</strong></td>
+<td>Object mapping via source generators (zero reflection)</td>
+</tr>
+<tr>
+<td><strong>FluentValidation</strong></td>
+<td>Request validation</td>
+</tr>
+<tr>
+<td><strong>NATS.Net</strong></td>
+<td>Messaging and event streaming</td>
+</tr>
+<tr>
+<td><strong>Entity Framework Core</strong></td>
+<td>Database persistence</td>
+</tr>
+<tr>
+<td><strong>Asp.Versioning</strong></td>
+<td>API versioning</td>
+</tr>
+<tr>
+<td><strong>Swashbuckle</strong></td>
+<td>OpenAPI/Swagger documentation</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="design-patterns-implemented">7. Design Patterns Implemented</h2>
+<table>
+<thead>
+<tr>
+<th>Pattern</th>
+<th>Implementation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Domain-Driven Design</td>
+<td>Entity, AggregateRoot, Domain Events, Repository</td>
+</tr>
+<tr>
+<td>CQRS</td>
+<td>Command/Query separation via Mediator</td>
+</tr>
+<tr>
+<td>Repository</td>
+<td>Generic and specialized repository abstractions</td>
+</tr>
+<tr>
+<td>Eventual Consistency</td>
+<td>Middleware-based domain event publishing</td>
+</tr>
+<tr>
+<td>Pipeline</td>
+<td>Validation and authorization behaviors</td>
+</tr>
+<tr>
+<td>Factory Method</td>
+<td>Entity creation with ErrorOr</td>
+</tr>
+<tr>
+<td>Event-Driven</td>
+<td>Domain events and NATS messaging</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="related-resources">Related Resources</h2>
+<ul>
+<li><a href="01-domain-layer.md">01-domain-layer.md</a> - Domain Layer Implementation Guide</li>
+<li><a href="02-application-layer.md">02-application-layer.md</a> - Application Layer Guide</li>
+<li><a href="03-infrastructure-layer.md">03-infrastructure-layer.md</a> - Infrastructure Layer Guide</li>
+<li><a href="04-api-layer.md">04-api-layer.md</a> - API Layer Guide</li>
+<li><a href="GUIDE.md">GUIDE.md</a> - Learning Guide Overview</li>
+</ul>
+
+    </article>
+</body>
+</html>

@@ -1,7 +1,7 @@
 ---
 title: WEDA Clean Architecture Template 學習指南
 description: 從零開始到專精的完整學習指南，適用於內部團隊培訓
-keywords: [Clean Architecture, DDD, CQRS, MediatR, .NET]
+keywords: [Clean Architecture, DDD, CQRS, Mediator, .NET]
 sidebar_position: 1
 ---
 
@@ -37,7 +37,7 @@ sidebar_position: 1
 - 具有 Id 與 Domain Event 的 Entity Base Class
 - Aggregate Root 作為一致性邊界
 - Encapsulation：Private Setter、受控的狀態變更
-- 範例：`TaskItem` 作為 Aggregate Root
+- 範例：`Employee` 作為 Aggregate Root
 
 ### 5. Value Object
 - Immutability 與 Value Equality
@@ -73,7 +73,7 @@ sidebar_position: 1
 - 為何要分離 Command 與 Query
 - 資料夾結構：`Commands/` 與 `Queries/`
 
-### 10. MediatR 與 Request/Handler Pattern
+### 10. Mediator 與 Request/Handler Pattern
 - `IRequest<T>` 與 `IRequestHandler<TRequest, TResponse>`
 - 解耦 Sender 與 Handler
 - 每個 Request 對應一個 Handler
@@ -82,11 +82,11 @@ sidebar_position: 1
 ### 11. Repository Interface (IRepository<T>)
 - Generic Repository Pattern
 - `IRepository<T>` Base Interface
-- 特化的 Interface：`ITaskRepository`
+- 特化的 Interface：`IEmployeeRepository`
 - 為何 Interface 應該放在 Application Layer
 
 ### 12. Pipeline Behavior (Validation, Authorization)
-- MediatR Pipeline 概念
+- Mediator Pipeline 概念
 - `IPipelineBehavior<TRequest, TResponse>`
 - Cross-Cutting Concern：Logging、Validation、Authorization
 - 執行順序與串接
@@ -94,7 +94,7 @@ sidebar_position: 1
 ### 13. FluentValidation
 - 使用 `AbstractValidator<T>` 進行 Request 驗證
 - Validation Rule 與 Error Message
-- 與 MediatR Pipeline 整合
+- 與 Mediator Pipeline 整合
 - 自訂 Validator
 
 ---
@@ -133,7 +133,7 @@ sidebar_position: 1
 - `[ApiController]` Attribute
 - Route 慣例：`[Route("api/[controller]")]`
 - Action Method 與 HTTP Verb
-- 注入 MediatR `ISender`
+- 注入 Mediator `ISender`
 
 ### 19. Contract (DTO) 與 Mapping
 - Request 與 Response DTO
@@ -246,6 +246,6 @@ Domain Error → ErrorOr<T> → Handler → Controller → ProblemDetails → HT
 
 - [Clean Architecture by Robert C. Martin](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
 - [ErrorOr Library](https://github.com/amantinband/error-or)
-- [MediatR Documentation](https://github.com/jbogard/MediatR)
+- [Mediator Documentation](https://github.com/martinothamar/Mediator)
 - [FluentValidation Documentation](https://docs.fluentvalidation.net/)
 - [Amantinband Clean Architecture Template](https://github.com/amantinband/clean-architecture)

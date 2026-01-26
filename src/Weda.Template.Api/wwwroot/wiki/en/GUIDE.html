@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="WikiGenerator">
+    <link rel="stylesheet" href="../wiki.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/vs2015.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
+</head>
+<body>
+    <article class="markdown-body">
+    <h1 id="weda-clean-architecture-template-learning-guide">WEDA Clean Architecture Template - Learning Guide</h1>
+<blockquote>
+<p>From Zero to Expert: A comprehensive guide for internal team training</p>
+</blockquote>
+<h2 id="part-1-foundation">Part 1: Foundation</h2>
+<h3 id="clean-architecture-overview">1. Clean Architecture Overview</h3>
+<ul>
+<li>Uncle Bob's Clean Architecture principles</li>
+<li>Dependency Rule: dependencies point inward</li>
+<li>Independence from frameworks, UI, databases, and external agencies</li>
+<li>Testability by design</li>
+</ul>
+<h3 id="project-structure-layer-dependencies">2. Project Structure &amp; Layer Dependencies</h3>
+<ul>
+<li>Solution organization: Domain → Application → Infrastructure → Api</li>
+<li>Project references and dependency direction</li>
+<li>Contracts project: shared DTOs between layers</li>
+<li>Why separation matters for maintainability</li>
+</ul>
+<h3 id="domain-driven-design-ddd-basics">3. Domain-Driven Design (DDD) Basics</h3>
+<ul>
+<li>Ubiquitous Language</li>
+<li>Bounded Context</li>
+<li>Entities vs Value Objects</li>
+<li>Aggregates and Aggregate Roots</li>
+</ul>
+<hr />
+<h2 id="part-2-domain-layer">Part 2: Domain Layer</h2>
+<h3 id="entity-aggregate-root">4. Entity &amp; Aggregate Root</h3>
+<ul>
+<li>Entity base class with Id and domain events</li>
+<li>Aggregate Root as consistency boundary</li>
+<li>Encapsulation: private setters, controlled state changes</li>
+<li>Example: <code>Employee</code> as an Aggregate Root</li>
+</ul>
+<h3 id="value-objects">5. Value Objects</h3>
+<ul>
+<li>Immutability and equality by value</li>
+<li>Self-validating objects</li>
+<li>When to use Value Objects vs Entities</li>
+<li>Example: <code>Email</code>, <code>Money</code>, <code>Address</code></li>
+</ul>
+<h3 id="factory-method-pattern">6. Factory Method Pattern</h3>
+<ul>
+<li>Why constructors should be private</li>
+<li><code>Create()</code> method returning <code>ErrorOr&lt;T&gt;</code></li>
+<li>Validation at creation time</li>
+<li>Domain invariants enforcement</li>
+</ul>
+<h3 id="domain-errors-erroror-pattern">7. Domain Errors (ErrorOr Pattern)</h3>
+<ul>
+<li>Railway-oriented programming</li>
+<li><code>ErrorOr&lt;T&gt;</code> for explicit error handling</li>
+<li>Static error definitions in <code>*Errors</code> classes</li>
+<li>Error types: Validation, NotFound, Conflict, Unauthorized</li>
+</ul>
+<h3 id="domain-events">8. Domain Events</h3>
+<ul>
+<li>What are Domain Events</li>
+<li><code>IDomainEvent</code> interface</li>
+<li>Raising events within Aggregate Root</li>
+<li>Event collection and publishing pattern</li>
+</ul>
+<hr />
+<h2 id="part-3-application-layer">Part 3: Application Layer</h2>
+<h3 id="cqrs-pattern-command-query-responsibility-segregation">9. CQRS Pattern (Command Query Responsibility Segregation)</h3>
+<ul>
+<li>Commands: write operations that change state</li>
+<li>Queries: read operations that return data</li>
+<li>Why separate Commands from Queries</li>
+<li>Folder structure: <code>Commands/</code> and <code>Queries/</code></li>
+</ul>
+<h3 id="mediator-requesthandler-pattern">10. Mediator &amp; Request/Handler Pattern</h3>
+<ul>
+<li><code>IRequest&lt;T&gt;</code> and <code>IRequestHandler&lt;TRequest, TResponse&gt;</code></li>
+<li>Decoupling sender from handler</li>
+<li>One handler per request</li>
+<li>Registration via assembly scanning</li>
+</ul>
+<h3 id="repository-interface-irepository">11. Repository Interface (IRepository<T>)</h3>
+<ul>
+<li>Generic repository pattern</li>
+<li><code>IRepository&lt;T&gt;</code> base interface</li>
+<li>Specialized interfaces: <code>IEmployeeRepository</code></li>
+<li>Why interfaces belong in Application layer</li>
+</ul>
+<h3 id="pipeline-behaviors-validation-authorization">12. Pipeline Behaviors (Validation, Authorization)</h3>
+<ul>
+<li>Mediator pipeline concept</li>
+<li><code>IPipelineBehavior&lt;TRequest, TResponse&gt;</code></li>
+<li>Cross-cutting concerns: logging, validation, authorization</li>
+<li>Execution order and chaining</li>
+</ul>
+<h3 id="fluentvalidation">13. FluentValidation</h3>
+<ul>
+<li><code>AbstractValidator&lt;T&gt;</code> for request validation</li>
+<li>Validation rules and error messages</li>
+<li>Integration with Mediator pipeline</li>
+<li>Custom validators</li>
+</ul>
+<hr />
+<h2 id="part-4-infrastructure-layer">Part 4: Infrastructure Layer</h2>
+<h3 id="generic-repository-implementation">14. Generic Repository Implementation</h3>
+<ul>
+<li><code>GenericRepository&lt;T&gt;</code> implementing <code>IRepository&lt;T&gt;</code></li>
+<li>Entity Framework Core integration</li>
+<li>CRUD operations implementation</li>
+<li>Unit of Work pattern (optional)</li>
+</ul>
+<h3 id="entity-framework-core-dbcontext">15. Entity Framework Core &amp; DbContext</h3>
+<ul>
+<li><code>AppDbContext</code> configuration</li>
+<li>Domain event publishing on SaveChanges</li>
+<li>Connection string management</li>
+<li>Database providers: SQLite, PostgreSQL, MongoDB</li>
+</ul>
+<h3 id="database-configuration-ef-configurations">16. Database Configuration (EF Configurations)</h3>
+<ul>
+<li><code>IEntityTypeConfiguration&lt;T&gt;</code></li>
+<li>Fluent API for mapping</li>
+<li>Value converters for Value Objects</li>
+<li>Indexes and constraints</li>
+</ul>
+<h3 id="dependency-injection-module-pattern">17. Dependency Injection Module Pattern</h3>
+<ul>
+<li><code>*Module.cs</code> naming convention</li>
+<li>Extension methods for <code>IServiceCollection</code></li>
+<li>Service lifetime: Singleton, Scoped, Transient</li>
+<li>Configuration binding with <code>IOptions&lt;T&gt;</code></li>
+</ul>
+<hr />
+<h2 id="part-5-api-layer">Part 5: API Layer</h2>
+<h3 id="controllers-routing">18. Controllers &amp; Routing</h3>
+<ul>
+<li><code>[ApiController]</code> attribute</li>
+<li>Route conventions: <code>[Route(&quot;api/[controller]&quot;)]</code></li>
+<li>Action methods and HTTP verbs</li>
+<li>Injecting Mediator <code>ISender</code></li>
+</ul>
+<h3 id="contracts-dtos-mapping">19. Contracts (DTOs) &amp; Mapping</h3>
+<ul>
+<li>Request and Response DTOs</li>
+<li>Why Contracts are separate from Domain</li>
+<li>Manual mapping vs Mapperly</li>
+<li>API versioning considerations</li>
+</ul>
+<h3 id="error-handling-problemdetails">20. Error Handling &amp; ProblemDetails</h3>
+<ul>
+<li>Global exception handling</li>
+<li><code>ProblemDetails</code> RFC 7807</li>
+<li>Mapping <code>ErrorOr</code> to HTTP responses</li>
+<li>Consistent error format</li>
+</ul>
+<h3 id="authentication-authorization">21. Authentication &amp; Authorization</h3>
+<ul>
+<li>JWT Bearer authentication</li>
+<li><code>[Authorize]</code> attribute</li>
+<li>Policy-based authorization</li>
+<li>Current user provider pattern</li>
+</ul>
+<hr />
+<h2 id="part-6-testing">Part 6: Testing</h2>
+<h3 id="unit-testing-domain-application">22. Unit Testing (Domain, Application)</h3>
+<ul>
+<li>Testing Domain logic in isolation</li>
+<li>Mocking dependencies with NSubstitute</li>
+<li>Testing Command/Query handlers</li>
+<li>FluentAssertions for readable assertions</li>
+</ul>
+<h3 id="integration-testing-webapplicationfactory">23. Integration Testing (WebApplicationFactory)</h3>
+<ul>
+<li><code>WebApplicationFactory&lt;T&gt;</code> setup</li>
+<li>In-memory database for testing</li>
+<li>HTTP client testing</li>
+<li>Test fixtures and collections</li>
+</ul>
+<h3 id="test-utilities-factories">24. Test Utilities &amp; Factories</h3>
+<ul>
+<li><code>TestCommon</code> shared project</li>
+<li>Object mothers and builders</li>
+<li><code>CurrentUserFactory</code> for auth testing</li>
+<li>Reusable test helpers</li>
+</ul>
+<hr />
+<h2 id="part-7-advanced-topics">Part 7: Advanced Topics</h2>
+<h3 id="serviceframework-integration-nats-jetstream">25. ServiceFramework Integration (NATS, JetStream)</h3>
+<ul>
+<li>EdgeSync.ServiceFramework packages</li>
+<li>NatsService for Request/Response</li>
+<li>BaseEventHandler for event handling</li>
+<li>JetStreamClient for event publishing</li>
+</ul>
+<h3 id="multiple-database-support">26. Multiple Database Support</h3>
+<ul>
+<li>Database abstraction strategy</li>
+<li>InMemory repository for development</li>
+<li>PostgreSQL for production</li>
+<li>MongoDB as alternative</li>
+</ul>
+<h3 id="devcontainer-docker-compose">27. DevContainer &amp; Docker Compose</h3>
+<ul>
+<li><code>.devcontainer/</code> configuration</li>
+<li><code>docker-compose.yml</code> for dependencies</li>
+<li>Development environment setup</li>
+<li>Consistent team environments</li>
+</ul>
+<h3 id="dotnet-new-template-configuration">28. dotnet new Template Configuration</h3>
+<ul>
+<li><code>template.json</code> structure</li>
+<li>Template parameters and symbols</li>
+<li>Conditional file inclusion</li>
+<li>Publishing to NuGet</li>
+</ul>
+<hr />
+<h2 id="quick-reference">Quick Reference</h2>
+<h3 id="layer-dependencies">Layer Dependencies</h3>
+<pre><code>Api → Application → Domain
+ ↓         ↓
+Infrastructure
+     ↓
+   Domain
+</code></pre>
+<h3 id="key-patterns-used">Key Patterns Used</h3>
+<table>
+<thead>
+<tr>
+<th>Pattern</th>
+<th>Location</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Factory Method</td>
+<td>Domain</td>
+<td>Controlled entity creation</td>
+</tr>
+<tr>
+<td>Repository</td>
+<td>Application/Infrastructure</td>
+<td>Data access abstraction</td>
+</tr>
+<tr>
+<td>CQRS</td>
+<td>Application</td>
+<td>Separate read/write operations</td>
+</tr>
+<tr>
+<td>Mediator</td>
+<td>Application</td>
+<td>Decouple request handling</td>
+</tr>
+<tr>
+<td>Module</td>
+<td>All layers</td>
+<td>Organize DI registration</td>
+</tr>
+</tbody>
+</table>
+<h3 id="error-handling-flow">Error Handling Flow</h3>
+<pre><code>Domain Error → ErrorOr&lt;T&gt; → Handler → Controller → ProblemDetails → HTTP Response
+</code></pre>
+<hr />
+<h2 id="recommended-learning-path">Recommended Learning Path</h2>
+<ol>
+<li><strong>Week 1</strong>: Part 1-2 (Foundation + Domain)</li>
+<li><strong>Week 2</strong>: Part 3 (Application Layer)</li>
+<li><strong>Week 3</strong>: Part 4-5 (Infrastructure + API)</li>
+<li><strong>Week 4</strong>: Part 6 (Testing)</li>
+<li><strong>Week 5</strong>: Part 7 (Advanced Topics)</li>
+</ol>
+<hr />
+<h2 id="resources">Resources</h2>
+<ul>
+<li><a href="https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html">Clean Architecture by Robert C. Martin</a></li>
+<li><a href="https://github.com/amantinband/error-or">ErrorOr Library</a></li>
+<li><a href="https://github.com/martinothamar/Mediator">Mediator Documentation</a></li>
+<li><a href="https://docs.fluentvalidation.net/">FluentValidation Documentation</a></li>
+<li><a href="https://github.com/amantinband/clean-architecture">Amantinband Clean Architecture Template</a></li>
+</ul>
+<p>&lt;!-- test --&gt;</p>
+
+    </article>
+</body>
+</html>
