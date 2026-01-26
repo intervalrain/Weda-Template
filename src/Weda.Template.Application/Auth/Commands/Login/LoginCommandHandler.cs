@@ -1,0 +1,55 @@
+using ErrorOr;
+
+using Mediator;
+
+using Weda.Core.Application.Security;
+using Weda.Core.Application.Security.PasswordHasher;
+using Weda.Template.Contracts.Auth;
+using Weda.Template.Contracts.Auth.Commands;
+using Weda.Template.Domain.Users.Errors;
+using Weda.Template.Domain.Users.Repositories;
+
+namespace Weda.Template.Application.Auth.Commands.Login;
+
+public class LoginCommandHandler(
+    IUserRepository userRepository,
+    IPasswordHasher passwordHasher,
+    IJwtTokenGenerator jwtTokenGenerator) : IRequestHandler<LoginCommand, ErrorOr<AuthResponse>>
+{
+    public async ValueTask<ErrorOr<AuthResponse>> Handle(LoginCommand request, CancellationToken cancellationToken)
+    {
+        var user = await userRepository.GetByEmailAsync(request.Email, cancellationToken);
+        if (user is null)
+        {
+            return UserErrors.InvalidCredentials;
+        }
+
+        if (!passwordHasher.VerifyPassword(request.Password, user.PasswordHash.Value))
+        {
+            return UserErrors.InvalidCredentials;
+        }
+
+        if (user.Status != Domain.Users.Enums.UserStatus.Active)
+        {
+            return UserErrors.AccountNotActive;
+        }
+
+        user.RecordLogin();
+        await userRepository.UpdateAsync(user, cancellationToken);
+
+        var token = jwtTokenGenerator.GenerateToken(
+            user.Id,
+            user.Name,
+            user.Email.Value,
+            user.Permissions.ToList(),
+            user.Roles.ToList());
+
+        return new AuthResponse(
+            Token: token,
+            Id: user.Id,
+            Name: user.Name,
+            Email: user.Email.Value,
+            Permissions: user.Permissions,
+            Roles: user.Roles);
+    }
+}
