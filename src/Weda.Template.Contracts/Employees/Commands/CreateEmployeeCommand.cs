@@ -10,4 +10,4 @@ public record CreateEmployeeCommand(
     string Department,
     string Position,
     DateTime HireDate,
-    int? SupervisorId) : IRequest<ErrorOr<EmployeeDto>>;
+    int? SupervisorId = null) : IRequest<ErrorOr<EmployeeDto>>;

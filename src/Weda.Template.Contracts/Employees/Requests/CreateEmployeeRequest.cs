@@ -2,6 +2,15 @@ using Swashbuckle.AspNetCore.Filters;
 
 namespace Weda.Template.Contracts.Employees.Requests;
 
+/// <summary>
+/// Request to create a new employee.
+/// </summary>
+/// <param name="Name">Employee's full name.</param>
+/// <param name="Email">Employee's email address.</param>
+/// <param name="Department">Department the employee belongs to.</param>
+/// <param name="Position">Job title or position.</param>
+/// <param name="HireDate">Date when the employee was hired.</param>
+/// <param name="SupervisorId">ID of the employee's supervisor (optional).</param>
 public record CreateEmployeeRequest(
     string Name,
     string Email,
