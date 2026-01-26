@@ -5,7 +5,20 @@
     <UserSecretsId>36d3aabc-1075-47d7-9b3b-c1feebf8f3bd</UserSecretsId>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);1591;MSG0005</NoWarn>
+    <WikiSourceDir>$(MSBuildProjectDirectory)/../../docs/wiki</WikiSourceDir>
+    <WikiOutputDir>$(MSBuildProjectDirectory)/wwwroot/wiki</WikiOutputDir>
   </PropertyGroup>
+
+  <!-- Generate Wiki HTML before build -->
+  <Target Name="GenerateWiki" BeforeTargets="Build" Condition="Exists('$(WikiSourceDir)/en') Or Exists('$(WikiSourceDir)/zh')">
+    <Exec Command="dotnet run --no-build --project $(MSBuildProjectDirectory)/../../tools/WikiGenerator/WikiGenerator.csproj -- $(WikiSourceDir) $(WikiOutputDir)"
+          ConsoleToMSBuild="true"
+          StandardOutputImportance="high" />
+    <!-- Copy static assets -->
+    <Copy SourceFiles="$(WikiSourceDir)/index.html;$(WikiSourceDir)/wiki.css"
+          DestinationFolder="$(WikiOutputDir)"
+          SkipUnchangedFiles="true" />
+  </Target>
 
   <ItemGroup>
     <PackageReference Include="Asp.Versioning.Mvc" />

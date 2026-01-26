@@ -1,3 +1,28 @@
+// DEPRECATED: This class is from EdgeSync.ServiceFramework and has been replaced by EventController.
+// Please use Weda.Core.Infrastructure.Nats.EventController instead.
+// This file is kept for backward compatibility and will be removed in a future version.
+//
+// Migration Guide:
+// 1. Change base class from DistributedEventHandler<T> to EventController
+// 2. Add [Subject] attribute to specify NATS subject
+// 3. Use [Stream] and [Consumer] attributes for JetStream configuration
+// 4. Remove IJetStreamClientFactory dependency
+// 5. Use Mediator, Logger, and NatsProvider from base class
+//
+// Example:
+// [Stream("orders_stream")]
+// [Consumer("order_handler")]
+// public class OrderEventController : EventController
+// {
+//     [Subject("order.created")]
+//     public async Task OnOrderCreated(OrderCreatedEvent evt)
+//     {
+//         // Handle event
+//     }
+// }
+
+#if FALSE // Disabled - use EventController instead
+
 using System.Text;
 using System.Text.Json;
 
@@ -31,3 +56,5 @@ public abstract class DistributedEventHandler<T>(
         await HandleAsync(data, subject, scope.ServiceProvider);
     }
 }
+
+#endif

@@ -488,3 +488,7 @@ $RECYCLE.BIN/
 
 # Database
 **/*.sqlite
+
+# wiki pages
+docs/**/_*
+src/**/wwwroot/wiki/**.html

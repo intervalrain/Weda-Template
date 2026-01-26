@@ -1,12 +1,12 @@
 using System.Reflection;
-using Mediator;
-
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
-
 using Weda.Core;
 using Weda.Template.Api;
 using Weda.Template.Application;
 using Weda.Template.Contracts;
+using Weda.Template.Domain.Employees.Entities;
+using Weda.Template.Domain.Users.Entities;
 using Weda.Template.Infrastructure;
 using Weda.Template.Infrastructure.Common.Persistence;
 
@@ -35,12 +35,43 @@ var builder = WebApplication.CreateBuilder(args);
 
 var app = builder.Build();
 {
+    // Enable static files for organization chart UI
+    app.UseStaticFiles();
+    app.UseDefaultFiles();
+
+    // Ensure database and seed in development
+    if (app.Environment.IsDevelopment())
+    {
+        using var scope = app.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+        // Try to create database, if schema mismatch occurs, recreate
+        try
+        {
+            dbContext.Database.EnsureCreated();
+
+            // Verify schema by testing a simple query on each DbSet
+            _ = await dbContext.Set<User>().AnyAsync();
+            _ = await dbContext.Set<Employee>().AnyAsync();
+        }
+        catch (Exception ex) when (ex.Message.Contains("no such table") || ex.Message.Contains("doesn't exist"))
+        {
+            logger.LogWarning("Database schema mismatch detected, recreating database...");
+            dbContext.Database.EnsureDeleted();
+            dbContext.Database.EnsureCreated();
+        }
+
+        var seeder = scope.ServiceProvider.GetRequiredService<AppDbContextSeeder>();
+        await seeder.SeedAsync();
+    }
+
     app.UseWedaCore<AppDbContext>(options =>
     {
-        options.EnsureDatabaseCreated = app.Environment.IsDevelopment();
+        options.EnsureDatabaseCreated = false; // Already done above
         options.SwaggerEndpointUrl = "/swagger/v1/swagger.json";
         options.SwaggerEndpointName = "Weda API V1";
-        options.RoutePrefix = string.Empty;
+        options.RoutePrefix = "swagger";
     });
 
     app.Run();
