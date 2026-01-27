@@ -1,0 +1,108 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "Rain Hu",
+  "classifications": [
+    "Web",
+    "API",
+    "Clean Architecture",
+    "DDD",
+    "CQRS"
+  ],
+  "identity": "Weda.Template",
+  "name": "Weda Clean Architecture Template",
+  "shortName": "weda",
+  "description": "A clean architecture template with DDD, CQRS, NATS EventController, and Entity Framework Core.",
+  "tags": {
+    "language": "C#",
+    "type": "solution"
+  },
+  "sourceName": "Weda.Template",
+  "preferNameDirectory": true,
+  "symbols": {
+    "Db": {
+      "type": "parameter",
+      "description": "The name of the database.",
+      "datatype": "string",
+      "defaultValue": "WedaTemplate",
+      "replaces": "WedaTemplate"
+    },
+    "Nats": {
+      "type": "parameter",
+      "description": "The NATS service name.",
+      "datatype": "string",
+      "defaultValue": "weda-template",
+      "replaces": "weda-template"
+    },
+    "test": {
+      "type": "parameter",
+      "description": "Include test projects.",
+      "datatype": "bool",
+      "defaultValue": "true"
+    },
+    "wiki": {
+      "type": "parameter",
+      "description": "Include wiki documentation and generator.",
+      "datatype": "bool",
+      "defaultValue": "true"
+    },
+    "sample": {
+      "type": "parameter",
+      "description": "Include the sample Employee module as reference.",
+      "datatype": "bool",
+      "defaultValue": "true"
+    },
+    "copyrightYear": {
+      "type": "generated",
+      "generator": "now",
+      "parameters": {
+        "format": "yyyy"
+      },
+      "replaces": "2026"
+    }
+  },
+  "sources": [
+    {
+      "modifiers": [
+        {
+          "condition": "(!test)",
+          "exclude": [
+            "tests/**/*"
+          ]
+        },
+        {
+          "condition": "(!wiki)",
+          "exclude": [
+            "tools/WikiGenerator/**/*",
+            "docs/wiki/**/*",
+            "src/Weda.Template.Api/wwwroot/wiki/**/*"
+          ]
+        },
+        {
+          "condition": "(!sample)",
+          "exclude": [
+            "src/Weda.Template.Api/EventControllers/EmployeesEventController.cs",
+            "src/Weda.Template.Api/wwwroot/sample/**/*",
+            "src/Weda.Template.Domain/Employees/**/*",
+            "src/Weda.Template.Application/Employees/**/*",
+            "src/Weda.Template.Contracts/Employees/**/*",
+            "src/Weda.Template.Infrastructure/Employees/**/*"
+          ]
+        },
+        {
+          "exclude": [
+            ".git/**/*",
+            ".claude/**/*",
+            ".vscode/**/*",
+            "**/*.sqlite",
+            "**/*.sqlite-shm",
+            "**/*.sqlite-wal",
+            "**/bin/**/*",
+            "**/obj/**/*",
+            "**/.DS_Store"
+          ]
+        }
+      ]
+    }
+  ],
+  "postActions": []
+}

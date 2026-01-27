@@ -11,7 +11,7 @@
 
   <!-- Generate Wiki HTML before build -->
   <Target Name="GenerateWiki" BeforeTargets="Build" Condition="Exists('$(WikiSourceDir)/en') Or Exists('$(WikiSourceDir)/zh')">
-    <Exec Command="dotnet run --no-build --project $(MSBuildProjectDirectory)/../../tools/WikiGenerator/WikiGenerator.csproj -- $(WikiSourceDir) $(WikiOutputDir)"
+    <Exec Command="dotnet run --project $(MSBuildProjectDirectory)/../../tools/WikiGenerator/WikiGenerator.csproj -- $(WikiSourceDir) $(WikiOutputDir)"
           ConsoleToMSBuild="true"
           StandardOutputImportance="high" />
     <!-- Copy static assets -->
