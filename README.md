@@ -1,492 +1,268 @@
-<div align="center">
+# WEDA Template
 
-[![Build](https://github.com/amantinband/clean-architecture/actions/workflows/build.yml/badge.svg)](https://github.com/amantinband/clean-architecture/actions/workflows/build.yml) [![Publish template to NuGet](https://github.com/amantinband/clean-architecture/actions/workflows/publish.yml/badge.svg)](https://github.com/amantinband/clean-architecture/actions/workflows/publish.yml)
+[中文版](README_zh.md)
 
-[![GitHub contributors](https://img.shields.io/github/contributors/amantinband/clean-architecture)](https://GitHub.com/amantinband/clean-architecture/graphs/contributors/) [![GitHub Stars](https://img.shields.io/github/stars/amantinband/clean-architecture.svg)](https://github.com/amantinband/clean-architecture/stargazers) [![GitHub license](https://img.shields.io/github/license/amantinband/clean-architecture)](https://github.com/amantinband/clean-architecture/blob/main/LICENSE)
-[![codecov](https://codecov.io/gh/amantinband/clean-architecture/branch/main/graph/badge.svg?token=DR2EBIWK7B)](https://codecov.io/gh/amantinband/clean-architecture)
+A production-ready Clean Architecture template for .NET 10 applications, featuring Domain-Driven Design (DDD), CQRS pattern, and comprehensive testing practices.
 
----
+## Features
 
-![Clean Architecture Template Title](assets/Clean%20Architecture%20Template%20Title.png)
+- **Clean Architecture** - Layered architecture with clear separation of concerns
+- **Domain-Driven Design** - Entities, Value Objects, Aggregate Roots, Domain Events
+- **CQRS Pattern** - Command Query Responsibility Segregation with Mediator
+- **Multiple Database Support** - SQLite, PostgreSQL, MongoDB
+- **JWT Authentication** - Role-based and permission-based authorization
+- **NATS Messaging** - Event-driven architecture with request-reply and pub-sub patterns
+- **API Versioning** - Built-in API versioning support
+- **Swagger/OpenAPI** - Auto-generated API documentation
+- **Comprehensive Testing** - Unit, integration, and subcutaneous tests
 
----
+## Preview
 
-</div>
+### Developer UI
++ Developer-friendly UI including Swagger UI, Wedally UI, and Wiki
+![homepage](resources/homepage.png)
 
-```shell
-dotnet new install Amantinband.WedaCleanArch.Template
+### Pre-configured Swagger UI
++ Pre-configured Swagger UI with Grouping, Tags, and SecurityRequirement settings
+![swagger](resources/swagger.png)
 
-dotnet new clean-arch -o WedaCleanArch
+### NATS Endpoint UI (Wedally UI)
++ Swagger-like UI for NATS endpoints with direct interaction support and copy-paste ready payloads
+![wedally](resources/wedally.png)
++ Direct operation support
+![wedally_req](resources/wedally_req.png)
+
+### Auto-generated Wiki Pages
++ Automatically converts articles from `docs/wiki/{en,zh}` to static web pages
++ Supports markdown rendering
+![wiki](resources/wiki.png)
+
+## Project Structure
+
+```
+WedaTemplate/
+├── src/
+│   ├── Weda.Core/                    # Shared infrastructure (DDD, CQRS, NATS)
+│   ├── Weda.Template.Api/            # REST API layer
+│   ├── Weda.Template.Application/    # Application/CQRS layer
+│   ├── Weda.Template.Contracts/      # DTOs and contracts
+│   ├── Weda.Template.Domain/         # Domain layer
+│   └── Weda.Template.Infrastructure/ # Infrastructure layer
+├── tests/
+│   ├── Weda.Template.Api.IntegrationTests/
+│   ├── Weda.Template.Application.UnitTests/
+│   ├── Weda.Template.Domain.UnitTests/
+│   ├── Weda.Template.Infrastructure.UnitTests/
+│   └── Weda.Template.TestCommon/
+└── tools/
+    └── WikiGenerator/
 ```
 
-- [️Important notice ⚠️](#️important-notice-️)
-- [Give it a star ⭐](#give-it-a-star-)
-- [Domain Overview 🌍](#domain-overview-)
-  - [Basic Subscription](#basic-subscription)
-  - [Pro Subscription](#pro-subscription)
-- [Use Cases / Features 🤓](#use-cases--features-)
-  - [Subscriptions](#subscriptions)
-  - [Reminders](#reminders)
-- [Getting Started 🏃](#getting-started-)
-  - [Install the template or clone the project](#install-the-template-or-clone-the-project)
-  - [Run the service using Docker or the .NET CLI](#run-the-service-using-docker-or-the-net-cli)
-  - [Generate a token](#generate-a-token)
-  - [Create a subscription](#create-a-subscription)
-  - [Create a reminder](#create-a-reminder)
-- [Folder Structure 📁](#folder-structure-)
-- [Authorization 🔐](#authorization-)
-  - [Authorization Types](#authorization-types)
-    - [Role-Based Authorization](#role-based-authorization)
-    - [Permission-Based Authorization](#permission-based-authorization)
-    - [Policy-Based Authorization](#policy-based-authorization)
-  - [Mixing Authorization Types](#mixing-authorization-types)
-- [Testing 📝](#testing-)
-  - [Test Types](#test-types)
-    - [Domain Layer Unit Tests](#domain-layer-unit-tests)
-    - [Application Layer Unit Tests](#application-layer-unit-tests)
-    - [Application Layer Subcutaneous Tests](#application-layer-subcutaneous-tests)
-    - [Presentation Layer Integration Tests](#presentation-layer-integration-tests)
-- [Fun features 💃🕺](#fun-features-)
-  - [Domain Events \& Eventual Consistency](#domain-events--eventual-consistency)
-    - [Eventual Consistency Mechanism](#eventual-consistency-mechanism)
-  - [Background service for sending email reminders](#background-service-for-sending-email-reminders)
-    - [Configure Email Settings](#configure-email-settings)
-    - [Configure Email Settings Manually](#configure-email-settings-manually)
-    - [Configure Email Settings via User Secrets](#configure-email-settings-via-user-secrets)
-- [Contribution 🤲](#contribution-)
-- [Credits 🙏](#credits-)
-- [License 🪪](#license-)
+## Getting Started
 
-# ️Important notice ⚠️
+### Prerequisites
 
-This template is still under construction 👷.
+- [.NET 10 SDK](https://dotnet.microsoft.com/download)
+- Docker & Docker Compose (optional)
+- NATS Server (optional, for messaging features)
 
-Check out my comprehensive [course](https://dometrain.com/bundle/from-zero-to-hero-clean-architecture/?coupon_code=GITHUB) on Dometrain where I cover everything you need to know when building production applications structured following clean architecture. Use the exclusive coupon code `GITHUB` to get 5% off (btw this is the only promo code for a discount on the bundle, which is already 20% off).
+### Run with .NET CLI
 
-<img src="assets/Clean%20Architecture%20Template%20Promo%20Code.png" height=30px >
-
-# Give it a star ⭐
-
-Loving it? Show your support by giving this project a star!
-
-# Domain Overview 🌍
-
-This is a simple reminder application. It allows users to create and manage their reminders.
-
-To create reminders, a user must have an active subscription.
-
-## Basic Subscription
-
-Users with a basic subscription can create up to 3 daily reminders.
-
-## Pro Subscription
-
-Users with a pro subscription do not have a daily limit on the number of reminders.
-
-# Use Cases / Features 🤓
-
-## Subscriptions
-
-1. Create Subscription
-1. Get Subscription
-1. Cancel Subscription
-
-## Reminders
-
-1. Set Reminder
-1. Get Reminder
-1. Delete Reminder
-1. Dismiss Reminder
-1. List Reminders
-
-# Getting Started 🏃
-
-## Install the template or clone the project
-
-```shell
-dotnet new install Amantinband.WedaCleanArch.Template
-
-dotnet new clean-arch -o WedaCleanArch
+```bash
+dotnet run --project src/Weda.Template.Api
 ```
 
-or
+### Run with Docker Compose
 
-```shell
-git clone https://github.com/amantinband/clean-architecture
-```
-
-## Run the service using Docker or the .NET CLI
-
-```shell
+```bash
 docker compose up
 ```
 
-or
+The API will be available at `http://localhost:5001`
 
-```shell
-dotnet run --project src/WedaCleanArch.Api
-```
+### Access Swagger UI
 
-## Generate a token
+Navigate to `http://localhost:5001/swagger` to explore the API documentation.
 
-Navigate to `requests/Tokens/GenerateToken.http` and generate a token.
+## Domain Models
 
-> Note: Since most systems use an external identity provider, this project uses a simple token generator endpoint that generates a token based on the details you provide. This is a simple way to generate a token for testing purposes and is closer to how your system will likely be designed when using an external identity provider.
+### Employee
 
-```yaml
-POST {{host}}/tokens/generate
-Content-Type: application/json
-```
+- Hierarchical organization structure with supervisor relationships
+- Department management (Engineering, HR, Finance, Marketing, Sales, Operations)
+- Status tracking (Active, OnLeave, Inactive)
+- Subordinate management with circular reference prevention
 
-```http
-{
-    "Id": "bae93bf5-9e3c-47b3-aace-3034653b6bb2",
-    "FirstName": "Amichai",
-    "LastName": "Mantinband",
-    "Email": "amichai@mantinband.com",
-    "Permissions": [
-        "set:reminder",
-        "get:reminder",
-        "dismiss:reminder",
-        "delete:reminder",
-        "create:subscription",
-        "delete:subscription",
-        "get:subscription"
-    ],
-    "Roles": [
-        "Admin"
-    ]
-}
-```
+### User
 
-> ### NOTE: Replacing http file variables (`{{variableName}}`)
->
-> #### Option 1 (recommended) - Using the [REST Client](https://marketplace.visualstudio.com/items?itemName=humao.rest-client) extension for VS Code
->
-> Use the [REST Client](https://marketplace.visualstudio.com/items?itemName=humao.rest-client) extension for VS Code + update the values under [.vscode/settings.json](.vscode/settings.json). This will update the value for all http files.
->
-> ```json
-> {
->    "rest-client.environmentVariables": {
->        "$shared": { // these will be shared across all http files, regardless of the environment
->            "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiTGlvciIsImZhbWlseV9uYW1lIjoiRGFnYW4iLCJlbWFpbCI6Imxpb3JAZGFnYW4uY29tIiwiaWQiOiJhYWU5M2JmNS05ZTNjLTQ3YjMtYWFjZS0zMDM0NjUzYjZiYjIiLCJodHRwOi8vc2NoZW1hcy5taWNyb3NvZnQuY29tL3dzLzIwMDgvMDYvaWRlbnRpdHkvY2xhaW1zL3JvbGUiOiJBZG1pbiIsInBlcm1pc3Npb25zIjpbInNldDpyZW1pbmRlciIsImdldDpyZW1pbmRlciIsImRpc21pc3M6cmVtaW5kZXIiLCJkZWxldGU6cmVtaW5kZXIiLCJjcmVhdGU6c3Vic2NyaXB0aW9uIiwiZGVsZXRlOnN1YnNjcmlwdGlvbiIsImdldDpzdWJzY3JpcHRpb24iXSwiZXhwIjoxNzA0MTM0MTIzLCJpc3MiOiJSZW1pbmRlclNlcnZpY2UiLCJhdWQiOiJSZW1pbmRlclNlcnZpY2UifQ.wyvn9cq3ohp-JPTmbBd3G1cAU1A6COpiQd3C_e_Ng5s",
->            "userId": "aae93bf5-9e3c-47b3-aace-3034653b6bb2",
->            "subscriptionId": "c8ee11f0-d4bb-4b43-a448-d511924b520e",
->            "reminderId": "08233bb1-ce29-49e2-b346-5f8b7cf61593"
->        },
->        "dev": { // when the environment is set to dev, these values will be used
->            "host": "http://localhost:5001",
->        },
->        "prod": { // when the environment is set to prod, these values will be used
->            "host": "http://your-prod-endpoint.com",
->        }
->    }
->}
-> ```
->
-> #### Options 2 - Defining the variables in the http file itself
->
-> Define the variables in the http file itself. This will only update the value for the current http file.
->
-> ```yaml
-> @host = http://localhost:5001
->
-> POST {{host}}/tokens/generate
-> ```
->
-> #### Option 3 - Manually
->
-> Replace the variables manually.
->
-> ```yaml
-> POST {{host}}/tokens/generate
-> ```
->
-> 👇
->
-> ```yaml
-> POST http://localhost:5001/tokens/generate
-> ```
->
+- Email-based authentication
+- Role management (User, Admin, SuperAdmin)
+- Permission-based access control
+- Login tracking
 
-## Create a subscription
+## API Endpoints
 
-```yaml
-POST {{host}}/users/{{userId}}/subscriptions
-Content-Type: application/json
-Authorization: Bearer {{token}}
-```
+### Auth
 
-```http
-{
-    "SubscriptionType": "Basic"
-}
-```
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/v1/auth/login` | User login |
 
-## Create a reminder
+### Users
 
-```yaml
-POST {{host}}/users/{{userId}}/subscriptions/{{subscriptionId}}/reminders
-Content-Type: application/json
-Authorization: Bearer {{token}}
-```
+| Method | Endpoint | Role | Description |
+|--------|----------|------|-------------|
+| GET | `/api/v1/users/me` | Authenticated | Get current user |
+| GET | `/api/v1/users` | Admin | List all users |
+| GET | `/api/v1/users/{id}` | Admin | Get user by ID |
+| POST | `/api/v1/users` | Admin | Create user |
+| PUT | `/api/v1/users/{id}` | Admin | Update user |
+| PUT | `/api/v1/users/{id}/roles` | SuperAdmin | Update roles |
+| DELETE | `/api/v1/users/{id}` | Admin | Delete user |
 
-```http
-{
-    "text": "let's do it",
-    "dateTime": "2025-2-26"
-}
-```
+### Employees
 
-# Folder Structure 📁
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/v1/employees` | List all employees |
+| GET | `/api/v1/employees/{id}` | Get employee by ID |
+| POST | `/api/v1/employees` | Create employee |
+| PUT | `/api/v1/employees/{id}` | Update employee |
+| DELETE | `/api/v1/employees/{id}` | Delete employee |
+| GET | `/api/v1/employees/{id}/subordinates` | Get subordinates |
 
-![Folder structure](assets/Clean%20Architecture%20Template.png)
+## NATS Integration
 
-# Authorization 🔐
+### EventController - ApiController-like Experience for NATS
 
-This project puts an emphasis on complex authorization scenarios and supports *role-based*, *permission-based* and *policy-based* authorization.
-
-## Authorization Types
-
-### Role-Based Authorization
-
-To apply role based authorization, use the `Authorize` attribute with the `Roles` parameter and implement the `IAuthorizeableRequest` interface.
-
-For example:
+The template provides `EventController`, an abstraction similar to ASP.NET Core's `ApiController` but for NATS messaging. This allows you to handle NATS messages with familiar patterns.
 
 ```csharp
-[Authorize(Roles = "Admin")]
-public record CancelSubscriptionCommand(Guid UserId, Guid SubscriptionId) : IAuthorizeableRequest<ErrorOr<Success>>;
-```
-
-Will only allow users with the `Admin` role to cancel subscriptions.
-
-### Permission-Based Authorization
-
-To apply permission based authorization, use the `Authorize` attribute with the `Permissions` parameter and implement the `IAuthorizeableRequest` interface.
-
-For example:
-
-```csharp
-[Authorize(Permissions = "get:reminder")]
-public record GetReminderQuery(Guid UserId, Guid SubscriptionId, Guid ReminderId) : IAuthorizeableRequest<ErrorOr<Reminder>>;
-```
-
-Will only allow users with the `get:reminder` permission to get a subscription.
-
-### Policy-Based Authorization
-
-To apply policy based authorization, use the `Authorize` attribute with the `Policy` parameter and implement the `IAuthorizeableRequest` interface.
-
-For example:
-
-```csharp
-[Authorize(Policies = "SelfOrAdmin")]
-public record GetReminderQuery(Guid UserId, Guid SubscriptionId, Guid ReminderId) : IAuthorizeableRequest<ErrorOr<Reminder>>;
-```
-
-Will only allow users who pass the `SelfOrAdmin` policy to get a subscription.
-
-Each policy is implemented as a simple method in the `PolicyEnforcer` class.
-
-The policy "SelfOrAdmin" for example, can be implemented as follows:
-
-```csharp
-public class PolicyEnforcer : IPolicyEnforcer
+[ApiVersion("1")]
+public class EmployeeEventController : EventController
 {
-    public ErrorOr<Success> Authorize<T>(
-        IAuthorizeableRequest<T> request,
-        CurrentUser currentUser,
-        string policy)
+    // Request-Reply pattern with subject-based routing
+    [Subject("[controller].v{version:apiVersion}.{id}.get")]
+    public async Task<GetEmployeeResponse> GetEmployee(int id)
     {
-        return policy switch
-        {
-            "SelfOrAdmin" => SelfOrAdminPolicy(request, currentUser),
-            _ => Error.Unexpected(description: "Unknown policy name"),
-        };
+        var query = new GetEmployeeQuery(id);
+        var result = await Mediator.Send(query);
+        return new GetEmployeeResponse(result.Value);
     }
 
-    private static ErrorOr<Success> SelfOrAdminPolicy<T>(IAuthorizeableRequest<T> request, CurrentUser currentUser) =>
-        request.UserId == currentUser.Id || currentUser.Roles.Contains(Role.Admin)
-            ? Result.Success
-            : Error.Unauthorized(description: "Requesting user failed policy requirement");
+    // Create employee
+    [Subject("[controller].v{version:apiVersion}.create")]
+    public async Task<GetEmployeeResponse> CreateEmployee(CreateEmployeeRequest request)
+    {
+        var command = new CreateEmployeeCommand(request.Name, request.Email, ...);
+        var result = await Mediator.Send(command);
+        return new GetEmployeeResponse(result.Value);
+    }
+
+    // JetStream Consume pattern (fire-and-forget)
+    [Subject("[controller].v{version:apiVersion}.created")]
+    public async Task OnEmployeeCreated(CreateEmployeeNatsEvent @event)
+    {
+        var command = new CreateEmployeeCommand(@event.Name, @event.Email, ...);
+        await Mediator.Send(command);
+    }
 }
 ```
 
-## Mixing Authorization Types
+### Supported NATS Patterns
 
-You can mix and match authorization types to create complex authorization scenarios.
+| Pattern | Description | Use Case |
+|---------|-------------|----------|
+| **Request-Reply** | Synchronous request with response | CRUD operations |
+| **JetStream Consume** | Continuous message processing | Event handlers |
+| **JetStream Fetch** | Batch message processing | Bulk operations |
+| **Core Pub-Sub** | Fire-and-forget messaging | Notifications |
 
-For example:
+### NATS Endpoints
 
-```csharp
-[Authorize(Permissions = "get:reminder,list:reminder", Policies = "SelfOrAdmin", Roles = "ReminderManager")]
-public record ListRemindersQuery(Guid UserId, Guid SubscriptionId, Guid ReminderId) : IAuthorizeableRequest<ErrorOr<Reminder>>;
+| Subject | Description |
+|---------|-------------|
+| `employee.v1.{id}.get` | Get employee by ID |
+| `employee.v1.getAll` | List all employees |
+| `employee.v1.create` | Create employee |
+| `employee.v1.{id}.update` | Update employee |
+| `employee.v1.{id}.delete` | Delete employee |
+
+### NATS CLI Examples
+
+Copy and paste these commands to interact with the NATS endpoints directly:
+
+**Get Employee by ID:**
+```bash
+nats req employee.v1.1.get ''
 ```
 
-Will only allow users with the `get:reminder` and  `list:reminder` permission, and who pass the `SelfOrAdmin` policy, and who have the `ReminderManager` role to list reminders.
-
-Another option, is specifying the `Authorize` attribute multiple times:
-
-```csharp
-[Authorize(Permissions = "get:reminder")]
-[Authorize(Permissions = "list:reminder")]
-[Authorize(Policies = "SelfOrAdmin")]
-[Authorize(Roles = "ReminderManager")]
-public record ListRemindersQuery(Guid UserId, Guid SubscriptionId, Guid ReminderId) : IAuthorizeableRequest<ErrorOr<Reminder>>;
+**List All Employees:**
+```bash
+nats req employee.v1.getAll ''
 ```
 
-# Testing 📝
+**Create Employee:**
+```bash
+nats req employee.v1.create '{"name":"John Doe","email":"john@example.com","department":"Engineering","position":"Software Engineer"}'
+```
 
-This project puts an emphasis on testability and comes with a comprehensive test suite.
+**Update Employee:**
+```bash
+nats req employee.v1.1.update '{"name":"John Doe","email":"john.doe@example.com","department":"Engineering","position":"Senior Engineer","status":"Active"}'
+```
 
-![](assets/Clean%20Architecture%20Template%20Testing%20Suite.png)
+**Delete Employee:**
+```bash
+nats req employee.v1.1.delete ''
+```
 
-## Test Types
+## Configuration
 
-### Domain Layer Unit Tests
+### Database
 
-The domain layer is tested using unit tests.
-By the bare minimum, each domain entity should have a test that verifies its invariants.
-
-![Domain Layer unit tests](assets/Clean%20Architecture%20Template%20Domain%20Layer%20Unit%20Tests.png)
-
-### Application Layer Unit Tests
-
-The application layer is tested using both unit tests and subcutaneous tests.
-
-Since each one of the application layer use cases has its corresponding subcutaneous tests, the unit tests are used to test the application layer standalone components, such as the `ValidationBehavior` and the `AuthorizationBehavior`.
-
-![Application Layer unit tests](assets/Clean%20Architecture%20Template%20Application%20Layer%20Unit%20Tests.png)
-
-### Application Layer Subcutaneous Tests
-
-Subcutaneous tests are tests that operate right under the presentation layer.
-These tests are responsible for testing the core logic of our application, which is the application layer and the domain layer.
-
-The reason there are so many of these tests, is because each one of the application layer use cases has its corresponding subcutaneous tests.
-
-This allows us to test the application layer and the domain layer based on the actual expected usage, giving us the confidence that our application works as expected and that the system cannot be manipulated in a way we don't allow.
-
-I recommend spending more effort on these tests than the other tests, since they aren't too expensive to write, and the value they provide is huge.
-
-![](assets/Clean%20Architecture%20Template%20Subcutaneous%20Tests.png)
-
-### Presentation Layer Integration Tests
-
-The api layer is tested using integration tests. This is where we want to cover the entire system, including the database, external dependencies and the presentation layer.
-
-Unlike the subcutaneous tests, the focus of these tests is to ensure the integration between the various components of our system and other systems.
-
-![Integration Tests](assets/Clean%20Architecture%20Template%20Integration%20Tests.png)
-
-# Fun features 💃🕺
-
-## Domain Events & Eventual Consistency
-
-> Note: Eventual consistency and the domain events pattern add a layer of complexity. If you don't need it, don't use it. If you need it, make sure your system is designed properly and that you have the right tools to manage failures.
-
-The domain is designed so each use case which manipulates data, updates a single domain object in a single transaction.
-
-For example, when a user cancels a subscription, the only change that happens atomically is the subscription is marked as canceled:
-
-```csharp
-public ErrorOr<Success> CancelSubscription(Guid subscriptionId)
+```json
 {
-    if (subscriptionId != Subscription.Id)
-    {
-        return Error.NotFound("Subscription not found");
-    }
-
-    Subscription = Subscription.Canceled;
-
-    _domainEvents.Add(new SubscriptionCanceledEvent(this, subscriptionId));
-
-    return Result.Success;
+  "Database": {
+    "Provider": "Sqlite",
+    "ConnectionString": "Data Source=Weda.Template.sqlite"
+  }
 }
 ```
 
-Then, in an eventual consistency manner, the system will update all the relevant data. Which includes:
+Supported providers: `Sqlite`, `PostgreSQL`, `MongoDB`
 
-1. Deleting the subscription from the database and marking all reminders as deleted ([Subscriptions/Events/SubscriptionDeletedEventHandler.cs](src/WedaCleanArch.Application/Subscriptions/Events/SubscriptionCanceledEventHandler.cs)])
-1. Deleting all the reminders marked as deleted from the database ([Reminders/Events/ReminderDeletedEventHandler.cs](src/WedaCleanArch.Application/Reminders/Events/ReminderDeletedEventHandler.cs)]
+### JWT Settings
 
-> Note: Alongside the performance benefits, this allows to reuse reactive behavior. For example, the `ReminderDeletedEventHandler` is invoked both when a subscription is deleted and when a reminder is deleted.
-
-### Eventual Consistency Mechanism
-
-1. Each invariant is encapsulated in a single domain object. This allows performing changes by updating a single domain object in a single transaction.
-1. If `domain object B` needs to react to changes in `domain object A`, a [Domain Event](src/WedaCleanArch.Domain/Common/IDomainEvent.cs) is added to `domain object A` alongside the changes.
-1. Upon persisting `domain object A` changes to the database, the domain events are [extracted and added to a queue](src/WedaCleanArch.Infrastructure/Common/Persistence/AppDbContext.cs) for offline processing:
-    ```csharp
-    private void AddDomainEventsToOfflineProcessingQueue(List<IDomainEvent> domainEvents)
-    {
-        Queue<IDomainEvent> domainEventsQueue = new();
-        domainEvents.ForEach(domainEventsQueue.Enqueue);
-
-        _httpContextAccessor.HttpContext.Items["DomainEvents"] = domainEventsQueue;
-    }
-    ```
-1. After the user receives a response, the [EventualConsistencyMiddleware](src/WedaCleanArch.Infrastructure/Common/Middleware/EventualConsistencyMiddleware.cs) is invoked and processes the domain events:
-    ```csharp
-    public async Task InvokeAsync(HttpContext context, IEventualConsistencyProcessor eventualConsistencyProcessor)
-    {
-        context.Response.OnCompleted(async () =>
-        {
-            if (context.Items.TryGetValue("DomainEvents", out var value) ||
-                value is not Queue<IDomainEvent> domainEvents)
-            {
-                return;
-            }
-
-            while (domainEvents.TryDequeue(out var nextEvent))
-            {
-                await publisher.Publish(nextEvent);
-            }
-        });
-    }
-    ```
-
-> Note: the code snippets above are a simplified version of the actual implementation.
-
-## Background service for sending email reminders
-
-There is a simple background service that runs every minute and sends email reminders for all reminders that are due ([ReminderEmailBackgroundService](src/WedaCleanArch.Infrastructure/Reminders/BackgroundServices/ReminderEmailBackgroundService.cs)):
-
-```csharp
-private async void SendEmailNotifications(object? state)
+```json
 {
-    await _fluentEmail
-        .To(user.Email)
-        .Subject($"{dueReminders.Count} reminders due!")
-        .Body($"""
-              Dear {user.FirstName} {user.LastName} from the present.
-
-              I hope this email finds you well.
-
-              I'm writing you this email to remind you about the following reminders:
-              {string.Join('\n', dueReminders.Select((reminder, i) => $"{i + 1}. {reminder.Text}"))}
-
-              Best,
-              {user.FirstName} from the past.
-              """)
-        .SendAsync();
+  "JwtSettings": {
+    "Secret": "your-secret-key-at-least-32-characters",
+    "TokenExpirationInMinutes": 60,
+    "Issuer": "WedaTemplate",
+    "Audience": "WedaTemplate"
+  }
 }
 ```
 
-### Configure Email Settings
+### NATS Messaging
 
-To configure the service to send emails, make sure to update the email settings under the `appsettings.json`/`appsettings.Development.json` file:
+```json
+{
+  "Nats": {
+    "Url": "nats://localhost:4222",
+    "Name": "weda-template"
+  }
+}
+```
 
-You can use your own SMTP server or use a service like [Brevo](https://brevo.co/).
-
-### Configure Email Settings Manually
+### Email Notifications
 
 ```json
 {
   "EmailSettings": {
     "EnableEmailNotifications": false,
-    "DefaultFromEmail": "your-email@gmail.com (also, change EnableEmailNotifications to true 👆)",
+    "DefaultFromEmail": "your-email@example.com",
     "SmtpSettings": {
       "Server": "smtp.gmail.com",
       "Port": 587,
@@ -497,27 +273,59 @@ You can use your own SMTP server or use a service like [Brevo](https://brevo.co/
 }
 ```
 
-> note: you may need to allow less secure apps to access your email account.
+## Authorization
 
-### Configure Email Settings via User Secrets
+The template supports three types of authorization:
 
-```shell
-dotnet user-secrets --project src/WedaCleanArch.Api set EmailSettings:EnableEmailNotifications true
-dotnet user-secrets --project src/WedaCleanArch.Api set EmailSettings:DefaultFromEmail amantinband@gmail.com
-dotnet user-secrets --project src/WedaCleanArch.Api set EmailSettings:SmtpSettings:Server smtp-relay.brevo.com
-dotnet user-secrets --project src/WedaCleanArch.Api set EmailSettings:SmtpSettings:Port 587
-dotnet user-secrets --project src/WedaCleanArch.Api set EmailSettings:SmtpSettings:Username amantinband@gmail.com
-dotnet user-secrets --project src/WedaCleanArch.Api set EmailSettings:SmtpSettings:Password your-password
+### Role-Based Authorization
+
+```csharp
+[Authorize(Roles = "Admin")]
+public record GetUserQuery(Guid Id) : IAuthorizeableRequest<ErrorOr<User>>;
 ```
 
-# Contribution 🤲
+### Permission-Based Authorization
 
-If you have any questions, comments, or suggestions, please open an issue or create a pull request 🙂
+```csharp
+[Authorize(Permissions = "users:read")]
+public record ListUsersQuery : IAuthorizeableRequest<ErrorOr<List<User>>>;
+```
 
-# Credits 🙏
+### Policy-Based Authorization
 
-- [WedaCleanArch](https://github.com/jasontaylordev/WedaCleanArch) - An awesome clean architecture solution template by Jason Taylor
+```csharp
+[Authorize(Policies = "SelfOrAdmin")]
+public record UpdateUserCommand(Guid Id, ...) : IAuthorizeableRequest<ErrorOr<User>>;
+```
 
-# License 🪪
+## Testing
 
-This project is licensed under the terms of the [MIT](https://github.com/mantinband/clean-architecture/blob/main/LICENSE) license.
+```bash
+# Run all tests
+dotnet test
+
+# Run with coverage
+dotnet test --collect:"XPlat Code Coverage"
+```
+
+### Test Types
+
+- **Domain Unit Tests** - Test domain entities and value objects
+- **Application Unit Tests** - Test handlers and pipeline behaviors
+- **Infrastructure Unit Tests** - Test repositories and persistence
+- **Integration Tests** - End-to-end API testing
+
+## Architecture Patterns
+
+| Pattern | Implementation |
+|---------|----------------|
+| Domain-Driven Design | Entity, AggregateRoot, Value Objects, Domain Events |
+| CQRS | Mediator-based command/query separation |
+| Repository Pattern | Generic and specialized repositories |
+| Pipeline Behaviors | Validation and authorization cross-cutting |
+| Eventual Consistency | Middleware-based domain event publishing |
+| Event-Driven | NATS messaging for async communication |
+
+## License
+
+This project is licensed under the MIT License.

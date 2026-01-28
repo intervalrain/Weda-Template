@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -104,8 +103,7 @@ public class RequestReplyHostedService(
 
                 if (response is not null)
                 {
-                    var responseJson = JsonSerializer.SerializeToUtf8Bytes(response);
-                    await msg.ReplyAsync(responseJson);
+                    await msg.ReplyAsync(response);
                 }
                 else
                 {

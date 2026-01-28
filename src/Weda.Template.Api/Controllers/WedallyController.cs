@@ -153,42 +153,22 @@ public class WedallyController(
         {
             var connection = connectionProvider.GetConnection(endpoint.ConnectionName);
 
-            byte[] payloadBytes = [];
-            if (request.Payload.HasValue && request.Payload.Value.ValueKind != JsonValueKind.Undefined)
-            {
-                payloadBytes = JsonSerializer.SerializeToUtf8Bytes(request.Payload.Value);
-            }
-
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             cts.CancelAfter(TimeSpan.FromMilliseconds(request.TimeoutMs));
 
-            var response = await connection.RequestAsync<byte[], byte[]>(
+            // Use JsonElement to receive the response since service uses NatsJsonSerializerRegistry
+            var response = await connection.RequestAsync<JsonElement?, JsonElement?>(
                 request.Subject,
-                payloadBytes,
+                request.Payload,
                 cancellationToken: cts.Token);
 
             stopwatch.Stop();
-
-            JsonElement? responseData = null;
-            if (response.Data is { Length: > 0 })
-            {
-                try
-                {
-                    responseData = JsonSerializer.Deserialize<JsonElement>(response.Data);
-                }
-                catch (JsonException)
-                {
-                    // If response is not valid JSON, return as string
-                    responseData = JsonSerializer.Deserialize<JsonElement>(
-                        $"\"{Convert.ToBase64String(response.Data)}\"");
-                }
-            }
 
             return Ok(new NatsPublishResponse
             {
                 Success = true,
                 Subject = request.Subject,
-                ResponseData = responseData,
+                ResponseData = response.Data,
                 ElapsedMs = stopwatch.ElapsedMilliseconds
             });
         }

@@ -1223,3 +1223,34 @@ body {
         font-size: 1.5rem;
     }
 }
+
+/* CLI Button */
+.btn-cli {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-cli:hover {
+    background: var(--bg);
+    color: var(--text);
+    border-color: var(--primary);
+}
+
+.btn-cli.copied {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+.btn-cli svg {
+    flex-shrink: 0;
+}

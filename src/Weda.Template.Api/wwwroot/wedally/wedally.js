@@ -244,6 +244,13 @@ function createEndpointCard(endpoint) {
             </div>
             <div class="endpoint-header-right">
                 <span class="endpoint-version">${endpoint.version}</span>
+                <button class="btn btn-small btn-cli" data-operation-id="${endpoint.operationId}" title="Copy NATS CLI command">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="4 17 10 11 4 5"></polyline>
+                        <line x1="12" y1="19" x2="20" y2="19"></line>
+                    </svg>
+                    CLI
+                </button>
                 ${canTest ? `<button class="btn btn-small btn-try" data-operation-id="${endpoint.operationId}">Try it</button>` : ''}
             </div>
         </div>
@@ -323,7 +330,7 @@ function createEndpointCard(endpoint) {
     const header = card.querySelector('.endpoint-header');
     const body = card.querySelector('.endpoint-body');
     header.addEventListener('click', (e) => {
-        if (e.target.closest('.btn-try')) return;
+        if (e.target.closest('.btn-try') || e.target.closest('.btn-cli')) return;
         body.classList.toggle('hidden');
         card.classList.toggle('collapsed');
     });
@@ -334,6 +341,15 @@ function createEndpointCard(endpoint) {
         tryBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             openTryItModal(endpoint);
+        });
+    }
+
+    // CLI button
+    const cliBtn = card.querySelector('.btn-cli');
+    if (cliBtn) {
+        cliBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            copyNatsCliCommand(endpoint, cliBtn);
         });
     }
 
@@ -691,6 +707,103 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// Generate NATS CLI command text for an endpoint
+function generateNatsCliCommand(endpoint) {
+    const subject = endpoint.resolvedSubject;
+    const subjectWithPlaceholder = subject.replace(/\*/g, '<id>');
+
+    // Get example payload if available
+    let examplePayload = null;
+    if (endpoint.requestBody && spec.definitions[endpoint.requestBody.schema]) {
+        const def = spec.definitions[endpoint.requestBody.schema];
+        if (def.example) {
+            try {
+                examplePayload = JSON.parse(def.example);
+            } catch (e) {
+                examplePayload = null;
+            }
+        }
+    }
+
+    // Determine command based on action type
+    let command = '';
+
+    switch (endpoint.action) {
+        case 'Request':
+            // Request-Reply: use nats req - response is JSON text
+            if (examplePayload) {
+                const formattedPayload = JSON.stringify(examplePayload, null, 2);
+                command = `nats req '${subjectWithPlaceholder}' '\n${formattedPayload}\n'`;
+            } else {
+                command = `nats req '${subjectWithPlaceholder}' ''`;
+            }
+            break;
+
+        case 'Publish':
+        case 'Consume':
+        case 'Fetch':
+        default:
+            // Pub-Sub and JetStream: use nats pub
+            if (examplePayload) {
+                const formattedPayload = JSON.stringify(examplePayload, null, 2);
+                command = `nats pub '${subjectWithPlaceholder}' '\n${formattedPayload}\n'`;
+            } else {
+                command = `nats pub '${subjectWithPlaceholder}' '{}'`;
+            }
+            break;
+    }
+
+    return command;
+}
+
+// Copy NATS CLI command to clipboard
+function copyNatsCliCommand(endpoint, button) {
+    const command = generateNatsCliCommand(endpoint);
+
+    navigator.clipboard.writeText(command).then(() => {
+        // Show feedback
+        const originalHtml = button.innerHTML;
+        button.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            Copied!
+        `;
+        button.classList.add('copied');
+
+        setTimeout(() => {
+            button.innerHTML = originalHtml;
+            button.classList.remove('copied');
+        }, 1500);
+    }).catch(err => {
+        console.error('Failed to copy:', err);
+    });
+}
+
+// Copy to clipboard helper (for other uses)
+function copyToClipboard(elementId, button) {
+    const element = document.getElementById(elementId);
+    const text = element.textContent;
+
+    navigator.clipboard.writeText(text).then(() => {
+        // Show feedback
+        const originalHtml = button.innerHTML;
+        button.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+        `;
+        button.classList.add('copied');
+
+        setTimeout(() => {
+            button.innerHTML = originalHtml;
+            button.classList.remove('copied');
+        }, 1500);
+    }).catch(err => {
+        console.error('Failed to copy:', err);
+    });
 }
 
 // Format example value for display in table
