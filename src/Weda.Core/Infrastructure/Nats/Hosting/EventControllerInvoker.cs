@@ -37,7 +37,7 @@ public class EventControllerInvoker(INatsConnectionProvider connectionProvider, 
             return null;
         }
 
-        return JsonSerializer.Deserialize(data, requestType);
+        return JsonSerializer.Deserialize(data, requestType, WedaJsonDefaults.Options);
     }
 
     private EventController CreateController(

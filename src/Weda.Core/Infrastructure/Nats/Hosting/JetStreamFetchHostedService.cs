@@ -3,6 +3,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 using NATS.Client.JetStream;
+using NATS.Client.JetStream.Models;
 
 using Weda.Core.Infrastructure.Nats.Configuration;
 using Weda.Core.Infrastructure.Nats.Discovery;
@@ -115,7 +116,10 @@ public class JetStreamFetchHostedService(
                                 {
                                     logger.LogError(ex, "Error processing JetStream Fetch: {Subject}", msg.Subject);
 
-                                    await msg.NakAsync(cancellationToken: stoppingToken);
+                                    // Ack the message even on error to prevent infinite retry loops.
+                                    // Business logic errors (e.g., duplicate email) should not cause redelivery.
+                                    // For transient errors, consider implementing a dead-letter queue pattern.
+                                    await msg.AckAsync(cancellationToken: stoppingToken);
                                 }
                             },
                             stoppingToken);
@@ -153,15 +157,28 @@ public class JetStreamFetchHostedService(
     {
         try
         {
-            await js.GetStreamAsync(streamName, cancellationToken: cancellationToken);
-            logger.LogDebug("Stream {Stream} already exists", streamName);
+            var stream = await js.GetStreamAsync(streamName, cancellationToken: cancellationToken);
+
+            // Check if subject is already in the stream, if not add it
+            var currentSubjects = stream.Info.Config.Subjects ?? [];
+            if (!currentSubjects.Contains(subject))
+            {
+                var updatedSubjects = currentSubjects.Append(subject).ToList();
+                var updatedConfig = stream.Info.Config with { Subjects = updatedSubjects };
+                await js.UpdateStreamAsync(updatedConfig, cancellationToken);
+                logger.LogInformation("Added subject {Subject} to stream {Stream}", subject, streamName);
+            }
+            else
+            {
+                logger.LogDebug("Stream {Stream} already has subject {Subject}", streamName, subject);
+            }
         }
         catch (NatsJSApiException ex) when (ex.Error.Code == 404)
         {
             // Stream doesn't exist, create it
             logger.LogInformation("Creating stream {Stream} with subject {Subject}", streamName, subject);
 
-            var streamConfig = new NATS.Client.JetStream.Models.StreamConfig
+            var streamConfig = new StreamConfig
             {
                 Name = streamName,
                 Subjects = [subject],
@@ -180,7 +197,7 @@ public class JetStreamFetchHostedService(
     {
         try
         {
-            await js.GetConsumerAsync(streamName, consumerName, cancellationToken);
+            await js.CreateOrUpdateConsumerAsync(streamName, new ConsumerConfig(consumerName), cancellationToken);
             logger.LogDebug("Consumer {Consumer} on stream {Stream} already exists", consumerName, streamName);
         }
         catch (NatsJSApiException ex) when (ex.Error.Code == 404)
@@ -188,11 +205,11 @@ public class JetStreamFetchHostedService(
             // Consumer doesn't exist, create it
             logger.LogInformation("Creating consumer {Consumer} on stream {Stream}", consumerName, streamName);
 
-            var consumerConfig = new NATS.Client.JetStream.Models.ConsumerConfig
+            var consumerConfig = new ConsumerConfig
             {
                 Name = consumerName,
                 DurableName = consumerName,
-                AckPolicy = NATS.Client.JetStream.Models.ConsumerConfigAckPolicy.Explicit,
+                AckPolicy = ConsumerConfigAckPolicy.Explicit,
             };
 
             await js.CreateOrUpdateConsumerAsync(streamName, consumerConfig, cancellationToken);

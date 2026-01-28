@@ -125,7 +125,12 @@ public static class WedaCoreModule
         this IServiceCollection services,
         WedaCoreOptions options)
     {
-        services.AddControllers();
+        services.AddControllers()
+            .AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.PropertyNamingPolicy = WedaJsonDefaults.Options.PropertyNamingPolicy;
+                options.JsonSerializerOptions.PropertyNameCaseInsensitive = WedaJsonDefaults.Options.PropertyNameCaseInsensitive;
+            });
         services.AddEndpointsApiExplorer();
 
         services.AddApiVersioning(versioningOptions =>

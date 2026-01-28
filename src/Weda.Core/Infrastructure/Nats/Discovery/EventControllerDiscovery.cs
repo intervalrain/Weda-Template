@@ -50,12 +50,15 @@ public class EventControllerDiscovery(string defaultConnection = "default")
             var streamTemplate = subjectAttr.Stream ?? classStreamAttr?.Template;
             var consumerTemplate = subjectAttr.Consumer ?? classConsumerAttr?.Name;
 
+            // Resolve stream name: use template if provided, otherwise auto-generate
             var streamName = streamTemplate is not null
                 ? TemplateResolver.Resolve(streamTemplate, controllerType, method.Name)
-                : null;
+                : GenerateDefaultStreamName(controllerType);
+
+            // Resolve consumer name: use template if provided, otherwise auto-generate
             var consumerName = consumerTemplate is not null
                 ? TemplateResolver.Resolve(consumerTemplate, controllerType, method.Name)
-                : null;
+                : GenerateDefaultConsumerName(controllerType, method.Name);
 
             var responseType = GetResponseType(method);
             var mode = DetermineEndpointMode(responseType, subjectAttr.DeliveryMode, subjectAttr.ConsumerMode);
@@ -112,7 +115,56 @@ public class EventControllerDiscovery(string defaultConnection = "default")
     private static Type? GetRequestType(MethodInfo method)
     {
         var parameters = method.GetParameters();
-        return parameters.Length > 0 ? parameters[0].ParameterType : null;
+
+        // Find the first complex type parameter (the body), skipping primitives and CancellationToken
+        foreach (var param in parameters)
+        {
+            var paramType = param.ParameterType;
+
+            // Skip CancellationToken
+            if (paramType == typeof(CancellationToken))
+                continue;
+
+            // Skip primitive types (they come from subject placeholders like {id})
+            if (IsPrimitiveOrSimpleType(paramType))
+                continue;
+
+            // Found a complex type - this is the request body
+            return paramType;
+        }
+
+        return null;
+    }
+
+    private static bool IsPrimitiveOrSimpleType(Type type)
+    {
+        var underlyingType = Nullable.GetUnderlyingType(type) ?? type;
+        return underlyingType.IsPrimitive ||
+               underlyingType == typeof(string) ||
+               underlyingType == typeof(decimal) ||
+               underlyingType == typeof(DateTime) ||
+               underlyingType == typeof(Guid);
+    }
+
+    /// <summary>
+    /// Auto-generate default stream name from controller type.
+    /// Format: {controller}_v{version}_stream (e.g., "employee_v1_stream")
+    /// </summary>
+    private static string GenerateDefaultStreamName(Type controllerType)
+    {
+        var controllerName = TemplateResolver.Resolve(controllerType.Name);
+        var version = TemplateResolver.GetApiVersion(controllerType) ?? "1";
+        return $"{controllerName}_v{version}_stream".ToLowerInvariant();
+    }
+
+    /// <summary>
+    /// Auto-generate default consumer name from controller type and method.
+    /// Format: {controller}_{method}_consumer (e.g., "employee_onemployeecreated_consumer")
+    /// </summary>
+    private static string GenerateDefaultConsumerName(Type controllerType, string methodName)
+    {
+        var controllerName = TemplateResolver.Resolve(controllerType.Name);
+        return $"{controllerName}_{methodName}_consumer".ToLowerInvariant();
     }
 
     private static Type? GetResponseType(MethodInfo method)

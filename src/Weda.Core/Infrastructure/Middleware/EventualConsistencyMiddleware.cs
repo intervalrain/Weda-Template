@@ -10,6 +10,14 @@ public class EventualConsistencyMiddleware<TDbContext>(RequestDelegate next)
 {
     public async Task InvokeAsync(HttpContext context, IPublisher publisher, TDbContext dbContext)
     {
+        // Skip transaction if endpoint is marked with [SkipTransaction]
+        var endpoint = context.GetEndpoint();
+        if (endpoint?.Metadata.GetMetadata<SkipTransactionAttribute>() is not null)
+        {
+            await next(context);
+            return;
+        }
+
         var transaction = await dbContext.Database.BeginTransactionAsync();
         context.Response.OnCompleted(async () =>
         {

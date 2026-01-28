@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using NATS.Client.Core;
 using NATS.Client.Serializers.Json;
+using NATS.Net;
 
 namespace Weda.Core.Infrastructure.Nats.Configuration;
 
@@ -22,7 +23,7 @@ public class NatsBuilder(IServiceCollection services)
         var opts = NatsOpts.Default with
         {
             Url = url,
-            SerializerRegistry = NatsJsonSerializerRegistry.Default
+            SerializerRegistry = NatsClientDefaultSerializerRegistry.Default
         };
         configure?.Invoke(opts);
         _connections[name] = opts;

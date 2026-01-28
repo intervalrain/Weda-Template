@@ -6,7 +6,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NATS.Client.Core;
 using Swashbuckle.AspNetCore.Filters;
+using Weda.Core;
 using Weda.Core.Api;
+using Weda.Core.Infrastructure.Middleware;
 using Weda.Core.Infrastructure.Nats.Configuration;
 using Weda.Core.Infrastructure.Nats.Discovery;
 using Weda.Core.Infrastructure.Nats.Enums;
@@ -21,6 +23,7 @@ namespace Weda.Template.Api.Controllers;
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/wedally")]
 [ApiExplorerSettings(IgnoreApi = true)]
+[SkipTransaction]
 public class WedallyController(
     EventControllerDiscovery discovery,
     INatsConnectionProvider connectionProvider,
@@ -156,10 +159,19 @@ public class WedallyController(
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             cts.CancelAfter(TimeSpan.FromMilliseconds(request.TimeoutMs));
 
-            // Use JsonElement to receive the response since service uses NatsJsonSerializerRegistry
-            var response = await connection.RequestAsync<JsonElement?, JsonElement?>(
+            // Convert JsonElement to byte[] for direct transmission
+            byte[]? payloadBytes = request.Payload.HasValue
+                ? JsonSerializer.SerializeToUtf8Bytes(request.Payload.Value, WedaJsonDefaults.Options)
+                : null;
+
+            logger.LogInformation("Sending request to {Subject}, payload bytes: {Length}",
                 request.Subject,
-                request.Payload,
+                payloadBytes?.Length ?? -1);
+
+            // Use byte[] for request, JsonElement for response
+            var response = await connection.RequestAsync<byte[]?, JsonElement?>(
+                request.Subject,
+                payloadBytes,
                 cancellationToken: cts.Token);
 
             stopwatch.Stop();

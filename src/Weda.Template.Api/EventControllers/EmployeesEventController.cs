@@ -101,7 +101,7 @@ public class EmployeeEventController : EventController
             request.Position,
             request.HireDate,
             request.SupervisorId);
-        var result = await Mediator.Send(command);
+        var result = await Mediator.Send(command, default);
 
         if (result.IsError)
         {

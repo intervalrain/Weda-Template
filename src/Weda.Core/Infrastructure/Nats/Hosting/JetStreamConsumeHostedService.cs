@@ -107,7 +107,11 @@ public class JetStreamConsumeHostedService(
                         catch (Exception ex)
                         {
                             logger.LogError(ex, "Error processing JetStream Consume: {Subject}", msg.Subject);
-                            await msg.NakAsync(cancellationToken: stoppingToken);
+
+                            // Ack the message even on error to prevent infinite retry loops.
+                            // Business logic errors (e.g., duplicate email) should not cause redelivery.
+                            // For transient errors, consider implementing a dead-letter queue pattern.
+                            await msg.AckAsync(cancellationToken: stoppingToken);
                         }
                     },
                     stoppingToken);
@@ -131,8 +135,21 @@ public class JetStreamConsumeHostedService(
     {
         try
         {
-            await js.GetStreamAsync(streamName, cancellationToken: cancellationToken);
-            logger.LogDebug("Stream {Stream} already exists", streamName);
+            var stream = await js.GetStreamAsync(streamName, cancellationToken: cancellationToken);
+
+            // Check if subject is already in the stream, if not add it
+            var currentSubjects = stream.Info.Config.Subjects ?? [];
+            if (!currentSubjects.Contains(subject))
+            {
+                var updatedSubjects = currentSubjects.Append(subject).ToList();
+                var updatedConfig = stream.Info.Config with { Subjects = updatedSubjects };
+                await js.UpdateStreamAsync(updatedConfig, cancellationToken);
+                logger.LogInformation("Added subject {Subject} to stream {Stream}", subject, streamName);
+            }
+            else
+            {
+                logger.LogDebug("Stream {Stream} already has subject {Subject}", streamName, subject);
+            }
         }
         catch (NatsJSApiException ex) when (ex.Error.Code == 404)
         {
