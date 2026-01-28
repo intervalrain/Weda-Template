@@ -20,6 +20,7 @@ namespace Weda.Template.Api.Controllers;
 /// </summary>
 [ApiVersion("1.0")]
 [Route("api/v{version:apiVersion}/wedally")]
+[ApiExplorerSettings(IgnoreApi = true)]
 public class WedallyController(
     EventControllerDiscovery discovery,
     INatsConnectionProvider connectionProvider,
