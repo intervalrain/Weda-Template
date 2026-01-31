@@ -12,10 +12,16 @@
     <PackageReference Include="Microsoft.AspNetCore.Mvc" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
+<!--#if (db == "sqlite")-->
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
+<!--#endif-->
+<!--#if (db == "postgres")-->
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+<!--#endif-->
+<!--#if (db == "mongo")-->
     <PackageReference Include="MongoDB.EntityFrameworkCore" />
+<!--#endif-->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Binder" />

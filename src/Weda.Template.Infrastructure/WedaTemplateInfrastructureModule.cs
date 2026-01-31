@@ -63,21 +63,15 @@ public static class WedaTemplateInfrastructureModule
     {
         services.AddDbContext<AppDbContext>(dbOptions =>
         {
-            switch (options.Provider)
-            {
-                case DatabaseProvider.Sqlite:
-                    dbOptions.UseSqlite(options.ConnectionString);
-                    break;
-                case DatabaseProvider.PostgreSql:
-                    dbOptions.UseNpgsql(options.ConnectionString);
-                    break;
-                case DatabaseProvider.MongoDb:
-                    dbOptions.UseMongoDB(options.ConnectionString, options.DatabaseName);
-                    break;
-                case DatabaseProvider.InMemory:
-                    dbOptions.UseInMemoryDatabase(options.DatabaseName);
-                    break;
-            }
+#if sqlite
+            dbOptions.UseSqlite(options.ConnectionString);
+#elif postgres
+            dbOptions.UseNpgsql(options.ConnectionString);
+#elif mongo
+            dbOptions.UseMongoDB(options.ConnectionString, options.DatabaseName);
+#elif nodb
+            dbOptions.UseInMemoryDatabase(options.DatabaseName);
+#endif
         });
 
 #if sample

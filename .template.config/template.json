@@ -35,6 +35,10 @@
         {
           "choice": "mongo",
           "description": "MongoDB"
+        },
+        {
+          "choice": "none",
+          "description": "InMemory (no external database)"
         }
       ],
       "defaultValue": "sqlite"
@@ -71,10 +75,41 @@
         "format": "yyyy"
       },
       "replaces": "2026"
+    },
+    "sqlite": {
+      "type": "computed",
+      "value": "(db == \"sqlite\")"
+    },
+    "postgres": {
+      "type": "computed",
+      "value": "(db == \"postgres\")"
+    },
+    "mongo": {
+      "type": "computed",
+      "value": "(db == \"mongo\")"
+    },
+    "nodb": {
+      "type": "computed",
+      "value": "(db == \"none\")"
     }
   },
   "specialCustomOperations": {
     "**/*.html": {
+      "operations": [
+        {
+          "type": "conditional",
+          "configuration": {
+            "if": ["#if"],
+            "else": ["#else"],
+            "elseif": ["#elseif"],
+            "endif": ["#endif"],
+            "trim": true,
+            "wholeLine": true
+          }
+        }
+      ]
+    },
+    "**/*.json": {
       "operations": [
         {
           "type": "conditional",
