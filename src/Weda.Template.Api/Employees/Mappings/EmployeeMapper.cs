@@ -3,7 +3,7 @@ using Riok.Mapperly.Abstractions;
 using Weda.Template.Contracts.Employees;
 using Weda.Template.Contracts.Employees.Dtos;
 
-namespace Weda.Template.Api.Mapping;
+namespace Weda.Template.Api.Employees.Mappings;
 
 [Mapper]
 public static partial class EmployeeMapper

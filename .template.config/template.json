@@ -19,12 +19,25 @@
   "sourceName": "Weda.Template",
   "preferNameDirectory": true,
   "symbols": {
-    "Db": {
+    "db": {
       "type": "parameter",
-      "description": "The name of the database.",
-      "datatype": "string",
-      "defaultValue": "WedaTemplate",
-      "replaces": "WedaTemplate"
+      "description": "Database provider to use.",
+      "datatype": "choice",
+      "choices": [
+        {
+          "choice": "sqlite",
+          "description": "SQLite (default, lightweight)"
+        },
+        {
+          "choice": "postgres",
+          "description": "PostgreSQL"
+        },
+        {
+          "choice": "mongo",
+          "description": "MongoDB"
+        }
+      ],
+      "defaultValue": "sqlite"
     },
     "Nats": {
       "type": "parameter",
@@ -60,6 +73,23 @@
       "replaces": "2026"
     }
   },
+  "specialCustomOperations": {
+    "**/*.html": {
+      "operations": [
+        {
+          "type": "conditional",
+          "configuration": {
+            "if": ["#if"],
+            "else": ["#else"],
+            "elseif": ["#elseif"],
+            "endif": ["#endif"],
+            "trim": true,
+            "wholeLine": true
+          }
+        }
+      ]
+    }
+  },
   "sources": [
     {
       "modifiers": [
@@ -80,12 +110,12 @@
         {
           "condition": "(!sample)",
           "exclude": [
-            "src/Weda.Template.Api/EventControllers/EmployeesEventController.cs",
-            "src/Weda.Template.Api/wwwroot/sample/**/*",
+            "src/Weda.Template.Api/Employees/**/*",
             "src/Weda.Template.Domain/Employees/**/*",
             "src/Weda.Template.Application/Employees/**/*",
             "src/Weda.Template.Contracts/Employees/**/*",
-            "src/Weda.Template.Infrastructure/Employees/**/*"
+            "src/Weda.Template.Infrastructure/Employees/**/*",
+            "src/Weda.Template.Api/wwwroot/sample/**/*"
           ]
         },
         {

@@ -2,13 +2,13 @@ using Asp.Versioning;
 using Mediator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Weda.Template.Api.Mapping;
 using Weda.Template.Contracts.Employees;
 using Weda.Template.Domain.Employees.Enums;
 using Weda.Core.Api;
 using Weda.Template.Contracts.Employees.Requests;
 using Weda.Template.Contracts.Employees.Commands;
 using Weda.Template.Contracts.Employees.Queries;
+using Weda.Template.Api.Employees.Mappings;
 
 namespace Weda.Template.Api.Controllers;
 

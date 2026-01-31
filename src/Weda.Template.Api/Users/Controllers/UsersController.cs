@@ -9,7 +9,7 @@ using Weda.Template.Contracts.Users.Dtos;
 using Weda.Template.Contracts.Users.Queries;
 using Weda.Template.Contracts.Users.Requests;
 
-namespace Weda.Template.Api.Controllers;
+namespace Weda.Template.Api.Users.Controllers;
 
 /// <summary>
 /// Manages user operations including CRUD and role management.

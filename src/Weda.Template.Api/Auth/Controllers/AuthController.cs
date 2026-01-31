@@ -8,7 +8,7 @@ using Weda.Template.Contracts.Auth;
 using Weda.Template.Contracts.Auth.Commands;
 using Weda.Template.Contracts.Auth.Requests;
 
-namespace Weda.Template.Api.Controllers;
+namespace Weda.Template.Api.Auth.Controllers;
 
 /// <summary>
 /// Authentication and authorization operations.

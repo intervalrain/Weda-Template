@@ -9,7 +9,7 @@ using Weda.Template.Contracts.Employees.Queries;
 using Weda.Template.Contracts.Employees.Requests;
 using Weda.Template.Domain.Employees.Enums;
 
-namespace Weda.Template.Api.EventControllers;
+namespace Weda.Template.Api.Auth.EventControllers;
 
 /// <summary>
 /// Employee EventController demonstrating different NATS patterns.

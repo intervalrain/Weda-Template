@@ -2,11 +2,8 @@ using Weda.Core.Application.Interfaces;
 using Weda.Core.Application.Security;
 using Weda.Core.Application.Security.CurrentUserProvider;
 using Weda.Core.Application.Security.PasswordHasher;
-using Weda.Template.Domain.Employees.DomainServices;
-using Weda.Template.Domain.Employees.Repositories;
 using Weda.Template.Domain.Users.Repositories;
 using Weda.Template.Infrastructure.Common.Persistence;
-using Weda.Template.Infrastructure.Employees.Persistence;
 using Weda.Template.Infrastructure.Persistence;
 using Weda.Template.Infrastructure.Security;
 using Weda.Template.Infrastructure.Security.PolicyEnforcer;
@@ -21,6 +18,10 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+
+#if sample
+using Weda.Template.Infrastructure.Employees;
+#endif
 
 namespace Weda.Template.Infrastructure;
 
@@ -79,8 +80,9 @@ public static class WedaTemplateInfrastructureModule
             }
         });
 
-        services.AddScoped<IEmployeeRepository, EmployeeRepository>();
-        services.AddScoped<EmployeeHierarchyManager>();
+#if sample
+        services.AddEmployeesInfrastructure();
+#endif
 
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddSingleton<IPasswordHasher, InfraPasswordHasher>();

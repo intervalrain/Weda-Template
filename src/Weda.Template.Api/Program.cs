@@ -5,10 +5,13 @@ using Weda.Core;
 using Weda.Template.Api;
 using Weda.Template.Application;
 using Weda.Template.Contracts;
-using Weda.Template.Domain.Employees.Entities;
 using Weda.Template.Domain.Users.Entities;
 using Weda.Template.Infrastructure;
 using Weda.Template.Infrastructure.Common.Persistence;
+
+#if sample
+using Weda.Template.Domain.Employees.Entities;
+#endif
 
 var builder = WebApplication.CreateBuilder(args);
 {
@@ -53,7 +56,9 @@ var app = builder.Build();
 
             // Verify schema by testing a simple query on each DbSet
             _ = await dbContext.Set<User>().AnyAsync();
+#if sample
             _ = await dbContext.Set<Employee>().AnyAsync();
+#endif
         }
         catch (Exception ex) when (ex.Message.Contains("no such table") || ex.Message.Contains("doesn't exist"))
         {

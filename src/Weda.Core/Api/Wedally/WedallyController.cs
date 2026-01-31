@@ -3,18 +3,19 @@ using System.Reflection;
 using System.Text.Json;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using NATS.Client.Core;
 using Swashbuckle.AspNetCore.Filters;
-using Weda.Core;
-using Weda.Core.Api;
+
+using Weda.Core.Api.Wedally.Contracts;
 using Weda.Core.Infrastructure.Middleware;
 using Weda.Core.Infrastructure.Nats.Configuration;
 using Weda.Core.Infrastructure.Nats.Discovery;
 using Weda.Core.Infrastructure.Nats.Enums;
-using Weda.Template.Contracts.Wedally;
 
-namespace Weda.Template.Api.Controllers;
+namespace Weda.Core.Api.Wedally;
 
 /// <summary>
 /// Wedally - NATS EventController testing UI API.

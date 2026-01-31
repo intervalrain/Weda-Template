@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace Weda.Template.Contracts.Wedally;
+namespace Weda.Core.Api.Wedally.Contracts;
 
 /// <summary>
 /// Request to publish a NATS message through Wedally.
