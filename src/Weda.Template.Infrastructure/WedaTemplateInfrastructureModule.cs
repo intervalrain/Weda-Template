@@ -70,7 +70,8 @@ public static class WedaTemplateInfrastructureModule
 #elif mongo
             dbOptions.UseMongoDB(options.ConnectionString, options.DatabaseName);
 #elif nodb
-            dbOptions.UseInMemoryDatabase(options.DatabaseName);
+            dbOptions.UseInMemoryDatabase(options.DatabaseName)
+                .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.InMemoryEventId.TransactionIgnoredWarning));
 #endif
         });
 

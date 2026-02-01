@@ -29,9 +29,7 @@ public class CreateUserCommandHandler(
         var userResult = User.Create(
             request.Email,
             passwordHash,
-            request.Name,
-            request.Roles,
-            request.Permissions);
+            request.Name);
 
         if (userResult.IsError)
         {

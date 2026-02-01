@@ -33,7 +33,11 @@ public class UpdateUserRolesCommandHandler(
 
         if (request.Permissions is not null)
         {
-            user.UpdatePermissions(request.Permissions);
+            var permissionsResult = user.UpdatePermissions(request.Permissions, currentUser.Roles);
+            if (permissionsResult.IsError)
+            {
+                return permissionsResult.Errors;
+            }
         }
 
         await userRepository.UpdateAsync(user, cancellationToken);

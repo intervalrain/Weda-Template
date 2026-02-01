@@ -91,6 +91,75 @@
     "nodb": {
       "type": "computed",
       "value": "(db == \"none\")"
+    },
+    "DatabaseProvider": {
+      "type": "generated",
+      "generator": "switch",
+      "parameters": {
+        "evaluator": "C++",
+        "datatype": "string",
+        "cases": [
+          { "condition": "(db == 'sqlite')", "value": "Sqlite" },
+          { "condition": "(db == 'postgres')", "value": "PostgreSql" },
+          { "condition": "(db == 'mongo')", "value": "MongoDb" },
+          { "condition": "(db == 'none')", "value": "InMemory" }
+        ]
+      },
+      "replaces": "DATABASE_PROVIDER_PLACEHOLDER"
+    },
+    "DatabaseConnection": {
+      "type": "generated",
+      "generator": "switch",
+      "parameters": {
+        "evaluator": "C++",
+        "datatype": "string",
+        "cases": [
+          { "condition": "(db == 'sqlite')", "value": "Data Source=Weda.Template.sqlite" },
+          { "condition": "(db == 'postgres')", "value": "Host=localhost;Database=weda_template;Username=postgres;Password=postgres" },
+          { "condition": "(db == 'mongo')", "value": "mongodb://localhost:27017" },
+          { "condition": "(db == 'none')", "value": "" }
+        ]
+      },
+      "replaces": "DATABASE_CONNECTION_PLACEHOLDER"
+    },
+    "SampleSymbol": {
+      "type": "generated",
+      "generator": "switch",
+      "parameters": {
+        "evaluator": "C++",
+        "datatype": "string",
+        "cases": [
+          { "condition": "(sample)", "value": ";sample" },
+          { "condition": "(!sample)", "value": "" }
+        ]
+      }
+    },
+    "DbSymbol": {
+      "type": "generated",
+      "generator": "switch",
+      "parameters": {
+        "evaluator": "C++",
+        "datatype": "string",
+        "cases": [
+          { "condition": "(db == 'sqlite')", "value": ";sqlite" },
+          { "condition": "(db == 'postgres')", "value": ";postgres" },
+          { "condition": "(db == 'mongo')", "value": ";mongo" },
+          { "condition": "(db == 'none')", "value": ";nodb" }
+        ]
+      }
+    },
+    "DefineConstantsValue": {
+      "type": "generated",
+      "generator": "join",
+      "parameters": {
+        "symbols": [
+          { "type": "const", "value": "$(DefineConstants)" },
+          { "type": "ref", "value": "SampleSymbol" },
+          { "type": "ref", "value": "DbSymbol" }
+        ],
+        "separator": ""
+      },
+      "replaces": "$(DefineConstants);sample;sqlite"
     }
   },
   "specialCustomOperations": {
@@ -99,25 +168,10 @@
         {
           "type": "conditional",
           "configuration": {
-            "if": ["#if"],
-            "else": ["#else"],
-            "elseif": ["#elseif"],
-            "endif": ["#endif"],
-            "trim": true,
-            "wholeLine": true
-          }
-        }
-      ]
-    },
-    "**/*.json": {
-      "operations": [
-        {
-          "type": "conditional",
-          "configuration": {
-            "if": ["#if"],
-            "else": ["#else"],
-            "elseif": ["#elseif"],
-            "endif": ["#endif"],
+            "if": ["<!--#if"],
+            "else": ["<!--#else"],
+            "elseif": ["<!--#elseif"],
+            "endif": ["<!--#endif"],
             "trim": true,
             "wholeLine": true
           }

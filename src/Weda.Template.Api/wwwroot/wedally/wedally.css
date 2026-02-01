@@ -1062,6 +1062,18 @@ body {
     font-size: 0.9rem;
 }
 
+.endpoint-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+    background: #e7f3ff;
+    border: 1px solid #61affe;
+    border-radius: 4px;
+    color: #1a5fb4;
+    font-size: 0.9rem;
+}
+
 /* Props Table */
 .props-table {
     width: 100%;

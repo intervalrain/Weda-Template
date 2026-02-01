@@ -1,5 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+  <PropertyGroup>
+    <!-- Default symbols for development (template source). Template engine will replace with actual values. -->
+    <DefineConstants>$(DefineConstants);sample;sqlite</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\Weda.Core\Weda.Core.csproj" />
     <ProjectReference Include="..\Weda.Template.Application\Weda.Template.Application.csproj" />

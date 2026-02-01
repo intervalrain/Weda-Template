@@ -230,6 +230,77 @@ public class WedallyController(
         }
     }
 
+    /// <summary>
+    /// Fire-and-forget publish to a NATS subject.
+    /// For Publish, Consume, and Fetch endpoints that don't expect a response.
+    /// Always returns success if the message was sent.
+    /// </summary>
+    /// <param name="request">The publish request containing endpoint ID, subject, and payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Success response indicating message was sent.</returns>
+    [HttpPost("fire")]
+    [ProducesResponseType(typeof(NatsPublishResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [AllowAnonymous]
+    public async Task<ActionResult<NatsPublishResponse>> Fire(
+        [FromBody] NatsPublishRequest request,
+        CancellationToken cancellationToken)
+    {
+        var endpoint = discovery.Endpoints
+            .FirstOrDefault(e => GetEndpointId(e) == request.EndpointId);
+
+        if (endpoint is null)
+        {
+            return NotFound($"Endpoint '{request.EndpointId}' not found");
+        }
+
+        var stopwatch = Stopwatch.StartNew();
+
+        try
+        {
+            var connection = connectionProvider.GetConnection(endpoint.ConnectionName);
+
+            // Convert JsonElement to byte[] for direct transmission
+            byte[]? payloadBytes = request.Payload.HasValue
+                ? JsonSerializer.SerializeToUtf8Bytes(request.Payload.Value, WedaJsonDefaults.Options)
+                : null;
+
+            logger.LogInformation("Fire-and-forget publish to {Subject}, payload bytes: {Length}",
+                request.Subject,
+                payloadBytes?.Length ?? -1);
+
+            // Fire-and-forget: just publish, don't wait for response
+            await connection.PublishAsync(
+                request.Subject,
+                payloadBytes,
+                cancellationToken: cancellationToken);
+
+            stopwatch.Stop();
+
+            return Ok(new NatsPublishResponse
+            {
+                Success = true,
+                Subject = request.Subject,
+                ResponseData = null,
+                ElapsedMs = stopwatch.ElapsedMilliseconds
+            });
+        }
+        catch (Exception ex)
+        {
+            stopwatch.Stop();
+            logger.LogError(ex, "Error publishing to {Subject}", request.Subject);
+
+            return Ok(new NatsPublishResponse
+            {
+                Success = false,
+                Subject = request.Subject,
+                ErrorCode = 500,
+                ErrorMessage = ex.Message,
+                ElapsedMs = stopwatch.ElapsedMilliseconds
+            });
+        }
+    }
+
     private static string GetEndpointId(EndpointDescriptor e) =>
         $"{e.ControllerType.Name}_{e.Method.Name}";
 

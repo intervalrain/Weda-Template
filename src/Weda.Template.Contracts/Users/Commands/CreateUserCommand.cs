@@ -7,6 +7,4 @@ namespace Weda.Template.Contracts.Users.Commands;
 public record CreateUserCommand(
     string Email,
     string Password,
-    string Name,
-    List<string>? Roles = null,
-    List<string>? Permissions = null) : IRequest<ErrorOr<UserDto>>;
+    string Name) : IRequest<ErrorOr<UserDto>>;

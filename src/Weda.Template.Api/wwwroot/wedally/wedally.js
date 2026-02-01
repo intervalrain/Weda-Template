@@ -3,6 +3,7 @@
 // API Endpoints
 const API_SPEC = '/api/v1/wedally/spec';
 const API_PUBLISH = '/api/v1/wedally/publish';
+const API_FIRE = '/api/v1/wedally/fire';
 
 // State
 let spec = null;
@@ -251,7 +252,7 @@ function createEndpointCard(endpoint) {
                     </svg>
                     CLI
                 </button>
-                ${canTest ? `<button class="btn btn-small btn-try" data-operation-id="${endpoint.operationId}">Try it</button>` : ''}
+                <button class="btn btn-small btn-try" data-operation-id="${endpoint.operationId}">Try it</button>
             </div>
         </div>
         <div class="endpoint-body">
@@ -314,13 +315,13 @@ function createEndpointCard(endpoint) {
             ` : ''}
 
             ${!canTest ? `
-                <div class="endpoint-warning">
+                <div class="endpoint-info">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                        <line x1="12" y1="9" x2="12" y2="13"></line>
-                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
                     </svg>
-                    <span>This endpoint is ${endpoint.action} mode. No response expected when testing.</span>
+                    <span>This endpoint is ${endpoint.action} mode (fire-and-forget).</span>
                 </div>
             ` : ''}
         </div>
@@ -593,6 +594,8 @@ async function executeModalRequest() {
     executeBtn.disabled = true;
     executeBtn.textContent = 'Sending...';
 
+    const startTime = performance.now();
+
     try {
         const subject = buildSubjectFromModal();
 
@@ -606,7 +609,11 @@ async function executeModalRequest() {
             }
         }
 
-        const response = await fetch(API_PUBLISH, {
+        // Use different API based on action type
+        const isFireAndForget = ['Publish', 'Consume', 'Fetch'].includes(currentEndpoint.action);
+        const apiEndpoint = isFireAndForget ? API_FIRE : API_PUBLISH;
+
+        const response = await fetch(apiEndpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -617,15 +624,20 @@ async function executeModalRequest() {
             })
         });
 
+        const elapsedMs = Math.round(performance.now() - startTime);
         const result = await response.json();
 
         responseSection.style.display = 'block';
-        responseTime.textContent = `${result.elapsedMs}ms`;
+        responseTime.textContent = `${result.elapsedMs || elapsedMs}ms`;
 
         if (result.success) {
             responseStatus.textContent = 'Success';
             responseStatus.className = 'response-status success';
-            responseViewer.innerHTML = `<pre>${syntaxHighlight(JSON.stringify(result.responseData, null, 2))}</pre>`;
+            if (isFireAndForget) {
+                responseViewer.innerHTML = `<pre>${syntaxHighlight(JSON.stringify({ message: 'Message published successfully', subject: subject }, null, 2))}</pre>`;
+            } else {
+                responseViewer.innerHTML = `<pre>${syntaxHighlight(JSON.stringify(result.responseData, null, 2))}</pre>`;
+            }
         } else {
             responseStatus.textContent = `Error ${result.errorCode || ''}`;
             responseStatus.className = 'response-status error';
@@ -634,7 +646,7 @@ async function executeModalRequest() {
 
     } catch (error) {
         responseSection.style.display = 'block';
-        responseTime.textContent = '0ms';
+        responseTime.textContent = `${Math.round(performance.now() - startTime)}ms`;
         responseStatus.textContent = 'Error';
         responseStatus.className = 'response-status error';
         responseViewer.innerHTML = `<pre class="error-text">${escapeHtml(error.message)}</pre>`;

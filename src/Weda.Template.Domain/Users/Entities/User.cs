@@ -128,11 +128,17 @@ public class User : AggregateRoot<Guid>
         return Result.Success;
     }
 
-    public void UpdatePermissions(List<string> newPermissions)
+    public ErrorOr<Success> UpdatePermissions(List<string> newPermissions, IReadOnlyList<string> currentUserRoles)
     {
+        if (!currentUserRoles.Contains(Role.SuperAdmin))
+        {
+            return UserErrors.OnlySuperAdminCanChangePermissions;
+        }
+
         _permissions.Clear();
         _permissions.AddRange(newPermissions);
         UpdatedAt = DateTime.UtcNow;
+        return Result.Success;
     }
 
     public void RecordLogin()

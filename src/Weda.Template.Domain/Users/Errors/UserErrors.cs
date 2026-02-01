@@ -48,6 +48,10 @@ public static class UserErrors
         code: "User.OnlySuperAdminCanChangeRoles",
         description: "Only SuperAdmin can change user roles.");
 
+    public static readonly Error OnlySuperAdminCanChangePermissions = Error.Unauthorized(
+        code: "User.OnlySuperAdminCanChangePermissions",
+        description: "Only SuperAdmin can change user permissions.");
+
     public static readonly Error CannotDeleteSelf = Error.Validation(
         code: "User.CannotDeleteSelf",
         description: "You cannot delete your own account.");

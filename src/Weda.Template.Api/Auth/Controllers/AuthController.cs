@@ -3,7 +3,6 @@ using Mediator;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Weda.Core.Api;
-using Weda.Template.Application.Auth.Queries.GetToken;
 using Weda.Template.Contracts.Auth;
 using Weda.Template.Contracts.Auth.Commands;
 using Weda.Template.Contracts.Auth.Requests;
@@ -31,28 +30,6 @@ public class AuthController(ISender _mediator) : ApiController
     {
         var command = new LoginCommand(request.Email, request.Password);
         var result = await _mediator.Send(command);
-
-        return result.Match(Ok, Problem);
-    }
-
-    /// <summary>
-    /// Generate a JWT token (for development/testing).
-    /// </summary>
-    /// <param name="request">The request to get JWT token.</param>
-    /// <returns>The generated JWT token.</returns>
-    /// <response code="200">Returns the JWT token.</response>
-    [HttpPost("generate")]
-    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GenerateToken(GetAuthRequest request)
-    {
-        var query = new GetTokenQuery(
-            request.Id,
-            request.Name,
-            request.Email,
-            request.Permissions,
-            request.Roles);
-
-        var result = await _mediator.Send(query);
 
         return result.Match(Ok, Problem);
     }
