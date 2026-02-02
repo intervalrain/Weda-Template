@@ -23,19 +23,9 @@ public class UpdateUserCommandHandler(
             return UserErrors.NotFound;
         }
 
-        if (request.Email is not null)
+        if (request.Name is null && request.Password is null)
         {
-            var existingUser = await userRepository.GetByEmailAsync(request.Email, cancellationToken);
-            if (existingUser is not null && existingUser.Id != user.Id)
-            {
-                return UserErrors.DuplicateEmail;
-            }
-
-            var updateEmailResult = user.UpdateEmail(request.Email);
-            if (updateEmailResult.IsError)
-            {
-                return updateEmailResult.Errors;
-            }
+            return UserMapper.ToDto(user);
         }
 
         if (request.Name is not null)

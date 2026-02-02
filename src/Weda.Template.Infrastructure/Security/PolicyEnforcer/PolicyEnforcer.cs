@@ -18,6 +18,7 @@ public class PolicyEnforcer : IPolicyEnforcer
         {
             Policy.SelfOrAdmin => SelfOrAdminPolicy(request, currentUser),
             Policy.SuperAdminOnly => SuperAdminOnlyPolicy(currentUser),
+            Policy.AdminOrAbove => AdminOrAbovePolicy(currentUser),
             _ => Error.Unexpected(description: "Unknown policy name"),
         };
     }
@@ -31,4 +32,9 @@ public class PolicyEnforcer : IPolicyEnforcer
         currentUser.Roles.Contains(Role.SuperAdmin)
             ? Result.Success
             : Error.Unauthorized(description: "Only SuperAdmin can perform this action");
+
+    private static ErrorOr<Success> AdminOrAbovePolicy(CurrentUser currentUser) =>
+        currentUser.Roles.Contains(Role.Admin) || currentUser.Roles.Contains(Role.SuperAdmin)
+            ? Result.Success
+            : Error.Unauthorized(description: "Only Admin or SuperAdmin can perform this action");
 }

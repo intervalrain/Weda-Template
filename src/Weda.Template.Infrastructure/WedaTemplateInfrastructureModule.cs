@@ -2,6 +2,8 @@ using Weda.Core.Application.Interfaces;
 using Weda.Core.Application.Security;
 using Weda.Core.Application.Security.CurrentUserProvider;
 using Weda.Core.Application.Security.PasswordHasher;
+using Weda.Core.Application.Security.Policies;
+using Weda.Core.Application.Security.Roles;
 using Weda.Template.Domain.Users.Repositories;
 using Weda.Template.Infrastructure.Common.Persistence;
 using Weda.Template.Infrastructure.Persistence;
@@ -46,7 +48,7 @@ public static class WedaTemplateInfrastructureModule
         {
             services
                 .AddJwtAuthentication(configuration)
-                .AddAuthorization();
+                .AddAuthorizationPolicies();
         }
 
         return services;
@@ -86,11 +88,17 @@ public static class WedaTemplateInfrastructureModule
         return services;
     }
 
-    private static IServiceCollection AddAuthorization(this IServiceCollection services)
+    private static IServiceCollection AddAuthorizationPolicies(this IServiceCollection services)
     {
         services.AddScoped<IAuthorizationService, AuthorizationService>();
         services.AddScoped<ICurrentUserProvider, InfraCurrentUserProvider>();
         services.AddSingleton<IPolicyEnforcer, PolicyEnforcer>();
+
+        services.AddAuthorizationBuilder()
+            .AddPolicy(Policy.AdminOrAbove, policy =>
+                policy.RequireRole(Role.Admin, Role.SuperAdmin))
+            .AddPolicy(Policy.SuperAdminOnly, policy =>
+                policy.RequireRole(Role.SuperAdmin));
 
         return services;
     }
