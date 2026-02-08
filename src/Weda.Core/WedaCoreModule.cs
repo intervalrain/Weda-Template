@@ -1,5 +1,3 @@
-using System.Reflection;
-
 using Asp.Versioning;
 
 using FluentValidation;
@@ -19,7 +17,7 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 using Weda.Core.Api.Swagger;
 using Weda.Core.Application.Behaviors;
 using Weda.Core.Infrastructure.Middleware;
-using Weda.Core.Infrastructure.Nats.Configuration;
+using Weda.Core.Infrastructure.Messaging.Nats.Configuration;
 
 namespace Weda.Core;
 
@@ -173,26 +171,11 @@ public static class WedaCoreModule
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        // NATS EventController - replaced ServiceFramework
+        var natsOptions = new NatsOptions();
+        configuration.GetSection(NatsOptions.SectionName).Bind(natsOptions);
         services.AddNats(builder =>
         {
-            var natsSection = configuration.GetSection("Nats");
-            var defaultUrl = natsSection.GetValue<string>("Url") ?? "nats://localhost:4222";
-
-            // Default connection
-            builder.AddConnection("default", defaultUrl);
-
-            // Additional connections from configuration
-            var connectionsSection = natsSection.GetSection("Connections");
-            foreach (var connectionConfig in connectionsSection.GetChildren())
-            {
-                var name = connectionConfig.Key;
-                var url = connectionConfig.GetValue<string>("Url");
-                if (!string.IsNullOrEmpty(url) && name != "default")
-                {
-                    builder.AddConnection(name, url);
-                }
-            }
+            builder.BindConfiguration(natsOptions);
         });
 
         // Register EventControllers from the API assembly (where controllers are defined)
