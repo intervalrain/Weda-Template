@@ -10,10 +10,10 @@ using NATS.Client.Core;
 using Swashbuckle.AspNetCore.Filters;
 
 using Weda.Core.Api.Wedally.Contracts;
+using Weda.Core.Infrastructure.Messaging.Nats.Configuration;
+using Weda.Core.Infrastructure.Messaging.Nats.Discovery;
+using Weda.Core.Infrastructure.Messaging.Nats.Enums;
 using Weda.Core.Infrastructure.Middleware;
-using Weda.Core.Infrastructure.Nats.Configuration;
-using Weda.Core.Infrastructure.Nats.Discovery;
-using Weda.Core.Infrastructure.Nats.Enums;
 
 namespace Weda.Core.Api.Wedally;
 

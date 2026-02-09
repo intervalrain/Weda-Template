@@ -10,7 +10,7 @@ using Weda.Template.Contracts.Employees.Commands;
 using Weda.Template.Contracts.Employees.Queries;
 using Weda.Template.Api.Employees.Mappings;
 
-namespace Weda.Template.Api.Controllers;
+namespace Weda.Template.Api.Employees.Controllers;
 
 /// <summary>
 /// Manages employee operations including CRUD and organizational hierarchy.

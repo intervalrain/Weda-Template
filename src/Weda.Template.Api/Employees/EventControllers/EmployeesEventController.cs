@@ -1,15 +1,14 @@
 using Asp.Versioning;
-
-using Weda.Core.Infrastructure.Nats;
-using Weda.Core.Infrastructure.Nats.Attributes;
-using Weda.Core.Infrastructure.Nats.Enums;
+using Weda.Core.Infrastructure.Messaging.Nats;
+using Weda.Core.Infrastructure.Messaging.Nats.Attributes;
+using Weda.Core.Infrastructure.Messaging.Nats.Enums;
 using Weda.Template.Contracts.Employees.Commands;
 using Weda.Template.Contracts.Employees.Events;
 using Weda.Template.Contracts.Employees.Queries;
 using Weda.Template.Contracts.Employees.Requests;
 using Weda.Template.Domain.Employees.Enums;
 
-namespace Weda.Template.Api.Auth.EventControllers;
+namespace Weda.Template.Api.Employees.EventControllers;
 
 /// <summary>
 /// Employee EventController demonstrating different NATS patterns.

@@ -1,5 +1,4 @@
 using Riok.Mapperly.Abstractions;
-
 using Weda.Template.Contracts.Employees;
 using Weda.Template.Contracts.Employees.Dtos;
 
