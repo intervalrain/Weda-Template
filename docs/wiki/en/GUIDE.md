@@ -56,12 +56,14 @@ sidebar_position: 1
 - `ErrorOr<T>` for explicit error handling
 - Static error definitions in `*Errors` classes
 - Error types: Validation, NotFound, Conflict, Unauthorized
+- See [09-error-handling-guide.md](09-error-handling-guide.md) for details
 
 ### 8. Domain Events
 - What are Domain Events
 - `IDomainEvent` interface
 - Raising events within Aggregate Root
 - Event collection and publishing pattern
+- See [11-domain-events-guide.md](11-domain-events-guide.md) for details
 
 ---
 
@@ -96,6 +98,7 @@ sidebar_position: 1
 - Validation rules and error messages
 - Integration with Mediator pipeline
 - Custom validators
+- See [10-validation-guide.md](10-validation-guide.md) for details
 
 ---
 
@@ -152,6 +155,7 @@ sidebar_position: 1
 - `[Authorize]` attribute
 - Policy-based authorization
 - Current user provider pattern
+- See [06-authentication-guide.md](06-authentication-guide.md) for details
 
 ---
 
@@ -174,6 +178,7 @@ sidebar_position: 1
 - Object mothers and builders
 - `CurrentUserFactory` for auth testing
 - Reusable test helpers
+- See [07-testing-guide.md](07-testing-guide.md) for details
 
 ---
 
@@ -190,6 +195,7 @@ sidebar_position: 1
 - InMemory repository for development
 - PostgreSQL for production
 - MongoDB as alternative
+- See [05-database-switch-guide.md](05-database-switch-guide.md) for details
 
 ### 27. DevContainer & Docker Compose
 - `.devcontainer/` configuration
@@ -202,6 +208,7 @@ sidebar_position: 1
 - Template parameters and symbols
 - Conditional file inclusion
 - Publishing to NuGet
+- See [08-template-usage-guide.md](08-template-usage-guide.md) for details
 
 ---
 
