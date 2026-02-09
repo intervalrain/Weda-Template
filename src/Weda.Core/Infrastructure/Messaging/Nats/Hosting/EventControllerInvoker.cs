@@ -3,14 +3,12 @@ using Mediator;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NATS.Client.Core;
-
 using Weda.Core.Infrastructure.Audit;
-using Weda.Core.Infrastructure.Messaging.Nats.Configuration;
 using Weda.Core.Infrastructure.Messaging.Nats.Discovery;
 
 namespace Weda.Core.Infrastructure.Messaging.Nats.Hosting;
 
-public class EventControllerInvoker(INatsConnectionProvider connectionProvider, IServiceScopeFactory scopeFactory)
+public class EventControllerInvoker(IServiceScopeFactory scopeFactory)
 {
     public async Task<object?> InvokeAsync(
         EndpointDescriptor endpoint,
@@ -54,7 +52,7 @@ public class EventControllerInvoker(INatsConnectionProvider connectionProvider, 
         return JsonSerializer.Deserialize(data, requestType, WedaJsonDefaults.Options);
     }
 
-    private EventController CreateController(
+    private static EventController CreateController(
         AsyncServiceScope scope,
         EndpointDescriptor endpoint,
         string subject,
@@ -65,7 +63,6 @@ public class EventControllerInvoker(INatsConnectionProvider connectionProvider, 
 
         var controller = (EventController)provider.GetRequiredService(endpoint.ControllerType);
         controller.Mediator = provider.GetRequiredService<IMediator>();
-        controller.NatsProvider = connectionProvider;
         controller.Logger = provider.GetRequiredService<ILoggerFactory>().CreateLogger(endpoint.ControllerType);
         controller.Subject = subject;
         controller.Headers = headers;

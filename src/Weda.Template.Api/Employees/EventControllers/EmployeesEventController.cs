@@ -19,8 +19,9 @@ namespace Weda.Template.Api.Employees.EventControllers;
 /// - Core Pub-Sub (fire-and-forget)
 /// </summary>
 [ApiVersion("1")]
-public class EmployeeEventController : EventController
+public class EmployeeEventController(IJetStreamClientFactory clientFactory) : EventController
 {
+    private readonly IJetStreamClient _bus = clientFactory.Create("bus");
     /// <summary>
     /// Request-Reply pattern example with subject-based ID.
     /// The {id} placeholder extracts the employee ID from the subject.
@@ -242,8 +243,8 @@ public class EmployeeEventController : EventController
 
         if (!result.IsError)
         {
-            // Publish directly - NatsJsonSerializerRegistry handles serialization
-            await GetConnection("bus").PublishAsync(responseSubject, result.Value);
+            // Publish with auto-injected trace headers
+            await _bus.PublishAsync(responseSubject, result.Value);
         }
     }
 }
