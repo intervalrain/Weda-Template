@@ -71,6 +71,7 @@ public class NatsBuilder(IServiceCollection services)
         Services.TryAddSingleton<INatsConnectionProvider>(sp => new NatsConnectionProvider(_connections, DefaultConnection));
         Services.TryAddSingleton(sp => sp.GetRequiredService<INatsConnectionProvider>().GetConnection());
         Services.TryAddSingleton(sp => sp.GetRequiredService<INatsConnectionProvider>().GetJetStreamContext());
+        Services.TryAddSingleton<IJetStreamClientFactory, JetStreamClientFactory>();
     }
 
     private static NatsOpts CreateNatsOpts(NatsConnectionConfig config)

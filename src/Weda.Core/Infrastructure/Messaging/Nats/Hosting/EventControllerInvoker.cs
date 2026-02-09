@@ -3,6 +3,8 @@ using Mediator;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NATS.Client.Core;
+
+using Weda.Core.Infrastructure.Audit;
 using Weda.Core.Infrastructure.Messaging.Nats.Configuration;
 using Weda.Core.Infrastructure.Messaging.Nats.Discovery;
 
@@ -27,7 +29,19 @@ public class EventControllerInvoker(INatsConnectionProvider connectionProvider, 
 
         var request = DeserializeRequest(data, endpoint.RequestType);
         var controller = CreateController(scope, endpoint, subject, headers, subjectValues);
-        return await InvokeMethodAsync(controller, endpoint, request, subjectValues, cancellationToken);
+
+        // Extract and set audit context
+        var traceContext = headers.GetTraceContext();
+        AuditContextAccessor.Current = traceContext;
+        
+        try
+        {
+            return await InvokeMethodAsync(controller, endpoint, request, subjectValues, cancellationToken);        
+        }
+        finally
+        {
+            AuditContextAccessor.Current = null;
+        }
     }
 
     private static object? DeserializeRequest(byte[]? data, Type? requestType)
