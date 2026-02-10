@@ -31,10 +31,25 @@ public class JetStreamClient : IJetStreamClient
         TRequest data,
         CancellationToken cancellationToken = default)
     {
+        var msg = await RequestAsync<TRequest, TReply>(subject, data, Timeout.InfiniteTimeSpan, cancellationToken);
+        return msg.Data!;
+    }
+
+    public async Task<NatsMsg<TReply>> RequestAsync<TRequest, TReply>(
+        string subject,
+        TRequest data,
+        TimeSpan timeout,
+        CancellationToken cancellationToken = default)
+    {
         var headers = CreateTracedHeaders();
-        var reply = await _connection.RequestAsync<TRequest, TReply>(
-            subject, data, headers: headers, cancellationToken: cancellationToken);
-        return reply.Data!;
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        if (timeout != Timeout.InfiniteTimeSpan)
+        {
+            cts.CancelAfter(timeout);
+        }
+
+        return await _connection.RequestAsync<TRequest, TReply>(
+            subject, data, headers: headers, cancellationToken: cts.Token);
     }
 
     public async Task<PubAckResponse> JsPublishAsync<T>(

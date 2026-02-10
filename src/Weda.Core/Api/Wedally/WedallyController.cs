@@ -10,7 +10,7 @@ using NATS.Client.Core;
 using Swashbuckle.AspNetCore.Filters;
 
 using Weda.Core.Api.Wedally.Contracts;
-using Weda.Core.Infrastructure.Messaging.Nats.Configuration;
+using Weda.Core.Infrastructure.Messaging.Nats;
 using Weda.Core.Infrastructure.Messaging.Nats.Discovery;
 using Weda.Core.Infrastructure.Messaging.Nats.Enums;
 using Weda.Core.Infrastructure.Middleware;
@@ -27,7 +27,7 @@ namespace Weda.Core.Api.Wedally;
 [SkipTransaction]
 public class WedallyController(
     EventControllerDiscovery discovery,
-    INatsConnectionProvider connectionProvider,
+    IJetStreamClientFactory clientFactory,
     IServiceProvider serviceProvider,
     ILogger<WedallyController> logger) : ApiController
 {
@@ -155,10 +155,7 @@ public class WedallyController(
 
         try
         {
-            var connection = connectionProvider.GetConnection(endpoint.ConnectionName);
-
-            using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            cts.CancelAfter(TimeSpan.FromMilliseconds(request.TimeoutMs));
+            var client = clientFactory.Create(endpoint.ConnectionName);
 
             // Convert JsonElement to byte[] for direct transmission
             byte[]? payloadBytes = request.Payload.HasValue
@@ -169,11 +166,12 @@ public class WedallyController(
                 request.Subject,
                 payloadBytes?.Length ?? -1);
 
-            // Use byte[] for request, JsonElement for response
-            var response = await connection.RequestAsync<byte[]?, JsonElement?>(
+            // Use IJetStreamClient which auto-injects trace headers
+            var response = await client.RequestAsync<byte[]?, JsonElement?>(
                 request.Subject,
                 payloadBytes,
-                cancellationToken: cts.Token);
+                TimeSpan.FromMilliseconds(request.TimeoutMs),
+                cancellationToken);
 
             stopwatch.Stop();
 
@@ -258,22 +256,32 @@ public class WedallyController(
 
         try
         {
-            var connection = connectionProvider.GetConnection(endpoint.ConnectionName);
+            var client = clientFactory.Create(endpoint.ConnectionName);
+
+            // For JetStream endpoints, use JetStream publish to ensure message persistence
+            var isJetStream = endpoint.Mode == EndpointMode.JetStreamConsume ||
+                              endpoint.Mode == EndpointMode.JetStreamFetch;
 
             // Convert JsonElement to byte[] for direct transmission
             byte[]? payloadBytes = request.Payload.HasValue
                 ? JsonSerializer.SerializeToUtf8Bytes(request.Payload.Value, WedaJsonDefaults.Options)
                 : null;
 
-            logger.LogInformation("Fire-and-forget publish to {Subject}, payload bytes: {Length}",
+            logger.LogInformation(
+                "Fire-and-forget publish to {Subject}, payload bytes: {Length}, JetStream: {IsJetStream}",
                 request.Subject,
-                payloadBytes?.Length ?? -1);
+                payloadBytes?.Length ?? -1,
+                isJetStream);
 
-            // Fire-and-forget: just publish, don't wait for response
-            await connection.PublishAsync(
-                request.Subject,
-                payloadBytes,
-                cancellationToken: cancellationToken);
+            // Use IJetStreamClient which auto-injects trace headers
+            if (isJetStream)
+            {
+                await client.JsPublishAsync(request.Subject, payloadBytes, cancellationToken);
+            }
+            else
+            {
+                await client.PublishAsync(request.Subject, payloadBytes, cancellationToken);
+            }
 
             stopwatch.Stop();
 

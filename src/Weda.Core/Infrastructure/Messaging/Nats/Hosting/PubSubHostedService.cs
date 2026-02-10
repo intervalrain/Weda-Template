@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Weda.Core.Infrastructure.Audit;
 using Weda.Core.Infrastructure.Messaging.Nats.Configuration;
 using Weda.Core.Infrastructure.Messaging.Nats.Discovery;
 
@@ -52,11 +53,21 @@ public class PubSubHostedService(
             _ = Task.Run(
                 async () =>
                 {
+                    // Extract trace context from headers for logging scope
+                    var traceContext = msg.Headers.GetTraceContext();
+                    using var logScope = logger.BeginScope(new Dictionary<string, object?>
+                    {
+                        ["TraceId"] = traceContext.TraceId,
+                        ["RequestId"] = traceContext.RequestId
+                    });
+
                     await using var scope = scopeFactory.CreateAsyncScope();
                     var invoker = scope.ServiceProvider.GetRequiredService<EventControllerInvoker>();
 
                     try
                     {
+                        logger.LogDebug("Processing Core Pub-Sub: {Subject}", msg.Subject);
+
                         await invoker.InvokeAsync(
                             endpoint,
                             msg.Data,

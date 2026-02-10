@@ -26,8 +26,10 @@ public abstract class WedaDbContext(
             return await base.SaveChangesAsync(cancellationToken);
         }
 
+        // Save first to ensure database-generated IDs are populated before publishing events
+        var result = await base.SaveChangesAsync(cancellationToken);
         await PublishDomainEvents(domainEvents);
-        return await base.SaveChangesAsync(cancellationToken);
+        return result;
     }
 
     private bool IsUserWaitingOnline() => _httpContextAccessor.HttpContext is not null;

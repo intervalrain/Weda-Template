@@ -3,6 +3,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using NATS.Client.Services;
 using NATS.Net;
+using Weda.Core.Infrastructure.Audit;
 using Weda.Core.Infrastructure.Messaging.Nats.Configuration;
 using Weda.Core.Infrastructure.Messaging.Nats.Discovery;
 
@@ -88,11 +89,21 @@ public class RequestReplyHostedService(
     {
         return async (msg) =>
         {
+            // Extract trace context from headers for logging scope
+            var traceContext = msg.Headers.GetTraceContext();
+            using var logScope = logger.BeginScope(new Dictionary<string, object?>
+            {
+                ["TraceId"] = traceContext.TraceId,
+                ["RequestId"] = traceContext.RequestId
+            });
+
             await using var scope = scopeFactory.CreateAsyncScope();
             var invoker = scope.ServiceProvider.GetRequiredService<EventControllerInvoker>();
 
             try
             {
+                logger.LogDebug("Processing Request-Reply: {Subject}", msg.Subject);
+
                 var data = msg.Data;
 
                 var response = await invoker.InvokeAsync(
@@ -110,7 +121,7 @@ public class RequestReplyHostedService(
                     await msg.ReplyAsync();
                 }
 
-                logger.LogDebug("Request-Reply: {Subject}", msg.Subject);
+                logger.LogDebug("Request-Reply completed: {Subject}", msg.Subject);
             }
             catch (Exception ex)
             {

@@ -5,8 +5,8 @@ using Weda.Core.Infrastructure.Messaging.Nats.Attributes;
 
 namespace Weda.Core.Infrastructure.Messaging.Nats;
 
-[Stream("[controller]_v{version:apiVersion}_stream")]
-[Consumer("[controller]_v{version:apiVersion}_consumer")]
+[Stream("[controller]_v{version:apiVersion}_[method]_stream")]
+[Consumer("[controller]_v{version:apiVersion}_[method]_consumer")]
 [Connection("bus")]
 public abstract class EventController
 {

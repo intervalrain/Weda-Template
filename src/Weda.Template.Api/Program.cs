@@ -1,6 +1,7 @@
 using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
+using Serilog;
 using Weda.Core;
 using Weda.Template.Api;
 using Weda.Template.Application;
@@ -15,6 +16,9 @@ using Weda.Template.Domain.Employees.Entities;
 
 var builder = WebApplication.CreateBuilder(args);
 {
+    builder.Host.UseSerilog((context, configuration) =>
+        configuration.ReadFrom.Configuration(context.Configuration));
+
     builder.Services
         .AddApplication()
         .AddInfrastructure(builder.Configuration)

@@ -6,7 +6,7 @@ using Asp.Versioning;
 namespace Weda.Core.Infrastructure.Messaging.Nats.Discovery;
 
 /// <summary>
-/// Resolve naming template like [controller], [action], {version}, {id}.
+/// Resolve naming template like [controller], [action], [method], {version}, {id}.
 /// Supports named placeholders that become wildcards for NATS subscription
 /// and can be parsed from incoming subjects.
 /// </summary>
@@ -51,6 +51,7 @@ public static partial class TemplateResolver
         if (actionName is not null)
         {
             result = result.Replace("[action]", actionName, StringComparison.OrdinalIgnoreCase);
+            result = result.Replace("[method]", actionName, StringComparison.OrdinalIgnoreCase);
         }
 
         if (version is not null)
