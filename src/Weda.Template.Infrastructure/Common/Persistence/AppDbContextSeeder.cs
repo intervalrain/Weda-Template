@@ -1,7 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 
-using Weda.Core.Application.Security.PasswordHasher;
-using Weda.Core.Application.Security.Roles;
+using Weda.Core.Application.Security;
+
+using Weda.Core.Application.Security.Models;
 using Weda.Template.Domain.Users.Entities;
 
 namespace Weda.Template.Infrastructure.Common.Persistence;

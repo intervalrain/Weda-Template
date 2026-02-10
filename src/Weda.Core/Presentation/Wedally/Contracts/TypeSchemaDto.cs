@@ -1,4 +1,4 @@
-namespace Weda.Core.Api.Wedally.Contracts;
+namespace Weda.Core.Presentation.Wedally.Contracts;
 
 /// <summary>
 /// DTO for type schema information.

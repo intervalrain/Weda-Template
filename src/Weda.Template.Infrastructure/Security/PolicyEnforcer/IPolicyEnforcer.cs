@@ -1,7 +1,7 @@
 using Weda.Core.Application.Security;
-using Weda.Core.Application.Security.CurrentUserProvider;
 
 using ErrorOr;
+using Weda.Core.Application.Security.Models;
 
 namespace Weda.Template.Infrastructure.Security.PolicyEnforcer;
 

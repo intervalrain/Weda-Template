@@ -1,9 +1,5 @@
 using Weda.Core.Application.Interfaces;
 using Weda.Core.Application.Security;
-using Weda.Core.Application.Security.CurrentUserProvider;
-using Weda.Core.Application.Security.PasswordHasher;
-using Weda.Core.Application.Security.Policies;
-using Weda.Core.Application.Security.Roles;
 using Weda.Template.Domain.Users.Repositories;
 using Weda.Template.Infrastructure.Common.Persistence;
 using Weda.Template.Infrastructure.Persistence;
@@ -20,6 +16,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Weda.Core.Application.Security.Models;
+
+
 
 #if sample
 using Weda.Template.Infrastructure.Employees;

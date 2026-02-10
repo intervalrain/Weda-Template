@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using NATS.Client.Core;
 using NATS.Net;
+using Weda.Core.Application.Interfaces.Messaging;
 
 namespace Weda.Core.Infrastructure.Messaging.Nats.Configuration;
 

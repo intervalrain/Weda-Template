@@ -1,4 +1,4 @@
-namespace Weda.Core.Application.Security.CurrentUserProvider;
+namespace Weda.Core.Application.Security.Models;
 
 public record CurrentUser(
     Guid Id,

@@ -2,8 +2,9 @@ using ErrorOr;
 
 using Mediator;
 
-using Weda.Core.Application.Security.CurrentUserProvider;
-using Weda.Core.Application.Security.Roles;
+using Weda.Core.Application.Security;
+
+using Weda.Core.Application.Security.Models;
 using Weda.Template.Contracts.Users.Commands;
 using Weda.Template.Domain.Users.Errors;
 using Weda.Template.Domain.Users.Repositories;

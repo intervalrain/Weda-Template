@@ -1,4 +1,6 @@
 using Asp.Versioning;
+
+using Weda.Core.Application.Interfaces.Messaging;
 using Weda.Core.Infrastructure.Messaging.Nats;
 using Weda.Core.Infrastructure.Messaging.Nats.Attributes;
 using Weda.Core.Infrastructure.Messaging.Nats.Enums;

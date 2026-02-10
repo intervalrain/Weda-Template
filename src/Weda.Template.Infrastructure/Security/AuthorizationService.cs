@@ -1,5 +1,4 @@
 using Weda.Core.Application.Security;
-using Weda.Core.Application.Security.CurrentUserProvider;
 using Weda.Template.Infrastructure.Security.PolicyEnforcer;
 
 using ErrorOr;

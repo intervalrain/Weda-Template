@@ -3,7 +3,6 @@ using ErrorOr;
 using Mediator;
 
 using Weda.Core.Application.Security;
-using Weda.Core.Application.Security.PasswordHasher;
 using Weda.Template.Contracts.Auth;
 using Weda.Template.Contracts.Auth.Commands;
 using Weda.Template.Domain.Users.Errors;

@@ -2,7 +2,8 @@ using ErrorOr;
 
 using Mediator;
 
-using Weda.Core.Application.Security.PasswordHasher;
+using Weda.Core.Application.Security;
+
 using Weda.Template.Application.Users.Mapping;
 using Weda.Template.Contracts.Users.Commands;
 using Weda.Template.Contracts.Users.Dtos;

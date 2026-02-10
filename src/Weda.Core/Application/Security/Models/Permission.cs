@@ -1,4 +1,4 @@
-namespace Weda.Core.Application.Security.Permissions;
+namespace Weda.Core.Application.Security.Models;
 
 public static class Permission
 {

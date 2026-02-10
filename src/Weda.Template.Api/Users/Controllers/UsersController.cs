@@ -1,9 +1,15 @@
 using Asp.Versioning;
+
+
 using Mediator;
+
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Weda.Core.Api;
-using Weda.Core.Application.Security.Policies;
+
+
+using Weda.Core.Application.Security.Models;
+using Weda.Core.Presentation;
 using Weda.Template.Contracts.Users.Commands;
 using Weda.Template.Contracts.Users.Dtos;
 using Weda.Template.Contracts.Users.Queries;

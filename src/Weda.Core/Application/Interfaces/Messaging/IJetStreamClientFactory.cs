@@ -1,4 +1,4 @@
-namespace Weda.Core.Infrastructure.Messaging.Nats;
+namespace Weda.Core.Application.Interfaces.Messaging;
 
 /// <summary>
 /// Factory for creating IJetStreamClient instances.

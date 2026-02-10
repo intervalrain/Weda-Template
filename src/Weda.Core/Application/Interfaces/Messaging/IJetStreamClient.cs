@@ -1,7 +1,7 @@
 using NATS.Client.Core;
 using NATS.Client.JetStream.Models;
 
-namespace Weda.Core.Infrastructure.Messaging.Nats;
+namespace Weda.Core.Application.Interfaces.Messaging;
 
 /// <summary>
 /// NATS client interface with automatic trace header injection.

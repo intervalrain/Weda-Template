@@ -2,7 +2,8 @@ using ErrorOr;
 
 using Mediator;
 
-using Weda.Core.Application.Security.CurrentUserProvider;
+using Weda.Core.Application.Security;
+
 using Weda.Template.Application.Users.Mapping;
 using Weda.Template.Contracts.Users.Dtos;
 using Weda.Template.Contracts.Users.Queries;

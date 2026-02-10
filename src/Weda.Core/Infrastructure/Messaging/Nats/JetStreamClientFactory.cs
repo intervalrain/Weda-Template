@@ -1,3 +1,4 @@
+using Weda.Core.Application.Interfaces.Messaging;
 using Weda.Core.Infrastructure.Messaging.Nats.Configuration;
 
 namespace Weda.Core.Infrastructure.Messaging.Nats;

@@ -14,10 +14,11 @@ using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.Filters;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
-using Weda.Core.Api.Swagger;
+
 using Weda.Core.Application.Behaviors;
 using Weda.Core.Infrastructure.Middleware;
 using Weda.Core.Infrastructure.Messaging.Nats.Configuration;
+using Weda.Core.Presentation.Swagger;
 
 namespace Weda.Core;
 

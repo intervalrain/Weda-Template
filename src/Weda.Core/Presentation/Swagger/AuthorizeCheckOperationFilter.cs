@@ -1,13 +1,8 @@
-using System.Diagnostics.Contracts;
-using System.Net.Mime;
-
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi;
-
 using Swashbuckle.AspNetCore.SwaggerGen;
 
-namespace Weda.Core.Api.Swagger;
+namespace Weda.Core.Presentation.Swagger;
 
 public class AuthorizeCheckOperationFilter : IOperationFilter
 {

@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 
-using Weda.Core.Application.Security.PasswordHasher;
+using Weda.Core.Application.Security;
+
 
 namespace Weda.Template.Infrastructure.Security.PasswordHasher;
 

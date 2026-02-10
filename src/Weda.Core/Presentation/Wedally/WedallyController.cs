@@ -8,14 +8,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using NATS.Client.Core;
 using Swashbuckle.AspNetCore.Filters;
-
-using Weda.Core.Api.Wedally.Contracts;
-using Weda.Core.Infrastructure.Messaging.Nats;
+using Weda.Core.Application.Interfaces.Messaging;
 using Weda.Core.Infrastructure.Messaging.Nats.Discovery;
 using Weda.Core.Infrastructure.Messaging.Nats.Enums;
 using Weda.Core.Infrastructure.Middleware;
+using Weda.Core.Presentation.Wedally.Contracts;
 
-namespace Weda.Core.Api.Wedally;
+namespace Weda.Core.Presentation.Wedally;
 
 /// <summary>
 /// Wedally - NATS EventController testing UI API.

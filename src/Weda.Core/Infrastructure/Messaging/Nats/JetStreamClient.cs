@@ -1,6 +1,8 @@
 using NATS.Client.Core;
 using NATS.Client.JetStream;
 using NATS.Client.JetStream.Models;
+
+using Weda.Core.Application.Interfaces.Messaging;
 using Weda.Core.Infrastructure.Audit;
 
 namespace Weda.Core.Infrastructure.Messaging.Nats;

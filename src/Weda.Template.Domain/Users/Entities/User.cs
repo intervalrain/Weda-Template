@@ -1,6 +1,7 @@
 using ErrorOr;
 
-using Weda.Core.Application.Security.Roles;
+using Weda.Core.Application.Security.Models;
+
 using Weda.Core.Domain;
 using Weda.Template.Domain.Users.Enums;
 using Weda.Template.Domain.Users.Errors;

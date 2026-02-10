@@ -1,4 +1,4 @@
-namespace Weda.Core.Api.Wedally.Contracts;
+namespace Weda.Core.Presentation.Wedally.Contracts;
 
 /// <summary>
 /// NATS API Specification - Similar to OpenAPI/Swagger spec.

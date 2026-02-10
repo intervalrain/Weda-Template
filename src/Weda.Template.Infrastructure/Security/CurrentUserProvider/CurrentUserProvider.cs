@@ -5,7 +5,9 @@ using Microsoft.AspNetCore.Http;
 
 using Throw;
 
-using Weda.Core.Application.Security.CurrentUserProvider;
+using Weda.Core.Application.Security;
+
+using Weda.Core.Application.Security.Models;
 
 namespace Weda.Template.Infrastructure.Security.CurrentUserProvider;
 

@@ -1,4 +1,4 @@
-namespace Weda.Core.Application.Security.PasswordHasher;
+namespace Weda.Core.Application.Security;
 
 public interface IPasswordHasher
 {
