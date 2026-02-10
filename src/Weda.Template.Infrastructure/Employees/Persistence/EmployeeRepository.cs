@@ -14,6 +14,11 @@ public class EmployeeRepository(AppDbContext dbContext) : GenericRepository<Empl
         return await DbSet.FirstOrDefaultAsync(e => e.Email.Value == email, cancellationToken);
     }
 
+    public async Task<Employee?> GetByNameAsync(string name, CancellationToken cancellationToken = default)
+    {
+        return await DbSet.FirstOrDefaultAsync(e => e.Name.Value == name, cancellationToken);
+    }
+
     public async Task<List<Employee>> GetBySupervisorIdAsync(int supervisorId, CancellationToken cancellationToken = default)
     {
         return await DbSet.Where(e => e.SupervisorId == supervisorId).ToListAsync(cancellationToken);

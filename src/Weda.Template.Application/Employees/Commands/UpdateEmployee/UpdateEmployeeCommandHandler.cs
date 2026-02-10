@@ -24,6 +24,20 @@ public class UpdateEmployeeCommandHandler(
             return EmployeeErrors.NotFound;
         }
 
+        // Check for duplicate name (exclude current employee)
+        var existingByName = await employeeRepository.GetByNameAsync(request.Name, cancellationToken);
+        if (existingByName is not null && existingByName.Id != request.Id)
+        {
+            return EmployeeErrors.DuplicateName;
+        }
+
+        // Check for duplicate email (exclude current employee)
+        var existingByEmail = await employeeRepository.GetByEmailAsync(request.Email, cancellationToken);
+        if (existingByEmail is not null && existingByEmail.Id != request.Id)
+        {
+            return EmployeeErrors.DuplicateEmail;
+        }
+
         var nameResult = employee.UpdateName(request.Name);
         if (nameResult.IsError)
         {

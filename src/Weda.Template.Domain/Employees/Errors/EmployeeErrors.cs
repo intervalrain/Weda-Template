@@ -42,6 +42,10 @@ public static class EmployeeErrors
         code: "Employee.DuplicateEmail",
         description: "An employee with this email already exists.");
 
+    public static readonly Error DuplicateName = Error.Conflict(
+        code: "Employee.DuplicateName",
+        description: "An employee with this name already exists.");
+
     // Validation Errors - Department
     public static readonly Error EmptyDepartment = Error.Validation(
         code: "Employee.EmptyDepartment",

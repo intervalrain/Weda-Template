@@ -17,6 +17,14 @@ public interface IEmployeeRepository : IRepository<Employee, int>
     Task<Employee?> GetByEmailAsync(string email, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Finds an employee by their name.
+    /// </summary>
+    /// <param name="name">The name to search for.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The employee if found, otherwise null.</returns>
+    Task<Employee?> GetByNameAsync(string name, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Gets all employees who report to a specific supervisor.
     /// </summary>
     /// <param name="supervisorId">The supervisor's ID.</param>
