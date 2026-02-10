@@ -31,20 +31,26 @@ public class EmployeeHierarchyManager(IEmployeeRepository employeeRepository)
         return employee.AssignSupervisor(supervisorId);
     }
 
-    public async Task<List<Employee>> GetManagementChainAsync(int employeeId)
+    public async Task<ErrorOr<IReadOnlyList<Employee>>> GetManagementChainAsync(int employeeId)
     {
+        var employee = await employeeRepository.GetByIdAsync(employeeId);
+        if (employee is null)
+        {
+            return EmployeeErrors.NotFound(employeeId);
+        }
+
         var chain = new List<Employee>();
         var currentId = employeeId;
 
         while (true)
         {
-            var employee = await employeeRepository.GetByIdAsync(currentId);
-            if (employee?.SupervisorId is null)
+            var current = await employeeRepository.GetByIdAsync(currentId);
+            if (current?.SupervisorId is null)
             {
                 break;
             }
 
-            var supervisor = await employeeRepository.GetByIdAsync(employee.SupervisorId.Value);
+            var supervisor = await employeeRepository.GetByIdAsync(current.SupervisorId.Value);
             if (supervisor is null)
             {
                 break;
@@ -57,7 +63,18 @@ public class EmployeeHierarchyManager(IEmployeeRepository employeeRepository)
         return chain;
     }
 
-    public async Task<List<Employee>> GetAllReportsAsync(int supervisorId)
+    public async Task<ErrorOr<IReadOnlyList<Employee>>> GetAllReportsAsync(int supervisorId)
+    {
+        var supervisor = await employeeRepository.GetByIdAsync(supervisorId);
+        if (supervisor is null)
+        {
+            return EmployeeErrors.NotFound(supervisorId);
+        }
+
+        return (await CollectReportAsync(supervisorId)).ToErrorOr();
+    }
+
+    private async Task<IReadOnlyList<Employee>> CollectReportAsync(int supervisorId)
     {
         var allReports = new List<Employee>();
         var directReports = await employeeRepository.GetBySupervisorIdAsync(supervisorId);
@@ -65,7 +82,7 @@ public class EmployeeHierarchyManager(IEmployeeRepository employeeRepository)
         foreach (var report in directReports)
         {
             allReports.Add(report);
-            var indirectReports = await GetAllReportsAsync(report.Id);
+            var indirectReports = await CollectReportAsync(report.Id);
             allReports.AddRange(indirectReports);
         }
 

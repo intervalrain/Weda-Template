@@ -8,9 +8,9 @@ namespace Weda.Template.Domain.Employees.Errors;
 public static class EmployeeErrors
 {
     // Not Found Errors
-    public static readonly Error NotFound = Error.NotFound(
+    public static Error NotFound(int id) => Error.NotFound(
         code: "Employee.NotFound",
-        description: "The employee with the specified ID was not found.");
+        description: $"The employee with the ID {id} was not found.");
 
     public static readonly Error SupervisorNotFound = Error.NotFound(
         code: "Employee.SupervisorNotFound",

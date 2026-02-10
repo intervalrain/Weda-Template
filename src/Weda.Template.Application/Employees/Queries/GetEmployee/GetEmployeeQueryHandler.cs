@@ -18,7 +18,7 @@ public class GetEmployeeQueryHandler(
         var employee = await employeeRepository.GetByIdAsync(request.Id, cancellationToken);
         if (employee is null)
         {
-            return EmployeeErrors.NotFound;
+            return EmployeeErrors.NotFound(request.Id);
         }
 
         return EmployeeMapper.ToDto(employee);

@@ -1,24 +1,19 @@
 using Asp.Versioning;
-
 using FluentValidation;
-
 using Mediator;
-
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi;
-
 using Swashbuckle.AspNetCore.Filters;
 using Swashbuckle.AspNetCore.SwaggerGen;
-
-
 using Weda.Core.Application.Behaviors;
 using Weda.Core.Infrastructure.Middleware;
 using Weda.Core.Infrastructure.Messaging.Nats.Configuration;
 using Weda.Core.Presentation.Swagger;
+using Weda.Core.Presentation.Filters;
 
 namespace Weda.Core;
 
@@ -35,6 +30,7 @@ public static class WedaCoreModule
         configure?.Invoke(options);
 
         services.AddProblemDetails();
+        services.AddExceptionHandler<GlobalExceptionHandler>();
 
         configureMediator(services);
 

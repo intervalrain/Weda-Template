@@ -21,7 +21,7 @@ public class UpdateEmployeeCommandHandler(
         var employee = await employeeRepository.GetByIdAsync(request.Id, cancellationToken);
         if (employee is null)
         {
-            return EmployeeErrors.NotFound;
+            return EmployeeErrors.NotFound(request.Id);
         }
 
         // Check for duplicate name (exclude current employee)

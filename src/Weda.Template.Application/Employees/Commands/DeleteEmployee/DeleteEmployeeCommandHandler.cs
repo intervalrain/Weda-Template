@@ -16,7 +16,7 @@ public class DeleteEmployeeCommandHandler(
         var employee = await _employeeRepository.GetByIdAsync(request.Id, cancellationToken);
         if (employee is null)
         {
-            return EmployeeErrors.NotFound;
+            return EmployeeErrors.NotFound(request.Id);
         }
 
         var subordinates = await _employeeRepository.GetBySupervisorIdAsync(request.Id, cancellationToken);
