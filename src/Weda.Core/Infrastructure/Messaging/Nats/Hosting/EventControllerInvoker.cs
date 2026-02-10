@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using NATS.Client.Core;
 using Weda.Core.Infrastructure.Audit;
 using Weda.Core.Infrastructure.Messaging.Nats.Discovery;
+using Weda.Core.Infrastructure.Messaging.Nats.Middleware;
 
 namespace Weda.Core.Infrastructure.Messaging.Nats.Hosting;
 
@@ -28,18 +29,47 @@ public class EventControllerInvoker(IServiceScopeFactory scopeFactory)
         var request = DeserializeRequest(data, endpoint.RequestType);
         var controller = CreateController(scope, endpoint, subject, headers, subjectValues);
 
-        // Extract and set audit context
+        // Extract audit context
         var traceContext = headers.GetTraceContext();
-        AuditContextAccessor.Current = traceContext;
-        
-        try
+
+        // Build context for middleware
+        var context = new EventControllerContext
         {
-            return await InvokeMethodAsync(controller, endpoint, request, subjectValues, cancellationToken);        
-        }
-        finally
+            Controller = controller,
+            Endpoint = endpoint,
+            Headers = headers,
+            Subject = subject,
+            AuditContext = traceContext,
+            Services = scope.ServiceProvider
+        };
+
+        object? result = null;
+
+        // Build middleware pipeline
+        var middlewares = scope.ServiceProvider.GetServices<IEventControllerMiddleware>().ToList();
+
+        async Task ExecuteHandler()
         {
-            AuditContextAccessor.Current = null;
+            AuditContextAccessor.Current = traceContext;
+            try
+            {
+                result = await InvokeMethodAsync(controller, endpoint, request, subjectValues, cancellationToken);
+            }
+            finally
+            {
+                AuditContextAccessor.Current = null;
+            }
         }
+
+        // Execute pipeline: middleware1 -> middleware2 -> ... -> handler
+        var pipeline = middlewares
+            .AsEnumerable()
+            .Reverse()
+            .Aggregate((Func<Task>)ExecuteHandler, (next, middleware) => () => middleware.InvokeAsync(context, next));
+
+        await pipeline();
+
+        return result;
     }
 
     private static object? DeserializeRequest(byte[]? data, Type? requestType)

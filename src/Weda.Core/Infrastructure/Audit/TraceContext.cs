@@ -22,8 +22,8 @@ public record TraceContext : IAuditContext
     {
         return new TraceContext
         {
-            TraceId = existingTraceId ?? ShortId.Generate(),
-            RequestId = ShortId.Generate(),
+            TraceId = existingTraceId ?? TraceIdGenerator.Generate(),
+            RequestId = RequestIdGenerator.Generate(),
             Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
         };
     }

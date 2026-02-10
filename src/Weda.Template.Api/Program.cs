@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 using Serilog;
 using Weda.Core;
+using Weda.Core.Infrastructure.Messaging.Nats.Configuration;
+using Weda.Core.Infrastructure.Messaging.Nats.Middleware;
 using Weda.Template.Api;
 using Weda.Template.Application;
 using Weda.Template.Contracts;
@@ -37,7 +39,9 @@ var builder = WebApplication.CreateBuilder(args);
                     Title = "Weda API",
                     Version = "v1",
                 };
-            });
+            },
+            nats => nats.Use<AuditLoggingMiddleware>()
+        );
 }
 
 var app = builder.Build();

@@ -31,8 +31,8 @@ public static class NatsHeadersExtensions
 
         return new TraceContext
         {
-            TraceId = traceId ?? ShortId.Generate(),
-            RequestId = requestId ?? ShortId.Generate(),
+            TraceId = traceId ?? TraceIdGenerator.Generate(),
+            RequestId = requestId ?? RequestIdGenerator.Generate(),
             Timestamp = timestamp > 0 ? timestamp : DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
         };
     }

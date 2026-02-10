@@ -27,7 +27,8 @@ public static class WedaCoreModule
         this IServiceCollection services,
         IConfiguration configuration,
         Action<IServiceCollection> configureMediator,
-        Action<WedaCoreOptions>? configure = null)
+        Action<WedaCoreOptions>? configure = null,
+        Action<NatsBuilder>? configureNats = null)
     {
         var options = new WedaCoreOptions();
         configure?.Invoke(options);
@@ -38,7 +39,7 @@ public static class WedaCoreModule
 
         if (options.Messaging.Enabled)
         {
-            services.AddMessaging<TAssemblyMarker>(configuration);
+            services.AddMessaging<TAssemblyMarker>(configuration, configureNats);
         }
 
         services.AddScoped(typeof(IPipelineBehavior<,>), typeof(AuthorizationBehavior<,>));
@@ -169,13 +170,15 @@ public static class WedaCoreModule
 
     private static IServiceCollection AddMessaging<TAssemblyMarker>(
         this IServiceCollection services,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        Action<NatsBuilder>? configureNats = null)
     {
         var natsOptions = new NatsOptions();
         configuration.GetSection(NatsOptions.SectionName).Bind(natsOptions);
         services.AddNats(builder =>
         {
             builder.BindConfiguration(natsOptions);
+            configureNats?.Invoke(builder);
         });
 
         // Register EventControllers from the API assembly (where controllers are defined)
