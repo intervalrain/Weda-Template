@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using NATS.Client.Core;
 using NATS.Net;
 using Weda.Core.Application.Interfaces.Messaging;
+using Weda.Core.Infrastructure.Messaging.Nats.Caching;
 
 namespace Weda.Core.Infrastructure.Messaging.Nats.Configuration;
 
@@ -34,6 +35,12 @@ public class NatsBuilder(IServiceCollection services)
     public NatsBuilder AddConnection(string name, NatsOpts opts)
     {
         _connections[name] = opts;
+        return this;
+    }
+
+    public NatsBuilder AddKeyValueCache(Action<NatsKvCacheOptions>? configure = null)
+    {
+        Services.AddNatsKvCache(configure);
         return this;
     }
 
