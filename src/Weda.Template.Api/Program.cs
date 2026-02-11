@@ -40,7 +40,11 @@ var builder = WebApplication.CreateBuilder(args);
                     Version = "v1",
                 };
             },
-            nats => nats.Use<AuditLoggingMiddleware>()
+            nats => 
+            {
+                nats.AddKeyValueCache();
+                nats.Use<AuditLoggingMiddleware>();
+            }
         );
 }
 
