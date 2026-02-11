@@ -41,6 +41,7 @@ public static class WedaCoreModule
 
         services.AddScoped(typeof(IPipelineBehavior<,>), typeof(AuthorizationBehavior<,>));
         services.AddScoped(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+        services.AddScoped(typeof(IPipelineBehavior<,>), typeof(UnitOfWorkBehavior<,>));
         services.AddValidatorsFromAssemblyContaining<TApplicationMarker>();
 
         services.AddPresentation<TContractsMarker>(options);

@@ -11,7 +11,7 @@ namespace Weda.Core.Application.Behaviors;
 public class AuthorizationBehavior<TRequest, TResponse>(
     IAuthorizationService _authorizationService)
         : IPipelineBehavior<TRequest, TResponse>
-            where TRequest : IAuthorizeableRequest<TResponse>
+            where TRequest : IAuthorizeableQuery<TResponse>
             where TResponse : IErrorOr
 {
     public async ValueTask<TResponse> Handle(

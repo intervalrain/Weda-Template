@@ -1,9 +1,8 @@
 using ErrorOr;
-using Mediator;
-using Weda.Template.Contracts.Auth;
+using Weda.Core.Application.Interfaces;
 
 namespace Weda.Template.Contracts.Auth.Commands;
 
 public record LoginCommand(
     string Email,
-    string Password) : IRequest<ErrorOr<AuthResponse>>;
+    string Password) : ICommand<ErrorOr<AuthResponse>>;

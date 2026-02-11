@@ -1,9 +1,7 @@
 using ErrorOr;
-
-using Mediator;
-
+using Weda.Core.Application.Interfaces;
 using Weda.Template.Contracts.Employees.Dtos;
 
 namespace Weda.Template.Contracts.Employees.Queries;
 
-public record GetSubordinatesQuery(int SupervisorId) : IRequest<ErrorOr<List<EmployeeDto>>>;
+public record GetSubordinatesQuery(int SupervisorId) : IQuery<ErrorOr<List<EmployeeDto>>>;

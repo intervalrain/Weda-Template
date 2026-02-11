@@ -1,6 +1,7 @@
 using Mediator;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Weda.Core.Application.Interfaces;
 using Weda.Core.Domain;
 using Weda.Core.Infrastructure.Middleware;
 
@@ -9,7 +10,7 @@ namespace Weda.Core.Infrastructure.Persistence;
 public abstract class WedaDbContext(
     DbContextOptions options,
     IHttpContextAccessor httpContextAccessor,
-    IPublisher publisher) : DbContext(options)
+    IPublisher publisher) : DbContext(options), IUnitOfWork
 {
     private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
     private readonly IPublisher _publisher = publisher;

@@ -1,7 +1,5 @@
 using ErrorOr;
-
-using Mediator;
-
+using Weda.Core.Application.Interfaces;
 using Weda.Template.Contracts.Employees.Dtos;
 using Weda.Template.Domain.Employees.Enums;
 
@@ -14,4 +12,4 @@ public record UpdateEmployeeCommand(
     string Department,
     string Position,
     EmployeeStatus Status,
-    int? SupervisorId) : IRequest<ErrorOr<EmployeeDto>>;
+    int? SupervisorId) : ICommand<ErrorOr<EmployeeDto>>;

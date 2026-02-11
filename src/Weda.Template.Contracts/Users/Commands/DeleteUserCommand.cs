@@ -1,6 +1,6 @@
 using ErrorOr;
-using Mediator;
+using Weda.Core.Application.Interfaces;
 
 namespace Weda.Template.Contracts.Users.Commands;
 
-public record DeleteUserCommand(Guid Id) : IRequest<ErrorOr<Deleted>>;
+public record DeleteUserCommand(Guid Id) : ICommand<ErrorOr<Deleted>>;

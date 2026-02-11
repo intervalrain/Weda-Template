@@ -24,18 +24,17 @@ public class GenericRepository<T, TId, TDbContext>(TDbContext dbContext) : IRepo
     public virtual async Task AddAsync(T entity, CancellationToken cancellationToken = default)
     {
         await DbSet.AddAsync(entity, cancellationToken);
-        await DbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public virtual async Task UpdateAsync(T entity, CancellationToken cancellationToken = default)
+    public virtual Task UpdateAsync(T entity, CancellationToken cancellationToken = default)
     {
         DbSet.Update(entity);
-        await DbContext.SaveChangesAsync(cancellationToken);
+        return Task.CompletedTask;
     }
 
-    public virtual async Task DeleteAsync(T entity, CancellationToken cancellationToken = default)
+    public virtual Task DeleteAsync(T entity, CancellationToken cancellationToken = default)
     {
         DbSet.Remove(entity);
-        await DbContext.SaveChangesAsync(cancellationToken);
+        return Task.CompletedTask;
     }
 }

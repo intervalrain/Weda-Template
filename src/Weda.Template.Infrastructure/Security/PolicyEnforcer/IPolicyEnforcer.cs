@@ -8,7 +8,7 @@ namespace Weda.Template.Infrastructure.Security.PolicyEnforcer;
 public interface IPolicyEnforcer
 {
     public ErrorOr<Success> Authorize<T>(
-        IAuthorizeableRequest<T> request,
+        IAuthorizeableQuery<T> request,
         CurrentUser currentUser,
         string policy);
 }

@@ -1,7 +1,7 @@
 using ErrorOr;
-using Mediator;
+using Weda.Core.Application.Interfaces;
 using Weda.Template.Contracts.Users.Dtos;
 
 namespace Weda.Template.Contracts.Users.Queries;
 
-public record GetCurrentUserQuery : IRequest<ErrorOr<UserDto>>;
+public record GetCurrentUserQuery : IQuery<ErrorOr<UserDto>>;

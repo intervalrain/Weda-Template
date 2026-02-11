@@ -8,7 +8,7 @@ namespace Weda.Template.Infrastructure.Security.PolicyEnforcer;
 public class PolicyEnforcer : IPolicyEnforcer
 {
     public ErrorOr<Success> Authorize<T>(
-        IAuthorizeableRequest<T> request,
+        IAuthorizeableQuery<T> request,
         CurrentUser currentUser,
         string policy)
     {
@@ -21,7 +21,7 @@ public class PolicyEnforcer : IPolicyEnforcer
         };
     }
 
-    private static ErrorOr<Success> SelfOrAdminPolicy<T>(IAuthorizeableRequest<T> request, CurrentUser currentUser) =>
+    private static ErrorOr<Success> SelfOrAdminPolicy<T>(IAuthorizeableQuery<T> request, CurrentUser currentUser) =>
         request.UserId == currentUser.Id || currentUser.Roles.Contains(Role.Admin) || currentUser.Roles.Contains(Role.SuperAdmin)
             ? Result.Success
             : Error.Unauthorized(description: "Requesting user failed policy requirement");

@@ -151,13 +151,13 @@ public record Response
     public static readonly Response Instance = new();
 }
 
-public record RequestWithNoAuthorizationAttribute(Guid UserId) : IAuthorizeableRequest<ErrorOr<Response>>;
+public record RequestWithNoAuthorizationAttribute(Guid UserId) : IAuthorizeableQuery<ErrorOr<Response>>;
 
 [Authorize(Permissions = "Permission")]
-public record RequestWithSingleAuthorizationAttribute(Guid UserId) : IAuthorizeableRequest<ErrorOr<Response>>;
+public record RequestWithSingleAuthorizationAttribute(Guid UserId) : IAuthorizeableQuery<ErrorOr<Response>>;
 
 [Authorize(Permissions = "Permission1,Permission2")]
 [Authorize(Roles = "Role1,Role2")]
 [Authorize(Policies = "Policy1,Policy2")]
 [Authorize(Permissions = "Permission3", Roles = "Role3", Policies = "Policy3")]
-public record RequestWithTonsOfAuthorizationAttribute(Guid UserId) : IAuthorizeableRequest<ErrorOr<Response>>;
+public record RequestWithTonsOfAuthorizationAttribute(Guid UserId) : IAuthorizeableQuery<ErrorOr<Response>>;
