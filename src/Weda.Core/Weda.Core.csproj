@@ -10,6 +10,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Microsoft.Extensions.Resilience" />
     <PackageReference Include="Microsoft.OpenApi" />
     <PackageReference Include="NATS.Client.Serializers.Json" />
     <PackageReference Include="NATS.Net" />

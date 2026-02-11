@@ -1,9 +1,13 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
+
 using NATS.Client.Core;
 using NATS.Net;
 using Weda.Core.Application.Interfaces.Messaging;
 using Weda.Core.Infrastructure.Messaging.Nats.Caching;
+using Weda.Core.Infrastructure.Outbox;
 
 namespace Weda.Core.Infrastructure.Messaging.Nats.Configuration;
 
@@ -41,6 +45,18 @@ public class NatsBuilder(IServiceCollection services)
     public NatsBuilder AddKeyValueCache(Action<NatsKvCacheOptions>? configure = null)
     {
         Services.AddNatsKvCache(configure);
+        return this;
+    }
+
+    public NatsBuilder AddOutbox<TDbContext>(Action<OutboxOptions>? configure = null)
+        where TDbContext : DbContext
+    {
+        var options = new OutboxOptions();
+        configure?.Invoke(options);
+
+        Services.AddSingleton(Options.Create(options));
+        Services.AddHostedService<OutboxProcessor<TDbContext>>();
+
         return this;
     }
 
