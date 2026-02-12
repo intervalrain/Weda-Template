@@ -1,13 +1,10 @@
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Options;
 
 using NATS.Client.Core;
 using NATS.Net;
 using Weda.Core.Application.Interfaces.Messaging;
 using Weda.Core.Infrastructure.Messaging.Nats.Caching;
-using Weda.Core.Infrastructure.Outbox;
 
 namespace Weda.Core.Infrastructure.Messaging.Nats.Configuration;
 
@@ -48,14 +45,20 @@ public class NatsBuilder(IServiceCollection services)
         return this;
     }
 
-    public NatsBuilder AddOutbox<TDbContext>(Action<OutboxOptions>? configure = null)
-        where TDbContext : DbContext
+    public NatsBuilder ConfigureResilience(Action<JetStreamResilienceOptions>? configure = null)
     {
-        var options = new OutboxOptions();
+        var options = new JetStreamResilienceOptions();
         configure?.Invoke(options);
 
-        Services.AddSingleton(Options.Create(options));
-        Services.AddHostedService<OutboxProcessor<TDbContext>>();
+        Services.Configure<JetStreamResilienceOptions>(opt =>
+        {
+            opt.MaxRetryAttempts = options.MaxRetryAttempts;
+            opt.BaseDelay = options.BaseDelay;
+            opt.FailureRatio = options.FailureRatio;
+            opt.SamplingDuration = options.SamplingDuration;
+            opt.BreakDuration = options.BreakDuration;
+            opt.MinimumThroughput = options.MinimumThroughput;
+        });
 
         return this;
     }

@@ -1,6 +1,8 @@
 using System.Reflection;
 
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Options;
 
 using Weda.Core.Infrastructure.Messaging.Nats.Discovery;
 using Weda.Core.Infrastructure.Messaging.Nats.Hosting;
@@ -45,6 +47,12 @@ public static class NatsServiceExtensions
 
         // Register invoker (creates controller instances and invokes methods)
         services.AddScoped<EventControllerInvoker>();
+
+        // Register message handler for NAK + DLQ support
+        services.AddSingleton<JetStreamMessageHandler>();
+
+        // Register default consumer options if not configured
+        services.TryAddSingleton(Options.Create(new JetStreamConsumerOptions()));
 
         // Register all 4 HostedServices
         services.AddHostedService<RequestReplyHostedService>();

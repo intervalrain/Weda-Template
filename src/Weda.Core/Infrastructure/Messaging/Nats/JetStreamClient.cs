@@ -2,24 +2,31 @@ using NATS.Client.Core;
 using NATS.Client.JetStream;
 using NATS.Client.JetStream.Models;
 
+using Polly;
+
 using Weda.Core.Application.Interfaces.Messaging;
 using Weda.Core.Infrastructure.Audit;
 
 namespace Weda.Core.Infrastructure.Messaging.Nats;
 
 /// <summary>
-/// NATS client with automatic trace header injection.
+/// NATS client with automatic trace header injection and resilience (Retry + Circuit Breaker).
 /// Created via IJetStreamClientFactory.Create().
 /// </summary>
 public class JetStreamClient : IJetStreamClient
 {
     private readonly INatsConnection _connection;
     private readonly NatsJSContext _jetStream;
+    private readonly ResiliencePipeline _resiliencePipeline;
 
-    internal JetStreamClient(INatsConnection connection, NatsJSContext jetStream)
+    internal JetStreamClient(
+        INatsConnection connection,
+        NatsJSContext jetStream,
+        ResiliencePipeline resiliencePipeline)
     {
         _connection = connection;
         _jetStream = jetStream;
+        _resiliencePipeline = resiliencePipeline;
     }
 
     public async Task PublishAsync<T>(string subject, T data, CancellationToken cancellationToken = default)
@@ -60,7 +67,10 @@ public class JetStreamClient : IJetStreamClient
         CancellationToken cancellationToken = default)
     {
         var headers = CreateTracedHeaders();
-        return await _jetStream.PublishAsync(subject, data, headers: headers, cancellationToken: cancellationToken);
+
+        return await _resiliencePipeline.ExecuteAsync(
+            async ct => await _jetStream.PublishAsync(subject, data, headers: headers, cancellationToken: ct),
+            cancellationToken);
     }
 
     private static NatsHeaders CreateTracedHeaders()
