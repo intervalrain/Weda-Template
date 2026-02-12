@@ -76,6 +76,8 @@ public static class WedaTemplateInfrastructureModule
 #endif
         });
 
+        services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<AppDbContext>());
+
 #if sample
         services.AddEmployeesInfrastructure();
 #endif

@@ -41,6 +41,8 @@ var builder = WebApplication.CreateBuilder(args);
                     Title = "Weda API",
                     Version = "v1",
                 };
+                options.Observability.ServiceName = "WedaTemplate";
+                options.Observability.Tracing.UseConsoleExporter = true;
             },
             nats =>
             {

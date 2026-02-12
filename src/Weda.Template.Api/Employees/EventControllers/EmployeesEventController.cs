@@ -207,7 +207,7 @@ public class EmployeeEventController(IJetStreamClientFactory clientFactory) : Ev
 
         Logger.LogInformation("Employee created successfully");
     }
-
+    
     /// <summary>
     /// JetStream Fetch pattern example.
     /// Uses ConsumerMode.Fetch for batch processing.
@@ -228,6 +228,7 @@ public class EmployeeEventController(IJetStreamClientFactory clientFactory) : Ev
 
         Logger.LogInformation("Employee created successfully");
     }
+
 
     /// <summary>
     /// Core Pub-Sub pattern example demonstrating runtime subject manipulation.

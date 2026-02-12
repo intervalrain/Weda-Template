@@ -14,6 +14,7 @@ using Weda.Core.Infrastructure.Middleware;
 using Weda.Core.Infrastructure.Messaging.Nats.Configuration;
 using Weda.Core.Presentation.Swagger;
 using Weda.Core.Presentation.Filters;
+using Weda.Core.Infrastructure.Observability;
 
 namespace Weda.Core;
 
@@ -33,6 +34,7 @@ public static class WedaCoreModule
         services.AddExceptionHandler<GlobalExceptionHandler>();
 
         configureMediator(services);
+        services.AddObservability(options.Observability);
 
         if (options.Messaging.Enabled)
         {

@@ -39,7 +39,7 @@ public class JetStreamMessageHandler(
         await EnsureStreamExistsAsync(js, endpoint.StreamName, subject, cancellationToken);
         await EnsureConsumerExistsAsync(js, endpoint.StreamName, endpoint.ConsumerName, cancellationToken);
 
-        return await js.GetConsumerAsync(endpoint.StreamName, endpoint.ConnectionName, cancellationToken);
+        return await js.GetConsumerAsync(endpoint.StreamName, endpoint.ConsumerName, cancellationToken);
     }
 
     public async Task HandleAsync(

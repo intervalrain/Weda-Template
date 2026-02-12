@@ -7,6 +7,7 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 using Swashbuckle.AspNetCore.SwaggerUI;
 
 using Weda.Core.Infrastructure.Messaging;
+using Weda.Core.Infrastructure.Observability;
 
 namespace Weda.Core;
 
@@ -23,6 +24,8 @@ public class WedaCoreOptions
     public WedaMessagingOptions Messaging { get; } = new();
 
     public OpenApiInfo OpenApiInfo { get; set; } = new();
+
+    public ObservabilityOptions Observability { get; } = new();
 }
 
 public class WedaCoreAppOptions
