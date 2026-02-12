@@ -4,7 +4,9 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using NATS.Client.Core;
 using NATS.Net;
 using Weda.Core.Application.Interfaces.Messaging;
+using Weda.Core.Application.Interfaces.Storage;
 using Weda.Core.Infrastructure.Messaging.Nats.Caching;
+using Weda.Core.Infrastructure.Messaging.Nats.ObjectStore;
 
 namespace Weda.Core.Infrastructure.Messaging.Nats.Configuration;
 
@@ -42,6 +44,12 @@ public class NatsBuilder(IServiceCollection services)
     public NatsBuilder AddKeyValueCache(Action<NatsKvCacheOptions>? configure = null)
     {
         Services.AddNatsKvCache(configure);
+        return this;
+    }
+
+    public NatsBuilder AddObjectStore(Action<NatsObjectStoreOptions>? configure = null)
+    {
+        Services.AddNatsObjectStore(configure);
         return this;
     }
 

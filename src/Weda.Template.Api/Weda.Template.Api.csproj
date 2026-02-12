@@ -11,13 +11,9 @@
 
   <!-- Generate Wiki HTML before build -->
   <Target Name="GenerateWiki" BeforeTargets="Build" Condition="Exists('$(WikiSourceDir)/en') Or Exists('$(WikiSourceDir)/zh')">
-    <Exec Command="dotnet run --project $(MSBuildProjectDirectory)/../../tools/WikiGenerator/WikiGenerator.csproj -- $(WikiSourceDir) $(WikiOutputDir)"
-          ConsoleToMSBuild="true"
-          StandardOutputImportance="high" />
+    <Exec Command="dotnet run --project $(MSBuildProjectDirectory)/../../tools/WikiGenerator/WikiGenerator.csproj -- $(WikiSourceDir) $(WikiOutputDir)" ConsoleToMSBuild="true" StandardOutputImportance="high" />
     <!-- Copy static assets -->
-    <Copy SourceFiles="$(WikiSourceDir)/index.html;$(WikiSourceDir)/wiki.css"
-          DestinationFolder="$(WikiOutputDir)"
-          SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(WikiSourceDir)/index.html;$(WikiSourceDir)/wiki.css" DestinationFolder="$(WikiOutputDir)" SkipUnchangedFiles="true" />
   </Target>
 
   <ItemGroup>
@@ -40,6 +36,7 @@
     <ProjectReference Include="..\Weda.Template.Contracts\Weda.Template.Contracts.csproj" />
     <ProjectReference Include="..\Weda.Template.Application\Weda.Template.Application.csproj" />
     <ProjectReference Include="..\Weda.Template.Infrastructure\Weda.Template.Infrastructure.csproj" />
+    <ProjectReference Include="..\Weda.Protocol\Weda.Protocol.csproj" />
   </ItemGroup>
 
 </Project>
