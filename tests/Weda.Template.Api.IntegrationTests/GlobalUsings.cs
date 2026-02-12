@@ -3,7 +3,7 @@ global using System.Net.Http.Json;
 
 global using Weda.Template.Api.IntegrationTests.Common;
 
-global using FluentAssertions;
+global using Shouldly;
 
 global using Weda.Template.TestCommon.Security;
 

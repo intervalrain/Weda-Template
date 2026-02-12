@@ -1,4 +1,4 @@
-using FluentAssertions;
+using Shouldly;
 using Weda.Protocol.Serialization;
 
 namespace Weda.Protocol.UnitTests.Serialization;
@@ -11,7 +11,7 @@ public class ProtobufSerializerRegistryTests
         var registry1 = ProtobufSerializerRegistry.Default;
         var registry2 = ProtobufSerializerRegistry.Default;
 
-        registry1.Should().BeSameAs(registry2);
+        registry1.ShouldBeSameAs(registry2);
     }
 
     [Fact]
@@ -20,8 +20,8 @@ public class ProtobufSerializerRegistryTests
         var registry = ProtobufSerializerRegistry.Default;
         var serializer = registry.GetSerializer<TestMessage>();
 
-        serializer.Should().NotBeNull();
-        serializer.Should().BeOfType<ProtobufSerializer<TestMessage>>();
+        serializer.ShouldNotBeNull();
+        serializer.ShouldBeOfType<ProtobufSerializer<TestMessage>>();
     }
 
     [Fact]
@@ -30,8 +30,8 @@ public class ProtobufSerializerRegistryTests
         var registry = ProtobufSerializerRegistry.Default;
         var deserializer = registry.GetDeserializer<TestMessage>();
 
-        deserializer.Should().NotBeNull();
-        deserializer.Should().BeOfType<ProtobufSerializer<TestMessage>>();
+        deserializer.ShouldNotBeNull();
+        deserializer.ShouldBeOfType<ProtobufSerializer<TestMessage>>();
     }
 
     [Fact]
@@ -41,6 +41,6 @@ public class ProtobufSerializerRegistryTests
         var serializer1 = registry.GetSerializer<TestMessage>();
         var serializer2 = registry.GetSerializer<TestMessage>();
 
-        serializer1.Should().BeSameAs(serializer2);
+        serializer1.ShouldBeSameAs(serializer2);
     }
 }

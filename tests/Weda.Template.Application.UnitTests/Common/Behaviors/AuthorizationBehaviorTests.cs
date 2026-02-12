@@ -29,8 +29,8 @@ public class AuthorizationBehaviorTests
         var result = await authorizationBehavior.Handle(request, next, default);
 
         // Assert
-        result.IsError.Should().BeFalse();
-        result.Value.Should().Be(Response.Instance);
+        result.IsError.ShouldBeFalse();
+        result.Value.ShouldBe(Response.Instance);
     }
 
     [Fact]
@@ -56,8 +56,8 @@ public class AuthorizationBehaviorTests
         var result = await authorizationBehavior.Handle(request, next, default);
 
         // Assert
-        result.IsError.Should().BeFalse();
-        result.Value.Should().Be(Response.Instance);
+        result.IsError.ShouldBeFalse();
+        result.Value.ShouldBe(Response.Instance);
     }
 
     [Fact]
@@ -85,8 +85,8 @@ public class AuthorizationBehaviorTests
         var result = await authorizationBehavior.Handle(request, next, default);
 
         // Assert
-        result.IsError.Should().BeTrue();
-        result.FirstError.Should().Be(error);
+        result.IsError.ShouldBeTrue();
+        result.FirstError.ShouldBe(error);
     }
 
     [Fact]
@@ -112,8 +112,8 @@ public class AuthorizationBehaviorTests
         var result = await authorizationBehavior.Handle(request, next, default);
 
         // Assert
-        result.IsError.Should().BeFalse();
-        result.Value.Should().Be(Response.Instance);
+        result.IsError.ShouldBeFalse();
+        result.Value.ShouldBe(Response.Instance);
     }
 
     [Fact]
@@ -141,8 +141,8 @@ public class AuthorizationBehaviorTests
         var result = await authorizationBehavior.Handle(request, next, default);
 
         // Assert
-        result.IsError.Should().BeTrue();
-        result.FirstError.Should().Be(error);
+        result.IsError.ShouldBeTrue();
+        result.FirstError.ShouldBe(error);
     }
 }
 

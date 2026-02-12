@@ -1,5 +1,5 @@
 using System.Buffers;
-using FluentAssertions;
+using Shouldly;
 using Weda.Protocol.Serialization;
 
 namespace Weda.Protocol.UnitTests.Serialization;
@@ -16,7 +16,7 @@ public class ProtobufSerializerTests
 
         _serializer.Serialize(buffer, message);
 
-        buffer.WrittenCount.Should().BeGreaterThan(0);
+        buffer.WrittenCount.ShouldBeGreaterThan(0);
     }
 
     [Fact]
@@ -29,9 +29,9 @@ public class ProtobufSerializerTests
         var sequence = new ReadOnlySequence<byte>(buffer.WrittenMemory);
         var deserialized = _serializer.Deserialize(sequence);
 
-        deserialized.Should().NotBeNull();
-        deserialized!.Name.Should().Be("Hello");
-        deserialized.Value.Should().Be(123);
+        deserialized.ShouldNotBeNull();
+        deserialized!.Name.ShouldBe("Hello");
+        deserialized.Value.ShouldBe(123);
     }
 
     [Fact]
@@ -40,7 +40,7 @@ public class ProtobufSerializerTests
         var sequence = new ReadOnlySequence<byte>(Array.Empty<byte>());
         var result = _serializer.Deserialize(sequence);
 
-        result.Should().BeNull();
+        result.ShouldBeNull();
     }
 
     [Fact]
@@ -49,10 +49,8 @@ public class ProtobufSerializerTests
         var serializer = ProtobufSerializer<string>.Default;
         var buffer = new ArrayBufferWriter<byte>();
 
-        var act = () => serializer.Serialize(buffer, "test");
-
-        act.Should().Throw<InvalidOperationException>()
-            .WithMessage("*Cannot serialize*");
+        var ex = Should.Throw<InvalidOperationException>(() => serializer.Serialize(buffer, "test"));
+        ex.Message.ShouldContain("Cannot serialize");
     }
 
     [Fact]
@@ -65,9 +63,9 @@ public class ProtobufSerializerTests
         var sequence = new ReadOnlySequence<byte>(buffer.WrittenMemory);
         var deserialized = _serializer.Deserialize(sequence);
 
-        deserialized.Should().NotBeNull();
-        deserialized!.Name.Should().Be(original.Name);
-        deserialized.Value.Should().Be(original.Value);
+        deserialized.ShouldNotBeNull();
+        deserialized!.Name.ShouldBe(original.Name);
+        deserialized.Value.ShouldBe(original.Value);
     }
 
     [Fact]
@@ -80,13 +78,13 @@ public class ProtobufSerializerTests
         _serializer.Serialize(buffer, original);
 
         // Empty message serializes to empty buffer
-        buffer.WrittenCount.Should().Be(0);
+        buffer.WrittenCount.ShouldBe(0);
 
         var sequence = new ReadOnlySequence<byte>(buffer.WrittenMemory);
         var deserialized = _serializer.Deserialize(sequence);
 
         // Empty buffer returns null (matches Deserialize_EmptyBuffer_ReturnsDefault behavior)
-        deserialized.Should().BeNull();
+        deserialized.ShouldBeNull();
     }
 
     [Fact]
@@ -95,7 +93,7 @@ public class ProtobufSerializerTests
         var other = new ProtobufSerializer<TestMessage>();
         var result = _serializer.CombineWith(other);
 
-        result.Should().BeSameAs(_serializer);
+        result.ShouldBeSameAs(_serializer);
     }
 
     [Fact]
@@ -106,6 +104,6 @@ public class ProtobufSerializerTests
 
         var result = stringSerializer.CombineWith(next);
 
-        result.Should().BeSameAs(next);
+        result.ShouldBeSameAs(next);
     }
 }

@@ -1,4 +1,4 @@
-using FluentAssertions;
+using Shouldly;
 using NATS.Client.Core;
 using Weda.Core.Infrastructure.Audit;
 
@@ -12,28 +12,28 @@ public class TracingTests
     public void ShortId_Generate_ReturnsCorrectLength()
     {
         var id = ShortId.Generate();
-        id.Length.Should().Be(12);
+        id.Length.ShouldBe(12);
     }
 
     [Fact]
     public void ShortId_Generate_WithCustomLength_ReturnsCorrectLength()
     {
         var id = ShortId.Generate(16);
-        id.Length.Should().Be(16);
+        id.Length.ShouldBe(16);
     }
 
     [Fact]
     public void ShortId_Generate_ReturnsBase62Characters()
     {
         var id = ShortId.Generate();
-        id.All(c => char.IsLetterOrDigit(c)).Should().BeTrue();
+        id.All(c => char.IsLetterOrDigit(c)).ShouldBeTrue();
     }
 
     [Fact]
     public void ShortId_Generate_ReturnsUniqueIds()
     {
         var ids = Enumerable.Range(0, 1000).Select(_ => ShortId.Generate()).ToList();
-        ids.Count.Should().Be(ids.Distinct().Count());
+        ids.Count.ShouldBe(ids.Distinct().Count());
     }
 
     #endregion
@@ -45,11 +45,11 @@ public class TracingTests
     {
         var ctx = TraceContext.Create();
 
-        ctx.TraceId.Should().NotBeNullOrEmpty();
-        ctx.RequestId.Should().NotBeNullOrEmpty();
-        ctx.TraceId.Length.Should().Be(12);
-        ctx.RequestId.Length.Should().Be(12);
-        ctx.Timestamp.Should().BeGreaterThan(0);
+        ctx.TraceId.ShouldNotBeNullOrEmpty();
+        ctx.RequestId.ShouldNotBeNullOrEmpty();
+        ctx.TraceId.Length.ShouldBe(32);  // 128-bit = 16 bytes = 32 hex chars
+        ctx.RequestId.Length.ShouldBe(16); // RequestIdGenerator default length
+        ctx.Timestamp.ShouldBeGreaterThan(0);
     }
 
     [Fact]
@@ -58,8 +58,8 @@ public class TracingTests
         var existingTraceId = "existing123x";
         var ctx = TraceContext.Create(existingTraceId);
 
-        ctx.TraceId.Should().Be(existingTraceId);
-        ctx.RequestId.Should().NotBe(existingTraceId);
+        ctx.TraceId.ShouldBe(existingTraceId);
+        ctx.RequestId.ShouldNotBe(existingTraceId);
     }
 
     [Fact]
@@ -69,7 +69,7 @@ public class TracingTests
         var ctx = TraceContext.Create();
         var after = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
-        ctx.Timestamp.Should().BeInRange(before, after);
+        ctx.Timestamp.ShouldBeInRange(before, after);
     }
 
     #endregion
@@ -82,9 +82,9 @@ public class TracingTests
         NatsHeaders? headers = null;
         var ctx = headers.GetTraceContext();
 
-        ctx.TraceId.Should().NotBeNullOrEmpty();
-        ctx.RequestId.Should().NotBeNullOrEmpty();
-        ctx.Timestamp.Should().BeGreaterThan(0);
+        ctx.TraceId.ShouldNotBeNullOrEmpty();
+        ctx.RequestId.ShouldNotBeNullOrEmpty();
+        ctx.Timestamp.ShouldBeGreaterThan(0);
     }
 
     [Fact]
@@ -93,8 +93,8 @@ public class TracingTests
         var headers = new NatsHeaders();
         var ctx = headers.GetTraceContext();
 
-        ctx.TraceId.Should().NotBeNullOrEmpty();
-        ctx.RequestId.Should().NotBeNullOrEmpty();
+        ctx.TraceId.ShouldNotBeNullOrEmpty();
+        ctx.RequestId.ShouldNotBeNullOrEmpty();
     }
 
     [Fact]
@@ -103,9 +103,9 @@ public class TracingTests
         var ctx = TraceContext.Create();
         var headers = new NatsHeaders().WithTraceContext(ctx);
 
-        headers[TraceConstants.TraceIdHeader].First().Should().Be(ctx.TraceId);
-        headers[TraceConstants.RequestIdHeader].First().Should().Be(ctx.RequestId);
-        headers[TraceConstants.TimestampHeader].First().Should().Be(ctx.Timestamp.ToString());
+        headers[TraceConstants.TraceIdHeader].First().ShouldBe(ctx.TraceId);
+        headers[TraceConstants.RequestIdHeader].First().ShouldBe(ctx.RequestId);
+        headers[TraceConstants.TimestampHeader].First().ShouldBe(ctx.Timestamp.ToString());
     }
 
     [Fact]
@@ -115,9 +115,9 @@ public class TracingTests
         var headers = new NatsHeaders().WithTraceContext(original);
         var restored = headers.GetTraceContext();
 
-        restored.TraceId.Should().Be(original.TraceId);
-        restored.RequestId.Should().Be(original.RequestId);
-        restored.Timestamp.Should().Be(original.Timestamp);
+        restored.TraceId.ShouldBe(original.TraceId);
+        restored.RequestId.ShouldBe(original.RequestId);
+        restored.Timestamp.ShouldBe(original.Timestamp);
     }
 
     [Fact]
@@ -126,9 +126,9 @@ public class TracingTests
         var ctx = TraceContext.Create();
         var headers = NatsHeadersExtensions.CreateWithTraceContext(ctx);
 
-        headers[TraceConstants.TraceIdHeader].First().Should().Be(ctx.TraceId);
-        headers[TraceConstants.RequestIdHeader].First().Should().Be(ctx.RequestId);
-        headers[TraceConstants.TimestampHeader].First().Should().Be(ctx.Timestamp.ToString());
+        headers[TraceConstants.TraceIdHeader].First().ShouldBe(ctx.TraceId);
+        headers[TraceConstants.RequestIdHeader].First().ShouldBe(ctx.RequestId);
+        headers[TraceConstants.TimestampHeader].First().ShouldBe(ctx.Timestamp.ToString());
     }
 
     [Fact]
@@ -143,9 +143,9 @@ public class TracingTests
 
         var ctx = headers.GetTraceContext();
 
-        ctx.TraceId.Should().Be("trace123");
-        ctx.RequestId.Should().Be("request456");
-        ctx.Timestamp.Should().Be(1234567890);
+        ctx.TraceId.ShouldBe("trace123");
+        ctx.RequestId.ShouldBe("request456");
+        ctx.Timestamp.ShouldBe(1234567890);
     }
 
     [Fact]
@@ -158,9 +158,9 @@ public class TracingTests
 
         var ctx = headers.GetTraceContext();
 
-        ctx.TraceId.Should().Be("trace123");
-        ctx.RequestId.Should().NotBeNullOrEmpty();
-        ctx.RequestId.Length.Should().Be(12);
+        ctx.TraceId.ShouldBe("trace123");
+        ctx.RequestId.ShouldNotBeNullOrEmpty();
+        ctx.RequestId.Length.ShouldBe(16);
     }
 
     #endregion

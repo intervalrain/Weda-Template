@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="FluentAssertions" />
+    <PackageReference Include="Shouldly" />
     <PackageReference Include="FluentValidation" />
     <PackageReference Include="Mediator.Abstractions" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />

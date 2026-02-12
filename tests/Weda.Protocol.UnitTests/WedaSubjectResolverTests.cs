@@ -1,4 +1,4 @@
-using FluentAssertions;
+using Shouldly;
 
 using Weda.Core.Infrastructure.Messaging.Nats.Abstractions;
 
@@ -21,7 +21,7 @@ public class WedaSubjectResolverTests
     public void CanResolve_ShouldReturnExpected(string? subject, bool expected)
     {
         var result = _sut.CanResolve(subject!);
-        result.Should().Be(expected);
+        result.ShouldBe(expected);
     }
     #endregion
 
@@ -31,15 +31,15 @@ public class WedaSubjectResolverTests
     {
         var subject = "eco1j.weda.74fe.dm.sh.cfg.req";
         var result = _sut.Parse(subject);
-        result.Protocol.Should().Be("eco1j");
-        result.Version.Should().Be(1);
-        result.ContentType.Should().Be("application/json");
-        result.Segments["groupId"].Should().Be("weda");
-        result.Segments["resourceId"].Should().Be("74fe");
-        result.Segments["from"].Should().Be("dm");
-        result.Segments["to"].Should().Be("sh");
-        result.Segments["messageType"].Should().Be("cfg");
-        result.Segments["params"].Should().Be("req");
+        result.Protocol.ShouldBe("eco1j");
+        result.Version.ShouldBe(1);
+        result.ContentType.ShouldBe("application/json");
+        result.Segments["groupId"].ShouldBe("weda");
+        result.Segments["resourceId"].ShouldBe("74fe");
+        result.Segments["from"].ShouldBe("dm");
+        result.Segments["to"].ShouldBe("sh");
+        result.Segments["messageType"].ShouldBe("cfg");
+        result.Segments["params"].ShouldBe("req");
     }
 
     [Fact]
@@ -47,7 +47,7 @@ public class WedaSubjectResolverTests
     {
         var subject = "eco1p.weda.74fe.dm.00.evt.alarm.critical";
         var result = _sut.Parse(subject);
-        result.Segments["params"].Should().Be("alarm.critical");
+        result.Segments["params"].ShouldBe("alarm.critical");
     }
 
     [Fact]
@@ -55,23 +55,21 @@ public class WedaSubjectResolverTests
     {
         var subject = "eco1p.weda.74fe.dm.sh.cfg";
         var result = _sut.Parse(subject);
-        result.Segments["params"].Should().BeEmpty();
+        result.Segments["params"].ShouldBeEmpty();
     }
 
     [Fact]
     public void Parse_TooFewSegments_ShouldThrow()
     {
         var subject = "eco1p.weda.74fe.dm.sh";
-        var act = () => _sut.Parse(subject);
-        act.Should().Throw<ArgumentException>();
+        Should.Throw<ArgumentException>(() => _sut.Parse(subject));
     }
 
     [Fact]
     public void Parse_InvalidPrefix_ShouldThrow()
     {
         var subject = "invalid.weda.74fe.dm.sh.cfg.req";
-        var act = () => _sut.Parse(subject);
-        act.Should().Throw<ArgumentException>();
+        Should.Throw<ArgumentException>(() => _sut.Parse(subject));
     }
     #endregion
 
@@ -95,7 +93,7 @@ public class WedaSubjectResolverTests
             }
         };
         var result = _sut.Build(info);
-        result.Should().Be("eco1j.weda.74fe.dm.sh.cfg.req");
+        result.ShouldBe("eco1j.weda.74fe.dm.sh.cfg.req");
     }
 
     [Fact]
@@ -116,7 +114,7 @@ public class WedaSubjectResolverTests
             }
         };
         var result = _sut.Build(info);
-        result.Should().Be("eco1j.weda.74fe.dm.sh.cfg");
+        result.ShouldBe("eco1j.weda.74fe.dm.sh.cfg");
     }
 
     [Theory]
@@ -127,7 +125,7 @@ public class WedaSubjectResolverTests
     {
         var parsed = _sut.Parse(subject);
         var rebuilt = _sut.Build(parsed);
-        rebuilt.Should().Be(subject);
+        rebuilt.ShouldBe(subject);
     }
     #endregion
 }
