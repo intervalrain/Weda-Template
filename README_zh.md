@@ -15,6 +15,10 @@
 - **API 版本控制** - 內建 API 版本控制支援
 - **Swagger/OpenAPI** - 自動產生 API 文件
 - **完整測試** - 單元測試、整合測試、子表層測試
+- **分散式快取** - 基於 NATS KV 的分散式快取，實作 IDistributedCache
+- **物件儲存** - 使用 NATS Object Store 的二進位檔案儲存
+- **SAGA 模式** - 分散式交易編排與補償機制
+- **可觀測性** - OpenTelemetry 追蹤與指標
 
 ## 預覽
 
@@ -43,7 +47,7 @@
 ```
 WedaTemplate/
 ├── src/
-│   ├── Weda.Core/                    # 共用基礎設施 (DDD, CQRS, NATS)
+│   ├── Weda.Core/                    # 共用基礎設施 (DDD, CQRS, NATS, Cache, SAGA)
 │   ├── Weda.Template.Api/            # REST API 層
 │   ├── Weda.Template.Application/    # 應用層/CQRS 層
 │   ├── Weda.Template.Contracts/      # DTO 和契約
@@ -326,6 +330,93 @@ dotnet test --collect:"XPlat Code Coverage"
 | Pipeline Behavior | 驗證和授權的橫切關注點 |
 | 最終一致性 | 基於 Middleware 的領域事件發布 |
 | 事件驅動 | NATS 訊息傳遞用於非同步通訊 |
+| 分散式快取 | NATS KV 搭配 IDistributedCache 介面 |
+| 物件儲存 | NATS Object Store 用於二進位檔案 |
+| SAGA 模式 | 編排式分散式交易 |
+| 可觀測性 | OpenTelemetry 追蹤與指標 |
+
+## Weda.Core 基礎設施
+
+`Weda.Core` 函式庫提供生產級的基礎設施模式：
+
+### 分散式快取 (NATS KV)
+
+```csharp
+// 注入 IDistributedCache
+public class MyService(IDistributedCache cache)
+{
+    public async Task CacheDataAsync(string key, MyData data)
+    {
+        var json = JsonSerializer.Serialize(data);
+        await cache.SetStringAsync(key, json, new DistributedCacheEntryOptions
+        {
+            AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30)
+        });
+    }
+}
+```
+
+### 物件儲存（二進位檔案）
+
+```csharp
+// 注入 IBlobStorage
+public class FileService(IBlobStorage storage)
+{
+    public async Task<string> UploadAsync(Stream file, string filename)
+    {
+        return await storage.UploadAsync(file, filename);
+    }
+
+    public async Task<Stream> DownloadAsync(string filename)
+    {
+        return await storage.DownloadAsync(filename);
+    }
+}
+```
+
+### SAGA 模式
+
+```csharp
+// 定義 saga 步驟
+public class CreateOrderStep : ISagaStep<OrderSagaData>
+{
+    public string Name => "CreateOrder";
+
+    public async Task<ErrorOr<OrderSagaData>> ExecuteAsync(OrderSagaData data, CancellationToken ct)
+    {
+        // 建立訂單邏輯
+        return data;
+    }
+
+    public async Task<ErrorOr<OrderSagaData>> CompensateAsync(OrderSagaData data, CancellationToken ct)
+    {
+        // 回滾訂單建立
+        return data;
+    }
+}
+
+// 執行 saga
+var result = await sagaOrchestrator.ExecuteAsync(saga, initialData);
+```
+
+### 可觀測性設定
+
+```json
+{
+  "Observability": {
+    "ServiceName": "MyService",
+    "Tracing": {
+      "Enabled": true,
+      "UseConsoleExporter": true,
+      "OtlpEndpoint": "http://localhost:4317"
+    },
+    "Metrics": {
+      "Enabled": true,
+      "UseConsoleExporter": false
+    }
+  }
+}
+```
 
 ## 授權條款
 

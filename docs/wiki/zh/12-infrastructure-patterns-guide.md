@@ -1,13 +1,13 @@
 ---
 title: 基礎設施模式指南
-description: Unit of Work、Distributed Cache、Outbox Pattern 的實作指南
-keywords: [Unit of Work, Distributed Cache, Outbox Pattern, NATS, Resilience]
+description: Unit of Work、Distributed Cache、Object Store、SAGA、Observability 的實作指南
+keywords: [Unit of Work, Distributed Cache, Object Store, SAGA, Observability, NATS, OpenTelemetry]
 sidebar_position: 13
 ---
 
 # 基礎設施模式指南
 
-> 學習 Weda.Core 提供的基礎設施模式：Unit of Work、分散式快取、Outbox Pattern
+> 學習 Weda.Core 提供的基礎設施模式
 
 ## 概觀
 
@@ -17,26 +17,36 @@ Weda.Core 提供以下基礎設施模式：
 |------|------|------|
 | Unit of Work | 交易邊界管理 | EF Core + Pipeline Behavior |
 | Distributed Cache | 分散式快取 | NATS KV Store |
-| Outbox Pattern | 可靠訊息發布 | NATS JetStream + Polly |
+| Object Store | Blob 儲存 | NATS Object Store |
+| SAGA Pattern | 分散式交易 | Orchestration + Compensation |
+| Observability | 追蹤與監控 | OpenTelemetry |
 
 ```
 src/Weda.Core/
 ├── Application/
 │   ├── Behaviors/
 │   │   └── UnitOfWorkBehavior.cs     # 自動 SaveChanges
-│   └── Interfaces/
-│       └── IUnitOfWork.cs            # 交易邊界介面
+│   ├── Interfaces/
+│   │   ├── IUnitOfWork.cs            # 交易邊界介面
+│   │   ├── ISagaStateStore.cs        # SAGA 狀態儲存
+│   │   └── Storage/
+│   │       └── IBlobStorage.cs       # Blob 儲存介面
+│   └── Sagas/
+│       ├── ISaga.cs                  # SAGA 定義
+│       ├── ISagaStep.cs              # SAGA 步驟
+│       ├── SagaState.cs              # SAGA 狀態
+│       └── SagaStatus.cs             # 狀態枚舉
 ├── Infrastructure/
 │   ├── Messaging/Nats/
-│   │   ├── Caching/
-│   │   │   ├── NatsKvDistributedCache.cs
-│   │   │   └── NatsKvCacheOptions.cs
+│   │   ├── Caching/                  # 分散式快取
+│   │   ├── ObjectStore/              # Object Store
 │   │   └── Configuration/
-│   │       └── NatsBuilder.cs        # Fluent API
-│   └── Outbox/
-│       ├── OutboxMessage.cs
-│       ├── OutboxProcessor.cs
-│       └── OutboxOptions.cs
+│   ├── Sagas/
+│   │   ├── SagaOrchestrator.cs       # SAGA 執行引擎
+│   │   └── CacheSagaStateStore.cs    # 狀態持久化
+│   └── Observability/
+│       ├── ObservabilityOptions.cs   # 設定選項
+│       └── ObservabilityExtensions.cs # DI 擴展
 ```
 
 ---
@@ -556,6 +566,335 @@ Circuit Breaker Open → 暫停處理 30s
 
 ---
 
+## 4. Object Store (IBlobStorage)
+
+### 4.1 概念
+
+使用 NATS Object Store 儲存大型 Blob 資料：
+
+```
+Application
+    ↓
+IBlobStorage (介面)
+    ↓
+NatsObjectStorage (實作)
+    ↓
+NATS Object Store
+```
+
+### 4.2 啟用 Object Store
+
+在 `Program.cs` 中設定：
+
+```csharp
+services.AddWedaCore<...>(
+    builder.Configuration,
+    // ...
+    nats =>
+    {
+        nats.AddObjectStore(opts =>
+        {
+            opts.BucketName = "blobs";
+        });
+    }
+);
+```
+
+### 4.3 IBlobStorage 介面
+
+```csharp
+public interface IBlobStorage
+{
+    Task<ErrorOr<BlobInfo>> PutAsync<T>(string key, T value, CancellationToken ct = default);
+    Task<ErrorOr<T>> GetAsync<T>(string key, CancellationToken ct = default);
+    Task<ErrorOr<Deleted>> DeleteAsync(string key, CancellationToken ct = default);
+    Task<bool> ExistsAsync(string key, CancellationToken ct = default);
+}
+
+public record BlobInfo(string Key, ulong Size, DateTime ModifiedAt);
+```
+
+### 4.4 使用範例
+
+```csharp
+public class DocumentService(IBlobStorage storage)
+{
+    public async Task<ErrorOr<BlobInfo>> UploadAsync(string key, Document doc)
+    {
+        return await storage.PutAsync(key, doc);
+    }
+
+    public async Task<ErrorOr<Document>> DownloadAsync(string key)
+    {
+        return await storage.GetAsync<Document>(key);
+    }
+}
+```
+
+### 4.5 序列化
+
+`NatsObjectStorage` 根據型別自動選擇序列化方式：
+
+| 型別 | 序列化方式 |
+|------|-----------|
+| `byte[]` | 直接儲存 |
+| `Stream` | 複製到 byte[] |
+| 其他物件 | JSON 序列化 |
+
+---
+
+## 5. SAGA Pattern
+
+### 5.1 概念
+
+SAGA Pattern 用於處理跨服務的分散式交易，透過 Compensation 機制確保一致性：
+
+```
+Step1 ──✓──> Step2 ──✓──> Step3 ──✗──> Compensate
+  │           │           │              ↓
+  └───────────┴───────────┴──────── Rollback All
+```
+
+### 5.2 啟用 SAGA
+
+```csharp
+services.AddSagas();
+```
+
+### 5.3 核心介面
+
+```csharp
+// 單一步驟
+public interface ISagaStep<TData> where TData : class
+{
+    string Name { get; }
+    Task<ErrorOr<TData>> ExecuteAsync(TData data, CancellationToken ct = default);
+    Task<ErrorOr<TData>> CompensateAsync(TData data, CancellationToken ct = default);
+}
+
+// SAGA 定義
+public interface ISaga<TData> where TData : class
+{
+    string SagaType { get; }
+    IReadOnlyList<ISagaStep<TData>> Steps { get; }
+}
+```
+
+### 5.4 實作範例
+
+**1. 定義 Data Model：**
+
+```csharp
+public class OrderSagaData
+{
+    public string OrderId { get; set; } = string.Empty;
+    public decimal Amount { get; set; }
+    public string? PaymentId { get; set; }
+}
+```
+
+**2. 實作 Steps：**
+
+```csharp
+public class CreateOrderStep : ISagaStep<OrderSagaData>
+{
+    public string Name => "CreateOrder";
+
+    public async Task<ErrorOr<OrderSagaData>> ExecuteAsync(OrderSagaData data, CancellationToken ct)
+    {
+        data.OrderId = Guid.NewGuid().ToString();
+        return data;
+    }
+
+    public async Task<ErrorOr<OrderSagaData>> CompensateAsync(OrderSagaData data, CancellationToken ct)
+    {
+        // 取消訂單邏輯
+        return data;
+    }
+}
+
+public class ProcessPaymentStep(IPaymentService payment) : ISagaStep<OrderSagaData>
+{
+    public string Name => "ProcessPayment";
+
+    public async Task<ErrorOr<OrderSagaData>> ExecuteAsync(OrderSagaData data, CancellationToken ct)
+    {
+        var result = await payment.ChargeAsync(data.Amount, ct);
+        if (result.IsError) return result.FirstError;
+
+        data.PaymentId = result.Value;
+        return data;
+    }
+
+    public async Task<ErrorOr<OrderSagaData>> CompensateAsync(OrderSagaData data, CancellationToken ct)
+    {
+        if (data.PaymentId is not null)
+            await payment.RefundAsync(data.PaymentId, ct);
+        return data;
+    }
+}
+```
+
+**3. 定義 SAGA：**
+
+```csharp
+public class OrderSaga(
+    CreateOrderStep createOrder,
+    ProcessPaymentStep processPayment) : ISaga<OrderSagaData>
+{
+    public string SagaType => "OrderSaga";
+    public IReadOnlyList<ISagaStep<OrderSagaData>> Steps => [createOrder, processPayment];
+}
+```
+
+**4. 執行 SAGA：**
+
+```csharp
+public class CreateOrderHandler(SagaOrchestrator orchestrator, OrderSaga saga)
+{
+    public async Task<ErrorOr<string>> Handle(CreateOrderCommand cmd, CancellationToken ct)
+    {
+        var data = new OrderSagaData { Amount = cmd.Amount };
+        var result = await orchestrator.ExecuteAsync(saga, data, ct: ct);
+
+        return result.Match(
+            success => success.OrderId,
+            errors => errors
+        );
+    }
+}
+```
+
+### 5.5 狀態追蹤
+
+SAGA 狀態透過 `IDistributedCache` (NATS KV) 持久化：
+
+| 狀態 | 說明 |
+|------|------|
+| `Pending` | 尚未開始 |
+| `Running` | 執行中 |
+| `Completed` | 成功完成 |
+| `Failed` | 執行失敗 |
+| `Compensating` | 補償中 |
+| `Compensated` | 補償完成 |
+
+---
+
+## 6. Observability (OpenTelemetry)
+
+### 6.1 概念
+
+使用 OpenTelemetry 實現分散式追蹤和監控：
+
+```
+Application
+    ↓
+OpenTelemetry SDK
+    ↓
+┌───────────┬───────────┐
+│  Console  │   OTLP    │
+│ (開發用)   │ (生產用)   │
+└───────────┴───────────┘
+```
+
+### 6.2 啟用 Observability
+
+在 `Program.cs` 中設定：
+
+```csharp
+services.AddWedaCore<...>(
+    builder.Configuration,
+    // ...
+    options =>
+    {
+        options.Observability.ServiceName = "MyService";
+        options.Observability.ServiceVersion = "1.0.0";
+
+        // 開發環境：Console Exporter
+        options.Observability.Tracing.UseConsoleExporter = true;
+
+        // 生產環境：OTLP Exporter
+        // options.Observability.Tracing.OtlpEndpoint = "http://otel-collector:4317";
+    }
+);
+```
+
+### 6.3 ObservabilityOptions
+
+```csharp
+public class ObservabilityOptions
+{
+    public string ServiceName { get; set; } = "WedaService";
+    public string? ServiceVersion { get; set; }
+    public TracingOptions Tracing { get; set; } = new();
+    public MetricsOptions Metrics { get; set; } = new();
+}
+
+public class TracingOptions
+{
+    public bool Enabled { get; set; } = true;
+    public bool UseConsoleExporter { get; set; } = false;
+    public string? OtlpEndpoint { get; set; }
+}
+
+public class MetricsOptions
+{
+    public bool Enabled { get; set; } = true;
+    public bool UseConsoleExporter { get; set; } = false;
+    public string? OtlpEndpoint { get; set; }
+}
+```
+
+### 6.4 自動 Instrumentation
+
+已自動追蹤：
+- ✅ **ASP.NET Core** - 所有 HTTP requests
+- ✅ **HttpClient** - 所有 outgoing HTTP calls
+
+### 6.5 手動建立 Span
+
+```csharp
+using System.Diagnostics;
+
+public class MyService
+{
+    private static readonly ActivitySource Source = new("MyService");
+
+    public async Task DoWorkAsync()
+    {
+        using var activity = Source.StartActivity("DoWork");
+        activity?.SetTag("user.id", "123");
+
+        // your logic here
+
+        activity?.SetStatus(ActivityStatusCode.Ok);
+    }
+}
+```
+
+需要在 `ObservabilityExtensions` 註冊 source：
+
+```csharp
+tracing.AddSource("MyService");
+```
+
+---
+
+## 快速參考
+
+### Pattern 選擇
+
+| 需求 | Pattern |
+|------|---------|
+| 確保一個操作中的所有變更一起提交 | Unit of Work |
+| 減少資料庫查詢，提升效能 | Distributed Cache |
+| 確保訊息可靠發布到外部系統 | Outbox Pattern |
+| 儲存大型檔案或 Blob | Object Store |
+| 跨服務分散式交易 | SAGA Pattern |
+| 追蹤與監控 | Observability |
+
+---
+
 ## 相關資源
 
 - [GUIDE.md](GUIDE.md) - 學習指南總覽
@@ -563,3 +902,5 @@ Circuit Breaker Open → 暫停處理 30s
 - [11-domain-events-guide.md](11-domain-events-guide.md) - Domain Events
 - [Microsoft.Extensions.Resilience](https://learn.microsoft.com/en-us/dotnet/core/resilience/)
 - [NATS KV Store](https://docs.nats.io/nats-concepts/jetstream/key-value-store)
+- [NATS Object Store](https://docs.nats.io/nats-concepts/jetstream/obj_store)
+- [OpenTelemetry .NET](https://opentelemetry.io/docs/languages/net/)

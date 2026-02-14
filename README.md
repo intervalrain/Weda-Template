@@ -15,6 +15,10 @@ A production-ready Clean Architecture template for .NET 10 applications, featuri
 - **API Versioning** - Built-in API versioning support
 - **Swagger/OpenAPI** - Auto-generated API documentation
 - **Comprehensive Testing** - Unit, integration, and subcutaneous tests
+- **Distributed Cache** - NATS KV-based distributed caching with IDistributedCache
+- **Object Store** - Binary file storage with NATS Object Store
+- **SAGA Pattern** - Distributed transaction orchestration with compensation
+- **Observability** - OpenTelemetry tracing and metrics
 
 ## Preview
 
@@ -42,7 +46,7 @@ A production-ready Clean Architecture template for .NET 10 applications, featuri
 ```
 WedaTemplate/
 ├── src/
-│   ├── Weda.Core/                    # Shared infrastructure (DDD, CQRS, NATS)
+│   ├── Weda.Core/                    # Shared infrastructure (DDD, CQRS, NATS, Cache, SAGA)
 │   ├── Weda.Template.Api/            # REST API layer
 │   ├── Weda.Template.Application/    # Application/CQRS layer
 │   ├── Weda.Template.Contracts/      # DTOs and contracts
@@ -325,6 +329,93 @@ dotnet test --collect:"XPlat Code Coverage"
 | Pipeline Behaviors | Validation and authorization cross-cutting |
 | Eventual Consistency | Middleware-based domain event publishing |
 | Event-Driven | NATS messaging for async communication |
+| Distributed Cache | NATS KV with IDistributedCache interface |
+| Object Store | NATS Object Store for binary files |
+| SAGA Pattern | Orchestration-based distributed transactions |
+| Observability | OpenTelemetry tracing and metrics |
+
+## Weda.Core Infrastructure
+
+The `Weda.Core` library provides production-ready infrastructure patterns:
+
+### Distributed Cache (NATS KV)
+
+```csharp
+// Inject IDistributedCache
+public class MyService(IDistributedCache cache)
+{
+    public async Task CacheDataAsync(string key, MyData data)
+    {
+        var json = JsonSerializer.Serialize(data);
+        await cache.SetStringAsync(key, json, new DistributedCacheEntryOptions
+        {
+            AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(30)
+        });
+    }
+}
+```
+
+### Object Store (Binary Files)
+
+```csharp
+// Inject IBlobStorage
+public class FileService(IBlobStorage storage)
+{
+    public async Task<string> UploadAsync(Stream file, string filename)
+    {
+        return await storage.UploadAsync(file, filename);
+    }
+
+    public async Task<Stream> DownloadAsync(string filename)
+    {
+        return await storage.DownloadAsync(filename);
+    }
+}
+```
+
+### SAGA Pattern
+
+```csharp
+// Define saga steps
+public class CreateOrderStep : ISagaStep<OrderSagaData>
+{
+    public string Name => "CreateOrder";
+
+    public async Task<ErrorOr<OrderSagaData>> ExecuteAsync(OrderSagaData data, CancellationToken ct)
+    {
+        // Create order logic
+        return data;
+    }
+
+    public async Task<ErrorOr<OrderSagaData>> CompensateAsync(OrderSagaData data, CancellationToken ct)
+    {
+        // Rollback order creation
+        return data;
+    }
+}
+
+// Execute saga
+var result = await sagaOrchestrator.ExecuteAsync(saga, initialData);
+```
+
+### Observability Configuration
+
+```json
+{
+  "Observability": {
+    "ServiceName": "MyService",
+    "Tracing": {
+      "Enabled": true,
+      "UseConsoleExporter": true,
+      "OtlpEndpoint": "http://localhost:4317"
+    },
+    "Metrics": {
+      "Enabled": true,
+      "UseConsoleExporter": false
+    }
+  }
+}
+```
 
 ## License
 
