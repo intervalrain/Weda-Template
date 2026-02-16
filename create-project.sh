@@ -140,6 +140,6 @@ printf "${GREEN}╚════════════════════�
 printf "${WHITE}Next steps:${NC}\n"
 printf "  1. cd ${PROJECT_NAME}\n"
 printf "  2. dotnet run --project src/${PROJECT_NAME}.Api\n"
-printf "  3. Open ${CYAN}http://localhost:8080/swagger${NC}\n\n"
+printf "  3. Open ${CYAN}http://localhost:5001/swagger${NC}\n\n"
 printf "${WHITE}Or use Docker:${NC}\n"
 printf "  docker compose up --build\n\n"
