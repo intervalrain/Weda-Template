@@ -1,0 +1,62 @@
+{
+  "$schema": "http://json.schemastore.org/ide.host",
+  "icon": "resources/icon.png",
+  "learnMoreLink": "https://github.com/advantech/weda-template",
+  "symbolInfo": [
+    {
+      "id": "db",
+      "name": {
+        "text": "Database Provider"
+      },
+      "description": {
+        "text": "Choose the database provider for your application"
+      },
+      "isVisible": true,
+      "defaultValue": "sqlite"
+    },
+    {
+      "id": "Nats",
+      "name": {
+        "text": "NATS Service Name"
+      },
+      "description": {
+        "text": "The NATS service name used for event-driven messaging"
+      },
+      "isVisible": true
+    },
+    {
+      "id": "test",
+      "name": {
+        "text": "Include Test Projects"
+      },
+      "description": {
+        "text": "Include unit and integration test projects"
+      },
+      "isVisible": true
+    },
+    {
+      "id": "wiki",
+      "name": {
+        "text": "Include Wiki Generator"
+      },
+      "description": {
+        "text": "Include wiki documentation and generator tool"
+      },
+      "isVisible": true
+    },
+    {
+      "id": "sample",
+      "name": {
+        "text": "Include Sample Module"
+      },
+      "description": {
+        "text": "Include the Employee sample module as reference implementation"
+      },
+      "isVisible": true
+    },
+    {
+      "id": "skipRestore",
+      "isVisible": false
+    }
+  ]
+}

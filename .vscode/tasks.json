@@ -7,7 +7,7 @@
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/WedaCleanArch.sln",
+                "${workspaceFolder}/Weda.Template.sln",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary;ForceNoAlign"
             ],
@@ -19,7 +19,7 @@
             "type": "process",
             "args": [
                 "publish",
-                "${workspaceFolder}/WedaCleanArch.sln",
+                "${workspaceFolder}/Weda.Template.sln",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary;ForceNoAlign"
             ],
@@ -33,7 +33,17 @@
                 "watch",
                 "run",
                 "--project",
-                "${workspaceFolder}/WedaCleanArch.sln"
+                "${workspaceFolder}/src/Weda.Template.Api"
+            ],
+            "problemMatcher": "$msCompile"
+        },
+        {
+            "label": "test",
+            "command": "dotnet",
+            "type": "process",
+            "args": [
+                "test",
+                "${workspaceFolder}/Weda.Template.sln"
             ],
             "problemMatcher": "$msCompile"
         }

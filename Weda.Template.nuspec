@@ -5,16 +5,36 @@
     <version>1.0.0</version>
     <title>Weda Clean Architecture Template</title>
     <authors>Rain Hu</authors>
-    <description>A clean architecture template with DDD, CQRS, NATS EventController, and Entity Framework Core for building enterprise-grade .NET applications.</description>
+    <owners>Advantech</owners>
+    <description>A clean architecture template with DDD, CQRS, NATS EventController, and Entity Framework Core for building enterprise-grade .NET applications.
+
+Features:
+- Clean Architecture with DDD patterns
+- CQRS with MediatR
+- NATS JetStream for event-driven architecture
+- Multiple database support (SQLite, PostgreSQL, MongoDB)
+- Unit of Work pattern
+- Result pattern for error handling
+- Comprehensive test projects
+- Docker Compose ready
+- Wiki documentation generator</description>
+    <summary>Clean Architecture template for .NET with DDD, CQRS, and NATS integration</summary>
+    <releaseNotes>Initial release with full Clean Architecture support.</releaseNotes>
+    <copyright>Copyright (c) 2024-2026 Advantech. All rights reserved.</copyright>
     <projectUrl>https://github.com/advantech/weda-template</projectUrl>
+    <repository type="git" url="https://github.com/advantech/weda-template.git" />
     <license type="expression">MIT</license>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <tags>dotnet-new template clean-architecture ddd cqrs nats efcore</tags>
+    <icon>src/Weda.Template.Api/wwwroot/favicon.svg</icon>
+    <readme>docs/README.md</readme>
+    <tags>dotnet-new template clean-architecture ddd cqrs nats efcore eventdriven saga unitofwork resultpattern</tags>
     <packageTypes>
       <packageType name="Template" />
     </packageTypes>
   </metadata>
   <files>
+    <file src="resources/icon.png" target="resources/" />
+    <file src="README.md" target="docs/" />
     <file src="**/*" exclude="**/.git/**;**/.claude/**;**/.vscode/**;**/bin/**;**/obj/**;**/*.sqlite;**/*.sqlite-shm;**/*.sqlite-wal;**/.DS_Store;*.nupkg" target="content" />
   </files>
 </package>

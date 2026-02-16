@@ -68,6 +68,12 @@
       "datatype": "bool",
       "defaultValue": "true"
     },
+    "skipRestore": {
+      "type": "parameter",
+      "description": "Skip the automatic NuGet restore after project creation.",
+      "datatype": "bool",
+      "defaultValue": "false"
+    },
     "copyrightYear": {
       "type": "generated",
       "generator": "now",
@@ -268,16 +274,48 @@
             ".git/**/*",
             ".claude/**/*",
             ".vscode/**/*",
+            ".github/**/*",
             "**/*.sqlite",
             "**/*.sqlite-shm",
             "**/*.sqlite-wal",
             "**/bin/**/*",
             "**/obj/**/*",
-            "**/.DS_Store"
+            "**/.DS_Store",
+            "create-project.sh",
+            "create-project.ps1",
+            "*.nuspec"
           ]
         }
       ]
     }
   ],
-  "postActions": []
+  "primaryOutputs": [
+    {
+      "path": "Weda.Template.sln"
+    }
+  ],
+  "postActions": [
+    {
+      "id": "restore",
+      "condition": "(!skipRestore)",
+      "description": "Restore NuGet packages required by this project.",
+      "manualInstructions": [
+        {
+          "text": "Run 'dotnet restore'"
+        }
+      ],
+      "actionId": "210D431B-A78B-4D2F-B762-4ED3E3EA9025",
+      "continueOnError": true
+    },
+    {
+      "id": "instructions",
+      "description": "Getting started instructions",
+      "manualInstructions": [
+        {
+          "text": "\n========================================\n  Project created successfully!\n========================================\n\nNext steps:\n\n1. Start the application:\n   cd src/{name}.Api\n   dotnet run\n\n2. Or use Docker Compose:\n   docker compose up --build\n\n3. Open Swagger UI:\n   http://localhost:8080/swagger\n\n4. Run tests:\n   dotnet test\n\nFor more information, see README.md\n"
+        }
+      ],
+      "actionId": "AC1156F7-BB77-4DB8-B28F-24EEBCCA1E5C"
+    }
+  ]
 }

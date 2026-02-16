@@ -1,0 +1,119 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  DOTNET_VERSION: '10.0.x'
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  build:
+    name: Build Template
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --no-restore --configuration Release
+
+    - name: Test
+      run: dotnet test --no-build --configuration Release --verbosity normal
+
+  template-test:
+    name: Test Template Generation
+    runs-on: ubuntu-latest
+    needs: build
+    strategy:
+      matrix:
+        db: [sqlite, postgres, mongo, none]
+        include:
+          - db: sqlite
+            name: SQLite
+          - db: postgres
+            name: PostgreSQL
+          - db: mongo
+            name: MongoDB
+          - db: none
+            name: InMemory
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Install template locally
+      run: dotnet new install ./
+
+    - name: Create test project (${{ matrix.name }})
+      run: |
+        mkdir -p /tmp/template-test
+        cd /tmp/template-test
+        dotnet new weda -n TestProject -db ${{ matrix.db }} --test false --wiki false
+
+    - name: Build generated project
+      run: |
+        cd /tmp/template-test/TestProject
+        dotnet build --configuration Release
+
+    - name: Verify docker-compose exists
+      run: |
+        cd /tmp/template-test/TestProject
+        test -f docker-compose.yml && echo "docker-compose.yml exists" || exit 1
+
+    - name: Uninstall template
+      run: dotnet new uninstall ./
+
+  template-full-test:
+    name: Test Full Template (with tests and wiki)
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Install template locally
+      run: dotnet new install ./
+
+    - name: Create full test project
+      run: |
+        mkdir -p /tmp/template-test
+        cd /tmp/template-test
+        dotnet new weda -n FullTestProject
+
+    - name: Build generated project
+      run: |
+        cd /tmp/template-test/FullTestProject
+        dotnet build --configuration Release
+
+    - name: Run tests
+      run: |
+        cd /tmp/template-test/FullTestProject
+        dotnet test --configuration Release --verbosity normal
+
+    - name: Uninstall template
+      run: dotnet new uninstall ./
