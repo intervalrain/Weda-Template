@@ -8,14 +8,9 @@ services:
       - "8080:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - Database__Provider=Sqlite
-      - Database__ConnectionString=Data Source=/app/data/Weda.Template.sqlite
-    volumes:
-      - weda-data:/app/data
+      - Database__Provider=InMemory
 #if (wiki)
+    volumes:
       - ./docs/wiki:/app/wwwroot/wiki
 #endif
     restart: on-failure
-
-volumes:
-  weda-data:

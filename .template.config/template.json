@@ -177,6 +177,21 @@
           }
         }
       ]
+    },
+    "**/docker-compose*.yml": {
+      "operations": [
+        {
+          "type": "conditional",
+          "configuration": {
+            "if": ["#if"],
+            "else": ["#else"],
+            "elseif": ["#elseif"],
+            "endif": ["#endif"],
+            "trim": true,
+            "wholeLine": true
+          }
+        }
+      ]
     }
   },
   "sources": [
@@ -206,6 +221,47 @@
             "src/Weda.Template.Infrastructure/Employees/**/*",
             "src/Weda.Template.Api/wwwroot/sample/**/*"
           ]
+        },
+        {
+          "condition": "(db == 'sqlite')",
+          "exclude": [
+            "docker-compose.postgres.yml",
+            "docker-compose.mongo.yml",
+            "docker-compose.inmemory.yml"
+          ]
+        },
+        {
+          "condition": "(db == 'postgres')",
+          "exclude": [
+            "docker-compose.yml",
+            "docker-compose.mongo.yml",
+            "docker-compose.inmemory.yml"
+          ],
+          "rename": {
+            "docker-compose.postgres.yml": "docker-compose.yml"
+          }
+        },
+        {
+          "condition": "(db == 'mongo')",
+          "exclude": [
+            "docker-compose.yml",
+            "docker-compose.postgres.yml",
+            "docker-compose.inmemory.yml"
+          ],
+          "rename": {
+            "docker-compose.mongo.yml": "docker-compose.yml"
+          }
+        },
+        {
+          "condition": "(db == 'none')",
+          "exclude": [
+            "docker-compose.yml",
+            "docker-compose.postgres.yml",
+            "docker-compose.mongo.yml"
+          ],
+          "rename": {
+            "docker-compose.inmemory.yml": "docker-compose.yml"
+          }
         },
         {
           "exclude": [

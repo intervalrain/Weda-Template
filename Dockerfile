@@ -1,23 +1,34 @@
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
-COPY ["src/WedaCleanArch.Api/WedaCleanArch.Api.csproj", "WedaCleanArch.Api/"]
-COPY ["src/WedaCleanArch.Application/WedaCleanArch.Application.csproj", "WedaCleanArch.Application/"]
-COPY ["src/WedaCleanArch.Domain/WedaCleanArch.Domain.csproj", "WedaCleanArch.Domain/"]
-COPY ["src/WedaCleanArch.Contracts/WedaCleanArch.Contracts.csproj", "WedaCleanArch.Contracts/"]
-COPY ["src/WedaCleanArch.Infrastructure/WedaCleanArch.Infrastructure.csproj", "WedaCleanArch.Infrastructure/"]
+
+# Copy solution and project files
+COPY ["Weda.Template.sln", "./"]
 COPY ["Directory.Packages.props", "./"]
 COPY ["Directory.Build.props", "./"]
-RUN dotnet restore "WedaCleanArch.Api/WedaCleanArch.Api.csproj"
-COPY . ../
-WORKDIR /src/WedaCleanArch.Api
-RUN dotnet build "WedaCleanArch.Api.csproj" -c Release -o /app/build
+COPY ["src/Weda.Template.Api/Weda.Template.Api.csproj", "src/Weda.Template.Api/"]
+COPY ["src/Weda.Template.Application/Weda.Template.Application.csproj", "src/Weda.Template.Application/"]
+COPY ["src/Weda.Template.Domain/Weda.Template.Domain.csproj", "src/Weda.Template.Domain/"]
+COPY ["src/Weda.Template.Contracts/Weda.Template.Contracts.csproj", "src/Weda.Template.Contracts/"]
+COPY ["src/Weda.Template.Infrastructure/Weda.Template.Infrastructure.csproj", "src/Weda.Template.Infrastructure/"]
 
+# Restore dependencies
+RUN dotnet restore "src/Weda.Template.Api/Weda.Template.Api.csproj"
+
+# Copy source code
+COPY src/ src/
+
+# Build
+WORKDIR /src/src/Weda.Template.Api
+RUN dotnet build "Weda.Template.Api.csproj" -c Release -o /app/build --no-restore
+
+# Publish
 FROM build AS publish
-RUN dotnet publish --no-restore -c Release -o /app/publish
+RUN dotnet publish "Weda.Template.Api.csproj" -c Release -o /app/publish --no-restore
 
-FROM mcr.microsoft.com/dotnet/aspnet:8.0
-ENV ASPNETCORE_HTTP_PORTS=5001
-EXPOSE 5001
+# Runtime
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
+EXPOSE 8080
+
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "WedaCleanArch.Api.dll"]
+ENTRYPOINT ["dotnet", "Weda.Template.Api.dll"]
