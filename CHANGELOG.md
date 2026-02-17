@@ -7,7 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-02-17
+
 ### Added
+- **NatsOptions IOptions Pattern** - NATS connections now fully configurable via `appsettings.json`
+  - Added `Protocol` property to `NatsConnectionConfig` (supports "Json" or "Protobuf")
+  - Added `BindConfigurationWithProtocol()` extension method for protocol-aware configuration binding
+  - Dual NATS server architecture: `broker` (Protobuf) and `bus` (JSON)
 - Interactive CLI tool (`create-project.sh`, `create-project.ps1`) for step-by-step project creation
 - GitHub Actions CI/CD workflows for build, test, and NuGet publishing
 - IDE host configuration for Visual Studio integration
@@ -15,13 +21,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Comprehensive template parameter documentation
 
 ### Changed
+- **Program.cs** now uses `NatsOptions` + IOptions pattern instead of hardcoded URLs
+- Docker-compose includes two NATS servers (broker on 4222, bus on 4223)
 - Improved docker-compose configurations for each database provider
 - Updated VS Code settings with correct project names
 
 ### Fixed
 - Template conditional directives for test and wiki projects in solution file
 
-## [1.0.0] - 2026-02-17
+## [1.0.0] - 2026-02-16
 
 ### Added
 - Initial release of Weda Clean Architecture Template
@@ -74,7 +82,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
-| 1.0.0 | TBD | Initial release with Clean Architecture, DDD, CQRS, NATS |
+| 1.0.1 | 2026-02-17 | NatsOptions IOptions pattern, dual NATS servers, CLI tools |
+| 1.0.0 | 2026-02-16 | Initial release with Clean Architecture, DDD, CQRS, NATS |
 
 ---
 
