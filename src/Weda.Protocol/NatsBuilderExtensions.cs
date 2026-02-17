@@ -54,4 +54,52 @@ public static class NatsBuilderExtensions
 
         return builder.AddConnection(name, opts);
     }
+
+    /// <summary>
+    /// Binds configuration from NatsOptions with protocol-aware serializer selection
+    /// </summary>
+    public static NatsBuilder BindConfigurationWithProtocol(this NatsBuilder builder, NatsOptions options)
+    {
+        builder.DefaultConnection = options.DefaultConnection;
+
+        foreach (var (name, config) in options.Connections)
+        {
+            var registry = GetSerializerRegistry(config.Protocol);
+            var opts = CreateNatsOpts(config, registry);
+            builder.AddConnection(name, opts);
+        }
+
+        return builder;
+    }
+
+    private static INatsSerializerRegistry GetSerializerRegistry(string protocol)
+    {
+        return protocol?.ToLowerInvariant() switch
+        {
+            "protobuf" => ProtobufSerializerRegistry.Default,
+            "json" or null or "" => NatsClientDefaultSerializerRegistry.Default,
+            _ => NatsClientDefaultSerializerRegistry.Default
+        };
+    }
+
+    private static NatsOpts CreateNatsOpts(NatsConnectionConfig config, INatsSerializerRegistry registry)
+    {
+        return NatsOpts.Default with
+        {
+            Url = config.Url,
+            Name = config.Name,
+            SerializerRegistry = registry,
+            AuthOpts = NatsAuthOpts.Default with
+            {
+                Username = config.Username,
+                Password = config.Password,
+                Token = config.Token,
+                Jwt = config.Jwt,
+                NKey = config.NKey,
+                Seed = config.Seed,
+                CredsFile = config.CredsFile,
+                NKeyFile = config.NKeyFile
+            }
+        };
+    }
 }

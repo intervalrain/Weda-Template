@@ -5,7 +5,6 @@ using Serilog;
 using Weda.Core;
 using Weda.Core.Infrastructure.Messaging.Nats.Configuration;
 using Weda.Core.Infrastructure.Messaging.Nats.Middleware;
-using Weda.Protocol.Enums;
 using Weda.Protocol;
 using Weda.Template.Api;
 using Weda.Template.Application;
@@ -46,10 +45,11 @@ var builder = WebApplication.CreateBuilder(args);
             },
             nats =>
             {
-                nats.DefaultConnection = "bus";
-                nats.AddConnection(EcoType.Protobuf ,"broker", "nats://localhost:4222");
-                nats.AddConnection(EcoType.Json, "bus", "nats://localhost:4223");
+                var natsOptions = builder.Configuration
+                    .GetSection(NatsOptions.SectionName)
+                    .Get<NatsOptions>() ?? new NatsOptions();
 
+                nats.BindConfigurationWithProtocol(natsOptions);
                 nats.AddKeyValueCache();
                 nats.AddObjectStore();
                 nats.Use<AuditLoggingMiddleware>();

@@ -5,18 +5,24 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "8080:8080"
+      - "5001:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - Database__Provider=MongoDb
       - Database__ConnectionString=mongodb://mongo:27017
       - Database__DatabaseName=WedaTemplate
+      - Nats__Broker__Url=nats://broker:4222
+      - Nats__Bus__Url=nats://bus:4222
 #if (wiki)
     volumes:
       - ./docs/wiki:/app/wwwroot/wiki
 #endif
     depends_on:
       mongo:
+        condition: service_healthy
+      broker:
+        condition: service_healthy
+      bus:
         condition: service_healthy
     restart: on-failure
 
@@ -32,6 +38,34 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
+  broker:
+    image: nats:latest
+    container_name: weda-template-broker
+    command: -js -n broker
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+    healthcheck:
+      test: ["CMD", "nats-server", "--help"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  bus:
+    image: nats:latest
+    container_name: weda-template-bus
+    command: -js -n bus
+    ports:
+      - "4223:4222"
+      - "8223:8222"
+    healthcheck:
+      test: ["CMD", "nats-server", "--help"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
 volumes:
   mongo-data:

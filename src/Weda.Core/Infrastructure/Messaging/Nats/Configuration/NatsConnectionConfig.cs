@@ -7,13 +7,18 @@ public class NatsConnectionConfig
 {
     /// <summary>
     /// NATS server URL (e.g., "nats://localhost:4222")
-    /// </summary>
+    /// </summary
     public required string Url { get; set; }
 
     /// <summary>
     /// Optional connection name for logging/debugging
     /// </summary>
     public string Name { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Serialization protocol: "Json" or "Protobuf"
+    /// </summary>
+    public string Protocol { get; set; } = "Json";
 
     /// <summary>
     /// Path to NATS credentials file (.creds)
